@@ -1,54 +1,70 @@
-function Landing() {
+import { useState, useEffect } from "react";
+import Navbar from "../components/Navbar";
+import Hero from "../components/Hero";
+import Problem from "../components/Problem";
+import Features from "../components/Features";
+import HowItWorks from "../components/HowItWorks";
+import Languages from "../components/Languages";
+import Security from "../components/Security";
+import Pricing from "../components/Pricing";
+import Testimonials from "../components/Testimonials";
+import FAQ from "../components/FAQ";
+import FinalCTA from "../components/FinalCTA";
+import Footer from "../components/Footer";
+import LoginModal from "../components/LoginModal";
+
+function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
+  const [authModalOpen, setAuthModalOpen] = useState(null); // null, 'login', 'signup'
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e, i) => {
+          if (e.isIntersecting) {
+            setTimeout(() => e.target.classList.add("visible"), i * 60);
+            obs.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".rv");
+    elements.forEach((el) => obs.observe(el));
+
+    return () => {
+      elements.forEach((el) => obs.unobserve(el));
+    };
+  }, []);
+
+  const openPanel = (tab) => {
+    setAuthModalOpen(tab);
+  };
+
+  const closePanel = () => {
+    setAuthModalOpen(null);
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white">
-
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-8 py-5 border-b border-gray-800">
-        <h1 className="text-2xl font-bold text-blue-500">
-          CryptoCode
-        </h1>
-
-        <div className="space-x-6">
-          <button className="hover:text-blue-500">
-            Home
-          </button>
-
-          <button className="hover:text-blue-500">
-            Features
-          </button>
-
-          <button className="hover:text-blue-500">
-            About
-          </button>
-
-          <button className="bg-blue-600 px-4 py-2 rounded-lg">
-            Login
-          </button>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <div className="text-center py-32 px-5">
-
-        <h1 className="text-6xl font-bold">
-          Secure Online Coding Platform
-        </h1>
-
-        <p className="mt-6 text-xl text-gray-400">
-          Practice, Execute and Track Code Securely
-        </p>
-
-        <div className="mt-8">
-          <button className="bg-blue-600 px-8 py-3 rounded-lg mr-4">
-            Get Started
-          </button>
-
-          <button className="border border-blue-600 px-8 py-3 rounded-lg">
-            Learn More
-          </button>
-        </div>
-      </div>
-
+    <div id="landing">
+      <Navbar isDark={isDark} onToggleTheme={onToggleTheme} onOpenPanel={openPanel} />
+      <Hero onOpenPanel={openPanel} />
+      <Problem />
+      <Features />
+      <HowItWorks />
+      <Languages />
+      <Security />
+      <Pricing onOpenPanel={openPanel} />
+      <Testimonials />
+      <FAQ />
+      <FinalCTA onOpenPanel={openPanel} />
+      <Footer />
+      <LoginModal
+        isOpen={authModalOpen !== null}
+        initialTab={authModalOpen}
+        onClose={closePanel}
+        onLoginSuccess={onLoginSuccess}
+      />
     </div>
   );
 }
