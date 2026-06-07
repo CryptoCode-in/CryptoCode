@@ -9,10 +9,10 @@ function Footer() {
               href="#"
               style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--tx)" }}
             >
-              <div className="logo-i">
-                <i className="fa-solid fa-code"></i>
+              <div >
+                <img src="src/assets/images/logob.png" width="55" height="55" />
               </div>
-              CryptoCode
+              <img src="src/assets/images/logow.png" width="200" height="200" />
             </a>
             <p style={{ fontSize: ".875rem", color: "var(--tx3)", lineHeight: 1.65, maxWidth: "280px" }}>
               Secure Online Coding Platform for Students and Teachers.
@@ -33,12 +33,12 @@ function Footer() {
             <a href="#faq">FAQ</a>
           </div>
           <div className="col-6 col-md-2 fcol">
-            <h5>Resources</h5>
-            <a href="#">Documentation</a>
-            <a href="#">API Reference</a>
-            <a href="#">Student Guide</a>
-            <a href="#">Teacher Guide</a>
-            <a href="#">Community</a>
+            <h5>Developed By 🧑‍💻</h5>
+            <a href="https://www.linkedin.com/in/devesh-sonawane-4b7965366/">Devesh Sonawane</a>
+            <a href="https://www.linkedin.com/in/ninad-bhad-b8118b327/">Ninad Bhad</a>
+            <a href="https://www.linkedin.com/in/ritesh-borse-20b513371/">Ritesh Borse</a>
+            <a href="https://www.linkedin.com/in/devesh-koshti-720611395/">Devesh Koshti</a>
+            <a href="https://www.linkedin.com/in/sai-navarkar-0a7991336/">Sai Navarkar</a>
           </div>
           <div className="col-6 col-md-2 fcol">
             <h5>Project</h5>
@@ -54,22 +54,20 @@ function Footer() {
           style={{ borderTop: "1px solid var(--bd)" }}
         >
           <p style={{ fontSize: ".8rem", color: "var(--tx3)", margin: 0 }}>
-            © 2026 CryptoCode — Final Year Capstone Project
+            © 2026 CryptoCode — Secure Online Coding Platform for Students and Teachers
             <br />
             <span style={{ color: "var(--tx3)" }}>Government Polytechnic Nashik</span>
           </p>
           <div className="d-flex gap-2">
-            <a href="#" className="sico">
+            <a href="https://github.com/teamcryptocode" className="sico">
               <i className="fa-brands fa-github"></i>
             </a>
-            <a href="#" className="sico">
+            <a href="https://www.linkedin.com/company/cryptocode-in/" className="sico">
               <i className="fa-brands fa-linkedin-in"></i>
             </a>
-            <a href="#" className="sico">
-              <i className="fa-brands fa-x-twitter"></i>
-            </a>
-            <a href="#" className="sico">
-              <i className="fa-regular fa-envelope"></i>
+
+            <a href="https://www.instagram.com/cryptocode.in?igsh=MWlmem9ndDU5YWF5Zg==" className="sico">
+              <i className="fa-brands fa-instagram"></i>
             </a>
           </div>
         </div>
