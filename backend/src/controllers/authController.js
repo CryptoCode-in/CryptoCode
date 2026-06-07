@@ -1,21 +1,40 @@
 const supabase = require("../config/supabase");
 
 const signup = async(req, res) => {
-    const { name, email, role } = req.body;
+    const { name, email,password, role } = req.body;
 
-    if (!name || !email || !role) {
+    if (!name || !email || !password || !role) {
         return res.status(400).json({ message: "All fields required" });
     }
+    
+    const { data: authData, error: authError } =
+  await supabase.auth.signUp({
+    email,
+    password,
+  });
+  
+
+  if (authError) {
+  return res.status(400).json({
+    success: false,
+    message: authError.message,
+  });
+}
+
+//console.log("AUTH USER:", authData.user);
+
+const userId = authData.user.id;
 
     const { data, error } = await supabase
         .from("profiles")
-        .insert([{ name, email, role }])
+        .insert([{ user_id : userId , name, email, role }])
         .select();
 
     if (error) return res.status(500).json({ error });
 
     res.status(201).json({ success: true, user: data });
 };
+
 
 
 
