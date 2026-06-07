@@ -12,7 +12,9 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
     "react": "^19.2.6",
+    "react-countup": "^6.5.3",
     "react-dom": "^19.2.6",
+    "react-intersection-observer": "^10.0.3",
     "react-router-dom": "^7.16.0",
     "tailwindcss": "^4.3.0"
   },
