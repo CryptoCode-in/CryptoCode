@@ -1,3 +1,4 @@
+import CountUp from "react-countup";
 function Hero({ onOpenPanel }) {
   return (
     <>
@@ -13,7 +14,7 @@ function Hero({ onOpenPanel }) {
           <div className="text-center">
             <div className="afu" style={{ animationDelay: ".05s" }}>
               <span className="hbadge">
-                <span className="bdot"></span>Now with AI-Powered Code Analysis & Plagiarism Detection
+                <span className="bdot"></span>Secure Code Execution • Smart Evaluation • Progress Tracking
               </span>
             </div>
             <h1 className="afu" style={{ animationDelay: ".12s", marginTop: "20px" }}>
@@ -31,8 +32,7 @@ function Hero({ onOpenPanel }) {
                 animationDelay: ".2s",
               }}
             >
-              Practice, execute and analyze code securely with AI-powered code review, plagiarism detection and
-              real-time progress tracking.
+              Practice coding, submit assignments and track progress through secure code execution, automated evaluation and teacher-friendly analytics.
             </p>
             <div
               className="d-flex align-items-center justify-content-center gap-3 flex-wrap afu"
@@ -75,7 +75,7 @@ function Hero({ onOpenPanel }) {
                     className="ms-auto me-auto"
                     style={{ fontSize: ".76rem", color: "var(--tx3)", fontFamily: "'JetBrains Mono', monospace" }}
                   >
-                    CryptoCode Dashboard — cryptocode.app/dashboard
+                    CryptoCode Dashboard — cryptocode.in/dashboard
                   </span>
                 </div>
                 <div className="dgrid">
