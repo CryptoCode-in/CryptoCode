@@ -12,7 +12,9 @@ const signup = async(req, res) => {
     email,
     password,
   });
-  
+
+console.log("Signup Request:", email);
+console.log("Auth Error:", authError);
 
   if (authError) {
   return res.status(400).json({
@@ -23,12 +25,18 @@ const signup = async(req, res) => {
 
 //console.log("AUTH USER:", authData.user);
 
+console.log("AUTH DATA:", authData);
+console.log("AUTH ERROR:", authError);
+
 const userId = authData.user.id;
 
     const { data, error } = await supabase
         .from("profiles")
         .insert([{ user_id : userId , name, email, role }])
         .select();
+
+        console.log("PROFILE ERROR:", error);
+        console.log("PROFILE DATA:", data);
 
     if (error) return res.status(500).json({ error });
 

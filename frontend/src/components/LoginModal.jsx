@@ -46,29 +46,120 @@ function LoginModal({ isOpen, initialTab, onClose, onLoginSuccess }) {
     setTimeout(() => setSignupErr(""), 3000);
   };
 
-  const handleLogin = () => {
-    const email = loginEmail.trim();
-    const pass = loginPass.trim();
-    if (!email || !pass) {
-      showLoginErr("Please enter email and password.");
-      return;
-    }
-    const name = email.split("@")[0];
-    onLoginSuccess({ name, email, role: loginRole });
-    onClose();
-  };
+  const handleLogin = async () => {
 
-  const handleSignup = () => {
-    const name = signupName.trim();
-    const email = signupEmail.trim();
-    const pass = signupPass.trim();
-    if (!name || !email || !pass) {
-      showSignupErr("Please fill all fields.");
+  const email = loginEmail.trim();
+  const pass = loginPass.trim();
+
+  if (!email || !pass) {
+    showLoginErr("Please enter email and password.");
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      "http://localhost:5000/auth/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password: pass,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      showLoginErr(data.message || "Login Failed");
       return;
     }
-    onLoginSuccess({ name, email, role: signupRole });
+
+    console.log(data);
+    localStorage.setItem(
+      "session",
+      JSON.stringify(data.session)
+    );
+
+    localStorage.setItem(
+  "user",
+  JSON.stringify({
+    name: data.user.email.split("@")[0],
+    email: data.user.email,
+    role: loginRole,
+  })
+);
+
+    onLoginSuccess({
+      name: data.user.email.split("@")[0],
+      email: data.user.email,
+      role: loginRole,
+    });
+
     onClose();
-  };
+
+  } catch (error) {
+
+    console.error(error);
+
+    showLoginErr("Server Error");
+
+  }
+};
+
+const handleSignup = async () => {
+
+  const name = signupName.trim();
+  const email = signupEmail.trim();
+  const pass = signupPass.trim();
+
+  if (!name || !email || !pass) {
+    showSignupErr("Please fill all fields.");
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      "http://localhost:5000/auth/signup",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password: pass,
+          role: signupRole,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    console.log(data);
+
+    if (!response.ok) {
+      showSignupErr(data.message || "Signup Failed");
+      return;
+    }
+
+    alert("Signup Successful");
+
+    onClose();
+
+  } catch (error) {
+
+    console.error(error);
+
+    showSignupErr("Server Error");
+  }
+};
 
   if (!show) return null;
 

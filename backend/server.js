@@ -1,13 +1,16 @@
 require("dotenv").config();
 
 const express = require("express");
+const cors = require("cors");
 const supabase = require("./src/config/supabase");
 
 const authRoutes = require("./src/routes/authRoutes");
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
+
 
 app.get("/", (req, res) => {
     res.send("Cryptocode Backend Running");
