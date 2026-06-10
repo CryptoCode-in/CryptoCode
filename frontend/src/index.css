@@ -133,6 +133,7 @@ h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 700; letter-spacing: -.
   background: var(--sf);
   border: 1px solid var(--bd);
   border-radius: 20px;
+  width: 100%;
   overflow: hidden;
   box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 0 0 1px var(--bd), inset 0 1px 0 rgba(255,255,255,.05);
 }
