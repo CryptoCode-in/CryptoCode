@@ -187,7 +187,7 @@ function Hero({ onOpenPanel }) {
                             height: "100%",
                             display: "flex",
                             flexDirection: "column",
-                            gap: "8px",
+                            gap: "1px",
                           }}
                         >
                           <div style={{ fontSize: ".71rem", color: "var(--tx3)", fontWeight: 600 }}>
