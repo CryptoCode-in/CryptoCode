@@ -22,7 +22,7 @@ function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
         entries.forEach((e, i) => {
           if (e.isIntersecting) {
             setTimeout(() => e.target.classList.add("visible"), i * 60);
-            obs.unobserve(e.target);
+            obs.unobserve(e.target);r
           }
         });
       },
