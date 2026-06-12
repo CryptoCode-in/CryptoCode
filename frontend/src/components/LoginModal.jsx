@@ -151,6 +151,15 @@ const handleSignup = async () => {
 
     alert("Signup Successful");
 
+    localStorage.setItem(
+  "cryptocode_user",
+  JSON.stringify({
+    name,
+    email,
+    role: signupRole,
+  })
+);
+
     onLoginSuccess({
   name,
   email,
