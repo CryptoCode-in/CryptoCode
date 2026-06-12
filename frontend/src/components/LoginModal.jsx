@@ -107,37 +107,6 @@ function LoginModal({ isOpen, initialTab, onClose, onLoginSuccess }) {
       role: loginRole,
     });
 
-  const handleSignup = () => {
-    const name = signupName.trim();
-    const email = signupEmail.trim();
-    const roll = signupRollNo.trim();
-    const yr = signupYear.trim();
-    const br = signupBranch.trim();
-    const col = signupCollege.trim();
-    const mob = signupMobileNo.trim();
-    const pass = signupPass.trim();
-
-    if (!name || !email || !roll || !yr || !br || !col || !mob || !pass) {
-      showSignupErr("Please fill all fields.");
-      return;
-    }
-
-    if (pass.length < 8) {
-      showSignupErr("Password must be at least 8 characters.");
-      return;
-    }
-
-    onLoginSuccess({
-      name,
-      email,
-      rollNo: roll,
-      year: yr,
-      branch: br,
-      college: col,
-      mobileNo: mob,
-      role: signupRole,
-    });
-    onClose();
 
   } catch (error) {
 
@@ -147,6 +116,7 @@ function LoginModal({ isOpen, initialTab, onClose, onLoginSuccess }) {
 
   }
 };
+
 
 const handleSignup = async () => {
 
@@ -524,4 +494,4 @@ const handleSignup = async () => {
   );
 }
 
-export default LoginModal;
+export default LoginModal;   
