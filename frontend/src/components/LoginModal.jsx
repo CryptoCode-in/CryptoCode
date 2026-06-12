@@ -151,16 +151,13 @@ const handleSignup = async () => {
 
     alert("Signup Successful");
 
-  const handleSignup = () => {
-    const name = signupName.trim();
-    const email = signupEmail.trim();
-    const pass = signupPass.trim();
-    if (!name || !email || !pass) {
-      showSignupErr("Please fill all fields.");
-      return;
-    }
-    onLoginSuccess({ name, email, role: signupRole });
-    onClose();
+    onLoginSuccess({
+  name,
+  email,
+  role: signupRole,
+});
+
+onClose();
 
   } catch (error) {
 
