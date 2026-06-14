@@ -9,6 +9,7 @@ import Security from "../components/Security";
 import Pricing from "../components/Pricing";
 import Testimonials from "../components/Testimonials";
 import FAQ from "../components/FAQ";
+import Contact from "../components/Contact";
 import FinalCTA from "../components/FinalCTA";
 import Footer from "../components/Footer";
 import LoginModal from "../components/LoginModal";
@@ -19,10 +20,10 @@ function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
   useEffect(() => {
     const obs = new IntersectionObserver(
       (entries) => {
-        entries.forEach((e, i) => {
+        entries.forEach((e) => {
           if (e.isIntersecting) {
-            setTimeout(() => e.target.classList.add("visible"), i * 60);
-            obs.unobserve(e.target);r
+            e.target.classList.add("visible");
+            obs.unobserve(e.target);
           }
         });
       },
@@ -57,6 +58,7 @@ function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
       <Pricing onOpenPanel={openPanel} />
       <Testimonials />
       <FAQ />
+      <Contact />
       <FinalCTA onOpenPanel={openPanel} />
       <Footer />
       <LoginModal

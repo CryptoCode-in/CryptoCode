@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import StudentDashboard from "./pages/StudentDashboard";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -63,6 +64,16 @@ function App() {
             ) : (
               <Navigate to="/" replace />
             )
+          }
+        />
+        <Route
+          path="/privacy-policy"
+          element={
+            <PrivacyPolicy
+              isDark={isDark}
+              onToggleTheme={handleToggleTheme}
+              onLoginSuccess={handleLoginSuccess}
+            />
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

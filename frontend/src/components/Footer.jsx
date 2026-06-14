@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Footer() {
   return (
     <footer id="foot">
@@ -36,15 +38,15 @@ function Footer() {
             <h5>Developed By 🧑‍💻</h5>
             <a href="https://www.linkedin.com/in/devesh-sonawane-4b7965366/">Devesh Sonawane</a>
             <a href="https://www.linkedin.com/in/ninad-bhad-b8118b327/">Ninad Bhad</a>
-            <a href="https://www.linkedin.com/in/ritesh-borse-20b513371/">Ritesh Borse</a>
             <a href="https://www.linkedin.com/in/devesh-koshti-720611395/">Devesh Koshti</a>
             <a href="https://www.linkedin.com/in/sai-navarkar-0a7991336/">Sai Navarkar</a>
+            <a href="https://www.linkedin.com/in/ritesh-borse-20b513371/">Ritesh Borse</a>
           </div>
           <div className="col-6 col-md-2 fcol">
             <h5>Project</h5>
             <a href="#">About</a>
             <a href="#">Team</a>
-            <a href="#">Privacy Policy</a>
+            <Link to="/privacy-policy">Privacy Policy</Link>
             <a href="#">Terms of Use</a>
             <a href="#">Contact</a>
           </div>

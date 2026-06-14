@@ -26,9 +26,9 @@ function FinalCTA({ onOpenPanel }) {
             <button className="bgrd btn px-4 py-3 fs-6" onClick={() => onOpenPanel("signup")}>
               <i className="fa-solid fa-play me-2"></i>Start Coding Now
             </button>
-            <button className="boc btn px-4 py-3 fs-6">
+            <a href="#contact" className="boc btn px-4 py-3 fs-6">
               <i className="fa-regular fa-comment-dots me-2"></i>Contact Us
-            </button>
+            </a>
           </div>
         </div>
       </div>

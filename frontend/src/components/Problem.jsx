@@ -1,6 +1,6 @@
 function Problem() {
   return (
-    <section className="sp position-relative">
+    <section id="problem" className="sp position-relative">
       <div className="aur aur-b" style={{ top: "50%", right: "-200px", transform: "translateY(-50%)" }}></div>
       <div className="container position-relative" style={{ zIndex: 1 }}>
         <div className="text-center mb-5 rv">
