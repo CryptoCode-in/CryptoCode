@@ -6,11 +6,10 @@ import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
 import Languages from "../components/Languages";
 import Security from "../components/Security";
-import Pricing from "../components/Pricing";
 import Testimonials from "../components/Testimonials";
 import FAQ from "../components/FAQ";
+import Team from "../components/Team";
 import Contact from "../components/Contact";
-import FinalCTA from "../components/FinalCTA";
 import Footer from "../components/Footer";
 import LoginModal from "../components/LoginModal";
 
@@ -55,11 +54,10 @@ function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
       <HowItWorks />
       <Languages />
       <Security />
-      <Pricing onOpenPanel={openPanel} />
       <Testimonials />
       <FAQ />
+      <Team />
       <Contact />
-      <FinalCTA onOpenPanel={openPanel} />
       <Footer />
       <LoginModal
         isOpen={authModalOpen !== null}

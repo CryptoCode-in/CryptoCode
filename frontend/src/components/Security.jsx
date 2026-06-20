@@ -28,10 +28,9 @@ function Security() {
               >
                 <i className="fa-solid fa-box fa-lg" style={{ color: "#34d399" }}></i>
               </div>
-              <h3 className="fw-semibold fs-5 mb-2">Sandboxed Code Execution</h3>
+              <h3 className="fw-semibold fs-5 mb-2">Protected Code Execution</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                All code runs in isolated containers. No student code can access the server filesystem or network,
-                ensuring full system security.
+                Programs run in a controlled environment to prevent unauthorized system access.
               </p>
             </div>
           </div>
@@ -50,12 +49,11 @@ function Security() {
                   marginBottom: "18px",
                 }}
               >
-                <i className="fa-solid fa-lock fa-lg" style={{ color: "#60a5fa" }}></i>
+                <i className="fa-solid fa-database" style={{ color: "#60a5fa" }}></i>
               </div>
-              <h3 className="fw-semibold fs-5 mb-2">Encrypted Data Storage</h3>
+              <h3 className="fw-semibold fs-5 mb-2">Secure Data Storage</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                All student code, submissions and personal data are encrypted at rest and in transit using
-                industry-standard protocols.
+                Student records, code history, and submissions are securely stored and protected.
               </p>
             </div>
           </div>
@@ -78,8 +76,7 @@ function Security() {
               </div>
               <h3 className="fw-semibold fs-5 mb-2">Secure Authentication</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Multi-factor authentication with secure session management. Separate login flows for students and
-                teachers.
+                Protected login system with secure session management for students and teachers.
               </p>
             </div>
           </div>
@@ -98,12 +95,11 @@ function Security() {
                   marginBottom: "18px",
                 }}
               >
-                <i className="fa-solid fa-robot fa-lg" style={{ color: "#fbbf24" }}></i>
+                <i className="fa-solid fa-chart-line" style={{ color: "#fbbf24" }}></i>
               </div>
-              <h3 className="fw-semibold fs-5 mb-2">AI-Based Monitoring</h3>
+              <h3 className="fw-semibold fs-5 mb-2">Activity Monitoring</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                AI monitors code quality, detects anomalies and flags suspicious patterns or potential cheating attempts
-                automatically.
+                Coding activity and submissions are monitored to maintain accountability and transparency.
               </p>
             </div>
           </div>
@@ -124,10 +120,9 @@ function Security() {
               >
                 <i className="fa-solid fa-shield-halved fa-lg" style={{ color: "#f87171" }}></i>
               </div>
-              <h3 className="fw-semibold fs-5 mb-2">Plagiarism Detection</h3>
+              <h3 className="fw-semibold fs-5 mb-2">Session Protection</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Automated similarity analysis across all submissions. Teachers receive detailed reports showing flagged
-                code pairs.
+                Active sessions are protected against unauthorized access and misuse.
               </p>
             </div>
           </div>
@@ -150,8 +145,7 @@ function Security() {
               </div>
               <h3 className="fw-semibold fs-5 mb-2">Role-Based Access Control</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Students, teachers and admins each have distinct permissions. No role can access data outside their
-                authorized scope.
+                Separate permissions ensure users only access features and data relevant to their role.
               </p>
             </div>
           </div>

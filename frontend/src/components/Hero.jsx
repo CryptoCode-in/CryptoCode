@@ -14,7 +14,7 @@ function Hero({ onOpenPanel }) {
           <div className="text-center">
             <div className="afu" style={{ animationDelay: ".05s" }}>
               <span className="hbadge">
-                <span className="bdot"></span>Secure Code Execution • Smart Evaluation • Progress Tracking
+                <span className="bdot"></span> Code  •  Evaluate  •  Track  •  Improve
               </span>
             </div>
             <h1 className="afu" style={{ animationDelay: ".12s", marginTop: "20px" }}>
@@ -32,7 +32,7 @@ function Hero({ onOpenPanel }) {
                 animationDelay: ".2s",
               }}
             >
-              Practice coding, submit assignments and track progress through secure code execution, automated evaluation and teacher-friendly analytics.
+              Practice coding, submit assignments and track progress through secure code execution and teacher-friendly analytics.
             </p>
             <div
               className="d-flex align-items-center justify-content-center gap-3 flex-wrap afu"

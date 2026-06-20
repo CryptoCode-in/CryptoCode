@@ -31,7 +31,6 @@ function Footer() {
             <a href="#features">Features</a>
             <a href="#languages">Languages</a>
             <a href="#security">Security</a>
-            <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
           </div>
           <div className="col-6 col-md-2 fcol">
@@ -44,10 +43,10 @@ function Footer() {
           </div>
           <div className="col-6 col-md-2 fcol">
             <h5>Project</h5>
-            <a href="#">About</a>
+            
             <a href="#">Team</a>
             <Link to="/privacy-policy">Privacy Policy</Link>
-            <a href="#">Terms of Use</a>
+            
             <a href="#">Contact</a>
           </div>
         </div>

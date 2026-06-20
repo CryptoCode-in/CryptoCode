@@ -48,7 +48,13 @@ function Contact() {
           <h2 className="stitle">
             Have Questions? <span className="gt">Let's Talk</span>
           </h2>
-          <p className="ssub mx-auto" style={{ maxWidth: "600px" }}>
+          <p className="ssub mx-auto text-center"
+                style={{
+                          maxWidth: "700px",
+                          textAlign: "center",
+                          marginLeft: "auto",
+                          marginRight: "auto"
+                        }}>
             We would love to hear your feedback, questions, suggestions and partnership inquiries.
           </p>
         </motion.div>
@@ -93,7 +99,7 @@ function Contact() {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        placeholder="John Doe"
+                        placeholder="Your Name"
                         className="contact-input"
                         required
                       />
@@ -110,7 +116,7 @@ function Contact() {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        placeholder="john@example.com"
+                        placeholder="user@example.com"
                         className="contact-input"
                         required
                       />
@@ -176,7 +182,7 @@ function Contact() {
               <div className="info-content text-start">
                 <h4>Email Support</h4>
                 <p className="mb-2">For general support and updates regarding accounts.</p>
-                <a href="mailto:support@cryptocode.in">support@cryptocode.in</a>
+                <a href="mailto:cryptocode.official@gmail.com">cryptocode.official@gmail.com</a>
               </div>
             </div>
 
@@ -188,21 +194,24 @@ function Contact() {
               <div className="info-content text-start">
                 <h4>Technical Help</h4>
                 <p className="mb-2">Facing platform errors or code evaluation issues?</p>
-                <a href="mailto:help@cryptocode.in">help@cryptocode.in</a>
+                <a href="mailto:help.cryptocode@gmail.com">help.cryptocode@gmail.com</a>
               </div>
             </div>
 
-            {/* Card 3: Community */}
+            {/* Card 3: LinkedIn */}
             <div className="info-card">
               <div className="info-icon">
-                <i className="fa-brands fa-discord"></i>
+                <i className="fa-brands fa-linkedin"></i>
               </div>
               <div className="info-content text-start">
-                <h4>Community</h4>
-                <p className="mb-2">Join our student developer community on Discord.</p>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  Join Community <i className="fa-solid fa-arrow-up-right-from-square fa-xs ms-1"></i>
-                </a>
+                <h4>LinkedIn</h4>
+                <p className="mb-2">Join our LinkedIn official Profile.</p>
+                <a
+  href="#"
+  onClick={() => window.open("https://www.linkedin.com/company/cryptocode-in/", "_blank")}
+>
+  Join LinkedIn
+</a>
               </div>
             </div>
           </motion.div>

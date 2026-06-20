@@ -13,9 +13,11 @@ function Languages() {
           </p>
         </div>
         <div className="row g-3 justify-content-center rv">
-          <div className="col-6 col-md-4">
+          <div className="col-6 col-md-6 col-lg-3">
             <div className="lang-card">
-              <div className="lang-icon">C</div>
+              <div className="lang-icon" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "48px", marginBottom: "12px", background: "none", WebkitTextFillColor: "initial", WebkitBackgroundClip: "initial" }}>
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" alt="C Logo" style={{ width: "42px", height: "42px" }} />
+              </div>
               <div className="fw-semibold mb-1">C Language</div>
               <div style={{ fontSize: ".78rem", color: "var(--tx3)", marginBottom: "8px" }}>
                 Systems programming & fundamentals
@@ -25,9 +27,11 @@ function Languages() {
               </span>
             </div>
           </div>
-          <div className="col-6 col-md-4">
+          <div className="col-6 col-md-6 col-lg-3">
             <div className="lang-card">
-              <div className="lang-icon">C++</div>
+              <div className="lang-icon" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "48px", marginBottom: "12px", background: "none", WebkitTextFillColor: "initial", WebkitBackgroundClip: "initial" }}>
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" alt="C++ Logo" style={{ width: "42px", height: "42px" }} />
+              </div>
               <div className="fw-semibold mb-1">C++</div>
               <div style={{ fontSize: ".78rem", color: "var(--tx3)", marginBottom: "8px" }}>
                 OOP & competitive programming
@@ -37,9 +41,11 @@ function Languages() {
               </span>
             </div>
           </div>
-          <div className="col-6 col-md-4">
+          <div className="col-6 col-md-6 col-lg-3">
             <div className="lang-card">
-              <div className="lang-icon">☕</div>
+              <div className="lang-icon" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "48px", marginBottom: "12px", background: "none", WebkitTextFillColor: "initial", WebkitBackgroundClip: "initial" }}>
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java Logo" style={{ width: "42px", height: "42px" }} />
+              </div>
               <div className="fw-semibold mb-1">Java</div>
               <div style={{ fontSize: ".78rem", color: "var(--tx3)", marginBottom: "8px" }}>
                 Enterprise & academic standard
@@ -49,36 +55,14 @@ function Languages() {
               </span>
             </div>
           </div>
-          <div className="col-6 col-md-4">
+          <div className="col-6 col-md-6 col-lg-3">
             <div className="lang-card">
-              <div className="lang-icon">Py</div>
+              <div className="lang-icon" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "48px", marginBottom: "12px", background: "none", WebkitTextFillColor: "initial", WebkitBackgroundClip: "initial" }}>
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python Logo" style={{ width: "42px", height: "42px" }} />
+              </div>
               <div className="fw-semibold mb-1">Python</div>
               <div style={{ fontSize: ".78rem", color: "var(--tx3)", marginBottom: "8px" }}>
                 Data science & scripting
-              </div>
-              <span className="ftag">
-                <i className="fa-solid fa-check me-1"></i>Supported
-              </span>
-            </div>
-          </div>
-          <div className="col-6 col-md-4">
-            <div className="lang-card">
-              <div className="lang-icon">JS</div>
-              <div className="fw-semibold mb-1">JavaScript</div>
-              <div style={{ fontSize: ".78rem", color: "var(--tx3)", marginBottom: "8px" }}>
-                Web development & scripting
-              </div>
-              <span className="ftag">
-                <i className="fa-solid fa-check me-1"></i>Supported
-              </span>
-            </div>
-          </div>
-          <div className="col-6 col-md-4">
-            <div className="lang-card">
-              <div className="lang-icon">PHP</div>
-              <div className="fw-semibold mb-1">PHP</div>
-              <div style={{ fontSize: ".78rem", color: "var(--tx3)", marginBottom: "8px" }}>
-                Server-side & web backend
               </div>
               <span className="ftag">
                 <i className="fa-solid fa-check me-1"></i>Supported

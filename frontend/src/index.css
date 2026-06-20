@@ -17,15 +17,19 @@
   --grad2: linear-gradient(135deg, #6d28d9, #1d4ed8);
 }
 html.light {
-  --bg: #f4f2ff;
-  --bg2: #ede9fe;
-  --bg3: #e8e3fc;
-  --sf: #ffffff;
-  --bd: rgba(139,92,246,.18);
-  --bd2: rgba(139,92,246,.3);
-  --tx: #1a1533;
-  --tx2: #4b4470;
-  --tx3: #8b82aa;
+  --bg: #F8FAFC;
+  --bg2: #F1F5F9;
+  --bg3: #E2E8F0;
+  --sf: #FFFFFF;
+  --tx: #0F172A;
+  --tx2: #475569;
+  --tx3: #64748B;
+  --pur: #7C3AED;
+  --pur2: #6D28D9;
+  --bd: rgba(124, 58, 237, 0.12);
+  --bd2: rgba(124, 58, 237, 0.20);
+  --grad: linear-gradient(135deg, #7C3AED, #2563EB);
+  --grad2: linear-gradient(135deg, #6D28D9, #1d4ed8);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -818,4 +822,447 @@ h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 700; letter-spacing: -.
   border-color: rgba(139, 92, 246, 0.35);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
+}
+
+/* ======= CLEAN SAAS DASHBOARD STYLES ======= */
+
+/* Minimal, professional glassmorphism panel (used on Welcome Card) */
+.cyber-glass-panel {
+  background: var(--sf) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid var(--bd) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.25s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+.cyber-glass-panel:hover {
+  border-color: var(--bd2) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Minimal, premium card style */
+.cyber-card {
+  background: var(--sf) !important;
+  border: 1px solid var(--bd) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.25s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+.cyber-card:hover {
+  border-color: var(--bd2) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Removed heavy text/border glows - replaced with clean subtle highlights */
+.glow-text-purple {
+  color: var(--pur);
+}
+.glow-text-blue {
+  color: #3b82f6;
+}
+.glow-text-white {
+  color: var(--tx);
+}
+
+.glow-border-purple {
+  border-color: var(--pur) !important;
+}
+.glow-border-blue {
+  border-color: #3b82f6 !important;
+}
+
+/* GitHub style contribution heatmap */
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  display: flex;
+  justify-content: center;
+}
+.heatmap-cell {
+  width: 16px;
+  height: 16px;
+  border-radius: 3.5px;
+  background: var(--bg3);
+  transition: background 0.2s ease;
+}
+.heatmap-cell.level-0 { background: var(--bg3); }
+.heatmap-cell.level-4 { background: var(--pur); }
+
+.heatmap-grid-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px 0;
+}
+.activity-columns-wrapper {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+.activity-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Activity Timeline */
+.timeline-container {
+  position: relative;
+  padding-left: 16px;
+}
+.timeline-line {
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--bd);
+}
+.timeline-item {
+  position: relative;
+  padding: 14px 8px 14px 12px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.06);
+  transition: background 0.15s ease;
+  border-radius: 8px;
+  margin-bottom: 0;
+}
+.timeline-item:last-child {
+  border-bottom: none;
+}
+.timeline-item:hover {
+  background: rgba(139, 92, 246, 0.04);
+}
+.timeline-node {
+  position: absolute;
+  left: -15px;
+  top: 20px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tx3);
+  border: 1.5px solid var(--sf);
+  z-index: 2;
+}
+.timeline-node.blue { background: #3b82f6; }
+.timeline-node.emerald { background: #10b981; }
+.timeline-node.amber { background: #f59e0b; }
+
+/* Background particle canvas overlay styling - hidden/disabled */
+.particle-canvas {
+  display: none;
+}
+
+/* Layout Alignment & CSS Grid */
+.dashboard-main-canvas {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.dashboard-inner-container {
+  max-width: 1400px;
+  width: 100%;
+  padding: 32px 24px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (max-width: 768px) {
+  .dashboard-inner-container {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+}
+
+/* Grid Layouts */
+.dashboard-row-1 {
+  display: grid;
+  grid-template-columns: 75fr 25fr;
+  gap: 24px;
+  align-items: stretch;
+}
+.dashboard-row-3-refined {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+@media (max-width: 991px) {
+  .dashboard-row-1,
+  .dashboard-row-3-refined {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.dashboard-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.dashboard-card-wrapper > .cyber-card,
+.dashboard-card-wrapper > .cyber-glass-panel {
+  height: 100%;
+  margin: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Height and Spacing Refinements */
+.welcome-bar-height {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.today-practical-height {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.heatmap-card-layout {
+  height: 330px;
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.activity-card-layout {
+  height: 330px;
+  min-height: 330px;
+}
+
+.achievements-card-layout {
+  min-height: auto;
+  height: auto;
+}
+
+.recent-activity-scroll {
+  flex: 1;
+  max-height: 250px;
+  overflow-y: auto;
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+}
+.recent-activity-scroll::-webkit-scrollbar {
+  display: none; /* Hide scrollbar in Chrome/Safari/Edge */
+}
+
+/* Clean Achievements Grid UI */
+.achievements-grid-refined {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (max-width: 991px) {
+  .achievements-grid-refined {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 576px) {
+  .achievements-grid-refined {
+    grid-template-columns: 1fr;
+  }
+}
+.achievement-badge {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.achievement-badge.locked {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+.achievement-badge.unlocked {
+  border-color: var(--pur) !important;
+  background: rgba(139, 92, 246, 0.05);
+  opacity: 1;
+  filter: none;
+}
+.achievement-badge:hover {
+  transform: translateY(-2px);
+  border-color: var(--bd2) !important;
+}
+.achievement-emoji {
+  font-size: 1.8rem;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.achievement-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--tx);
+  margin-bottom: 4px;
+}
+.achievement-desc {
+  font-size: 0.72rem;
+  color: var(--tx3);
+  line-height: 1.3;
+}
+
+/* Clean typography overrides */
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--tx);
+  margin-bottom: 12px;
+}
+.timeline-content {
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.activity-type {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--tx);
+  line-height: 1.3;
+}
+.activity-desc {
+  font-size: 0.76rem;
+  color: var(--tx2);
+  margin-top: 0;
+}
+.activity-time {
+  font-size: 0.72rem;
+  color: var(--tx3);
+  text-align: right;
+  margin-left: auto;
+  padding-left: 12px;
+  white-space: nowrap;
+}
+
+/* Uniform Margin and Padding Enforcement */
+.cyber-card, .cyber-glass-panel {
+  padding: 24px !important;
+  border-radius: 20px !important;
+  margin-bottom: 0px !important;
+}
+@media (max-width: 768px) {
+  .cyber-card, .cyber-glass-panel {
+    padding: 20px !important;
+    border-radius: 20px !important;
+  }
+}
+
+/* ======= LIGHT MODE PREMIUM SAAS OVERRIDES ======= */
+
+/* Navbar Overrides in Light Mode */
+html.light #nbar {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid var(--bd) !important;
+}
+
+/* Card Elevations in Light Mode */
+html.light .cyber-card,
+html.light .cyber-glass-panel,
+html.light .lang-card,
+html.light .gc {
+  background: var(--sf) !important;
+  border: 1px solid var(--bd) !important;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+html.light .cyber-card:hover,
+html.light .cyber-glass-panel:hover,
+html.light .lang-card:hover,
+html.light .gc:hover {
+  border-color: var(--bd2) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.10) !important;
+}
+
+/* Accordion Arrow Contrast in Light Mode */
+html.light .acco .accordion-button::after {
+  filter: none !important;
+}
+html.light .acco .accordion-button:not(.collapsed) {
+  background: rgba(124, 58, 237, 0.06) !important;
+}
+
+/* Contact form overrides for high-contrast professional inputs */
+html.light .contact-form-card {
+  background: var(--sf) !important;
+  border: 1px solid var(--bd) !important;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06) !important;
+}
+
+html.light .contact-input {
+  background: var(--bg) !important;
+  border: 1px solid var(--bd) !important;
+  color: var(--tx) !important;
+}
+
+html.light .contact-input::placeholder {
+  color: var(--tx3) !important;
+  opacity: 0.65;
+}
+
+html.light .contact-input:focus {
+  background: var(--sf) !important;
+  border-color: var(--pur) !important;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* Buttons lift and soft shadow in Light Mode */
+html.light .bgrd:hover {
+  opacity: 0.95 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.30) !important;
+}
+
+html.light .boc {
+  border: 1px solid var(--bd2) !important;
+  background: var(--sf) !important;
+  color: var(--tx2) !important;
+}
+
+html.light .boc:hover {
+  border-color: var(--pur) !important;
+  background: rgba(124, 58, 237, 0.05) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08) !important;
+}
+
+/* Common form elements in light mode (e.g. login inputs, search bars, selects) */
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: var(--pur) !important;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* Code History Page Card Styling */
+html.light #code-history-section .p-3,
+html.light #code-history-section .p-5 {
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Dashboard Header & Sidebar Border adjustments */
+html.light nav#nbar {
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02) !important;
+}
+html.light .db-sidebar {
+  box-shadow: 2px 0 10px rgba(15, 23, 42, 0.02) !important;
+}
+
+

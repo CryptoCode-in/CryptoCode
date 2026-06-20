@@ -6,11 +6,9 @@ function Problem() {
         <div className="text-center mb-5 rv">
           <span className="slbl">The Problem</span>
           <h2 className="stitle">
-            Traditional coding labs are <span className="gt">broken</span>
+            Challenges in Modern <span className="gt">Coding Education</span>
           </h2>
-          <p className="ssub mx-auto">
-            Students and teachers waste time on manual setup, evaluation and plagiarism checking.
-          </p>
+          
         </div>
         <div className="row g-4">
           <div className="col-md-4 rv">
@@ -30,10 +28,9 @@ function Problem() {
               >
                 <i className="fa-solid fa-desktop fa-lg" style={{ color: "#f87171" }}></i>
               </div>
-              <h3 className="fw-semibold fs-5 mb-2">No Secure Environment</h3>
+              <h3 className="fw-semibold fs-5 mb-2">Complex Setup & Execution</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Students need to install complex compilers and IDEs locally. Code runs unsandboxed, causing security
-                risks and setup failures.
+                Students spend valuable time configuring compilers and environments instead of focusing on learning and coding.
               </p>
             </div>
           </div>
@@ -54,10 +51,9 @@ function Problem() {
               >
                 <i className="fa-solid fa-copy fa-lg" style={{ color: "#fbbf24" }}></i>
               </div>
-              <h3 className="fw-semibold fs-5 mb-2">Rampant Plagiarism</h3>
+              <h3 className="fw-semibold fs-5 mb-2">Manual Evaluation</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Manual checking of code submissions is time-consuming and unreliable. Copied code often goes undetected,
-                undermining academic integrity.
+                Reviewing and grading coding assignments manually is time-consuming and difficult to scale for educators.
               </p>
             </div>
           </div>
@@ -78,10 +74,9 @@ function Problem() {
               >
                 <i className="fa-solid fa-chart-bar fa-lg" style={{ color: "#a78bfa" }}></i>
               </div>
-              <h3 className="fw-semibold fs-5 mb-2">No Progress Visibility</h3>
+              <h3 className="fw-semibold fs-5 mb-2">Limited Progress Tracking</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Teachers have no centralized view of student performance. Tracking assignment completion and coding skill
-                growth is nearly impossible.
+                Without centralized insights, monitoring student performance and coding growth becomes challenging.
               </p>
             </div>
           </div>

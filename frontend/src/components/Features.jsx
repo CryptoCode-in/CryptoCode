@@ -41,27 +41,25 @@ function Features() {
           <div className="col-md-4 rv" style={{ transitionDelay: ".1s" }}>
             <div className="gc p-4 h-100">
               <div className="ftico">
-                <i className="fa-solid fa-robot"></i>
-              </div>
-              <h3 className="fs-5 fw-semibold mb-2">AI Code Analysis</h3>
+  <i className="fa-solid fa-folder-open"></i>
+</div>
+              <h3 className="fs-5 fw-semibold mb-2">Code History & Storage</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Receive AI-powered coding suggestions, bug detection and improvement hints. Learn best practices as you
-                code in real time.
+                Students can save programs and access them later through organized language-wise code history folders.
               </p>
-              <span className="ftag">Claude Powered</span>
+              <span className="ftag">Save & Reuse</span>
             </div>
           </div>
           <div className="col-md-4 rv" style={{ transitionDelay: ".15s" }}>
             <div className="gc p-4 h-100">
               <div className="ftico">
-                <i className="fa-solid fa-shield-halved"></i>
-              </div>
-              <h3 className="fs-5 fw-semibold mb-2">Plagiarism Detection</h3>
+  <i className="fa-solid fa-bolt"></i>
+</div>
+              <h3 className="fs-5 fw-semibold mb-2">Real-Time Code Execution</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Detect copied code submissions automatically using advanced similarity algorithms. Maintain academic
-                integrity with zero manual effort.
+                Compile and run programs instantly with immediate output and error feedback for faster learning and debugging.
               </p>
-              <span className="ftag">Auto-detect</span>
+              <span className="ftag">Instant Output</span>
             </div>
           </div>
           <div className="col-md-4 rv" style={{ transitionDelay: ".2s" }}>
@@ -82,10 +80,9 @@ function Features() {
               <div className="ftico">
                 <i className="fa-solid fa-chalkboard-user"></i>
               </div>
-              <h3 className="fs-5 fw-semibold mb-2">Teacher Dashboard</h3>
+              <h3 className="fs-5 fw-semibold mb-2">Teacher Monitoring Dashboard</h3>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)" }}>
-                Manage students, create and assign tasks, review code submissions, run plagiarism checks and view
-                performance analytics from one panel.
+                Teachers can monitor student coding activity, view submissions, track progress, and manage practical assignments from one dashboard.
               </p>
               <span className="ftag">Full control</span>
             </div>
