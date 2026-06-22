@@ -7,10 +7,7 @@ import CodeEditor from "../components/CodeEditor";
 import CodeHistory from "../components/CodeHistory";
 import ProgressCards from "../components/ProgressCards";
 import ProfileCard from "../components/ProfileCard";
-import { 
-  ArrowRight, Calendar, FileText, Terminal,
-  ShieldAlert, Play, Target
-} from "lucide-react";
+import { Terminal, ShieldAlert, Play, Target } from "lucide-react";
 
 function StudentDashboard({ currentUser, onLogout }) {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -25,24 +22,7 @@ function StudentDashboard({ currentUser, onLogout }) {
   const [autoSave, setAutoSave] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
 
-  // Future-ready student achievements (All locked by default)
-  const [achievements] = useState([
-    { id: 1, title: "First Program Executed", desc: "First compilation run", emoji: "🚀", unlocked: false },
-    { id: 2, title: "First Assignment Submitted", desc: "Submit first lab assignment", emoji: "📂", unlocked: false },
-    { id: 3, title: "10 Programs Completed", desc: "Successfully run 10 programs", emoji: "💻", unlocked: false },
-    { id: 4, title: "Perfect Practical Score", desc: "Get full marks on a practical", emoji: "💯", unlocked: false },
-    { id: 5, title: "C Programming Expert", desc: "Complete all C practicals", emoji: "⚡", unlocked: false },
-    { id: 6, title: "Python Explorer", desc: "Complete all Python practicals", emoji: "🐍", unlocked: false },
-  ]);
 
-  // Recent Activity timeline details
-  const [recentActivities] = useState([
-    { type: "Program Executed", desc: "Compiled file_io.c successfully in sandbox", time: "10 mins ago", color: "blue" },
-    { type: "Practical Submitted", desc: "Submitted C programming practical task 5", time: "2 hours ago", color: "emerald" },
-    { type: "Assignment Submitted", desc: "Uploaded Java OOP inheritance lab assignment", time: "Yesterday", color: "amber" },
-    { type: "Practical Completed", desc: "Prof. Patil approved Python dict practical 3", time: "2 days ago", color: "blue" },
-    { type: "Program Executed", desc: "Ran code compiles for Python basic test", time: "3 days ago", color: "blue" },
-  ]);
 
   // Today's Practical state (Attempts to fetch, falls back to clean placeholder state if no backend table/data)
   const [todayPractical, setTodayPractical] = useState(null);
@@ -224,123 +204,6 @@ function StudentDashboard({ currentUser, onLogout }) {
                   </div>
                 )}
 
-                {/* Row 3 — Recent Activity (50%) & Coding Activity Heatmap (50%) */}
-                <div className="dashboard-row-3-refined">
-                  {/* Left Column (50%) - Recent Activity */}
-                  <div className="dashboard-card-wrapper">
-                    <div className="cyber-card activity-card-layout">
-                      <h4 className="section-title">
-                        Recent Activity
-                      </h4>
-                      <div className="timeline-container recent-activity-scroll">
-                        <div className="timeline-line"></div>
-                        {recentActivities.map((act, idx) => (
-                          <div key={idx} className="timeline-item d-flex justify-content-between align-items-start">
-                            <div className={`timeline-node ${act.color}`}></div>
-                            <div className="timeline-content">
-                              <div className="activity-type">
-                                {act.type}
-                              </div>
-                              <div className="activity-desc">
-                                {act.desc}
-                              </div>
-                            </div>
-                            <div className="activity-time">
-                              {act.time}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column (50%) - Coding Activity Heatmap */}
-                  <div className="dashboard-card-wrapper">
-                    <div className="cyber-card heatmap-card-layout">
-                      {/* Header Layout */}
-                      <div className="d-flex align-items-center justify-content-between mb-2">
-                        <h4 style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--tx)", margin: 0 }}>
-                          Coding Activity
-                        </h4>
-                        <div className="d-flex align-items-center gap-2.5">
-                          <span style={{ fontSize: "0.75rem", color: "var(--tx3)" }}>Activity Map</span>
-                          <span 
-                            style={{ 
-                              fontSize: "0.7rem", 
-                              fontWeight: 700, 
-                              padding: "3px 8px", 
-                              borderRadius: "6px", 
-                              background: "rgba(139,92,246,0.08)", 
-                              color: "var(--pur)", 
-                              border: "1px solid rgba(139,92,246,0.2)" 
-                            }}
-                          >
-                            29% Active
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* Center Heatmap Grid */}
-                      <div className="heatmap-grid-container">
-                        <div className="activity-columns-wrapper">
-                          {Array.from({ length: 14 }).map((_, colIdx) => (
-                            <div key={colIdx} className="activity-column">
-                              {Array.from({ length: 5 }).map((_, cellIdx) => {
-                                // ~29% active cells (20 active cells out of 70 total cells)
-                                const seed = (colIdx * 3 + cellIdx * 7) % 11;
-                                let level = 0;
-                                if (seed === 2 || seed === 5 || seed === 9) level = 4;
-                                return (
-                                  <div
-                                    key={cellIdx}
-                                    className={`heatmap-cell level-${level}`}
-                                    title={level > 0 ? "Active session logs" : "No activity"}
-                                  ></div>
-                                );
-                              })}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Legend Bottom Right */}
-                      <div className="d-flex align-items-center justify-content-end gap-3 mt-2" style={{ fontSize: "0.72rem", color: "var(--tx3)" }}>
-                        <div className="d-flex align-items-center gap-1.5">
-                          <div className="heatmap-cell level-0" style={{ width: 10, height: 10, cursor: "default" }}></div>
-                          <span>Inactive</span>
-                        </div>
-                        <div className="d-flex align-items-center gap-1.5">
-                          <div className="heatmap-cell level-4" style={{ width: 10, height: 10, cursor: "default" }}></div>
-                          <span>Active</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row 4 — Achievements (Full Width) */}
-                {achievements.length > 0 && (
-                  <div className="cyber-card achievements-card-layout">
-                    <h4 className="section-title" style={{ marginBottom: "8px" }}>
-                      Achievements
-                    </h4>
-                    <div className="achievements-grid-refined">
-                      {achievements.map((item) => (
-                        <div 
-                          key={item.id} 
-                          className={`achievement-badge ${item.unlocked ? "unlocked" : "locked"} d-flex align-items-center gap-3`}
-                          title={item.desc}
-                        >
-                          <div className="achievement-emoji">{item.emoji}</div>
-                          <div>
-                            <div className="achievement-title">{item.title}</div>
-                            <div className="achievement-desc">{item.desc}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </motion.div>
             )}
 
