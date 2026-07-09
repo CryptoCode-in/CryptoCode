@@ -22,18 +22,11 @@ function Footer() {
             <div className="d-flex gap-2 mt-3">
               <input className="nli" type="email" placeholder="your@email.com" style={{ maxWidth: "200px" }} />
               <button className="bgrd btn px-3 py-2" style={{ fontSize: ".85rem", whiteSpace: "nowrap" }}>
-                Subscribe
+                Contact Us
               </button>
             </div>
           </div>
-          <div className="col-6 col-md-2 fcol">
-            <h5>Platform</h5>
-            <a href="#features">Features</a>
-            <a href="#languages">Languages</a>
-            <a href="#security">Security</a>
-            <a href="#faq">FAQ</a>
-          </div>
-          <div className="col-6 col-md-2 fcol">
+          <div className="col-8 col-md-2 fcol">
             <h5>Developed By 🧑‍💻</h5>
             <a href="https://www.linkedin.com/in/devesh-sonawane-4b7965366/">Devesh Sonawane</a>
             <a href="https://www.linkedin.com/in/ninad-bhad-b8118b327/">Ninad Bhad</a>
@@ -41,14 +34,7 @@ function Footer() {
             <a href="https://www.linkedin.com/in/sai-navarkar-0a7991336/">Sai Navarkar</a>
             <a href="https://www.linkedin.com/in/ritesh-borse-20b513371/">Ritesh Borse</a>
           </div>
-          <div className="col-6 col-md-2 fcol">
-            <h5>Project</h5>
-            
-            <a href="#">Team</a>
-            <Link to="/privacy-policy">Privacy Policy</Link>
-            
-            <a href="#">Contact</a>
-          </div>
+          
         </div>
         <div
           className="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-4"

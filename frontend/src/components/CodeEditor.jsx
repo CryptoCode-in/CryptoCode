@@ -27,6 +27,21 @@ const langNameMap = {
 };
 
 function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
+  const getEditorPrefs = () => {
+    try {
+      const saved = localStorage.getItem("cryptocode_editor_settings");
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {}
+    return {
+      fontSize: "14px",
+      showLineNumbers: true,
+      wordWrap: true
+    };
+  };
+
+  const prefs = getEditorPrefs();
   const [isRunning, setIsRunning] = useState(false);
   const [consoleLogs, setConsoleLogs] = useState([
     { text: "System ready. Press 'Run Code' to execute compile sandbox.", type: "default" },
@@ -69,10 +84,20 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
 
   const handleRun = () => {
     setIsRunning(true);
-    setConsoleLogs([
+
+    const autoClear = true;
+    const saveHistory = true;
+
+    const runStartLogs = [
       { text: "⚡ Compilation started...", type: "running" },
       { text: "⚡ Initializing secure compilation sandbox...", type: "running" }
-    ]);
+    ];
+
+    if (autoClear) {
+      setConsoleLogs(runStartLogs);
+    } else {
+      setConsoleLogs(prev => [...prev, ...runStartLogs]);
+    }
 
     setTimeout(() => {
       const codeLower = code.toLowerCase();
@@ -90,16 +115,43 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
         errorMsg = "✗ Compilation Error\n\nLine 1: Missing class definition";
       }
 
+      let runResultLogs = [];
       if (hasError) {
-        setConsoleLogs([
+        runResultLogs = [
           { text: errorMsg, type: "error" }
-        ]);
+        ];
       } else {
-        setConsoleLogs([
+        runResultLogs = [
           { text: "✓ Program executed successfully\n", type: "success_status" },
           { text: "Welcome to CryptoCode", type: "success" }
-        ]);
+        ];
       }
+
+      if (autoClear) {
+        setConsoleLogs(runResultLogs);
+      } else {
+        setConsoleLogs(prev => [...prev, ...runResultLogs]);
+      }
+
+      if (saveHistory) {
+        try {
+          const runHistoryKey = "cryptocode_run_history";
+          let history = [];
+          const existing = localStorage.getItem(runHistoryKey);
+          if (existing) {
+            history = JSON.parse(existing);
+          }
+          const newRun = {
+            lang: lang,
+            fileName: fileName || `program.${extMap[lang]}`,
+            timestamp: new Date().toISOString(),
+            success: !hasError,
+            logs: runResultLogs.map(l => l.text).join("\n")
+          };
+          localStorage.setItem(runHistoryKey, JSON.stringify([newRun, ...history]));
+        } catch (e) {}
+      }
+
       setIsRunning(false);
     }, 1200);
   };
@@ -342,13 +394,14 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
               onChange={(val) => setCode(val || "")}
               theme="vs-dark"
               options={{
-                fontSize: 13,
+                fontSize: parseInt(prefs.fontSize) || 14,
                 fontFamily: "'JetBrains Mono', Consolas, monospace",
                 minimap: { enabled: false },
                 scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
                 automaticLayout: true,
                 tabSize: 4,
-                lineNumbers: "on",
+                lineNumbers: prefs.showLineNumbers ? "on" : "off",
+                wordWrap: prefs.wordWrap ? "on" : "off",
                 cursorBlinking: "smooth",
                 cursorSmoothCaretAnimation: "on"
               }}

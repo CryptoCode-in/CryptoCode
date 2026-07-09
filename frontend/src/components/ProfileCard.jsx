@@ -19,8 +19,7 @@ function ProfileCard({ currentUser }) {
 
   const personalFields = [
     { id: "name", label: "Full Name", value: name, setter: setName, icon: User, type: "text" },
-    { id: "email", label: "College Email", value: email, setter: setEmail, icon: Mail, type: "email" },
-    { id: "mobileNo", label: "Mobile Number", value: mobileNo, setter: setMobileNo, icon: Phone, type: "tel" },
+    { id: "email", label: "Email", value: email, setter: setEmail, icon: Mail, type: "email" },
   ];
 
   const academicFields = [
@@ -131,10 +130,7 @@ function ProfileCard({ currentUser }) {
                 <span style={{ color: "var(--tx3)" }}>Student UID</span>
                 <span style={{ color: "var(--tx2)", fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>CC-TY-{rollNo}</span>
               </div>
-              <div className="d-flex justify-content-between mb-2" style={{ fontSize: "0.78rem" }}>
-                <span style={{ color: "var(--tx3)" }}>Current Level</span>
-                <span style={{ color: "var(--pur)", fontWeight: 700 }}>Level 4 (Elite)</span>
-              </div>
+              
               <div className="d-flex justify-content-between" style={{ fontSize: "0.78rem" }}>
                 <span style={{ color: "var(--tx3)" }}>Role Access</span>
                 <span style={{ color: "var(--tx2)", fontWeight: 600 }}>Student Workspace</span>
@@ -274,10 +270,7 @@ function ProfileCard({ currentUser }) {
                   <span>Modify Credentials</span>
                 </button>
               )}
-              <button className="boc btn px-4 py-2" style={{ fontSize: "0.85rem", gap: "6px", borderColor: "rgba(255,255,255,0.08)" }}>
-                <ShieldCheck size={14} />
-                <span>Security Settings</span>
-              </button>
+              
             </div>
           </div>
         </div>

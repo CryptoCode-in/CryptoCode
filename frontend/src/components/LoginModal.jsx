@@ -336,7 +336,7 @@ onClose();
               onChange={(e) => setSignupName(e.target.value)}
             />
             <label className="olbl">
-              <i className="fa-regular fa-envelope me-1"></i>College email
+              <i className="fa-regular fa-envelope me-1"></i>Email address
             </label>
             <input
               className="oinp"

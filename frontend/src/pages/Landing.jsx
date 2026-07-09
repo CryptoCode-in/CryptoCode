@@ -8,7 +8,6 @@ import Languages from "../components/Languages";
 import Security from "../components/Security";
 import Testimonials from "../components/Testimonials";
 import FAQ from "../components/FAQ";
-import Team from "../components/Team";
 import Contact from "../components/Contact";
 import Footer from "../components/Footer";
 import LoginModal from "../components/LoginModal";
@@ -56,7 +55,6 @@ function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
       <Security />
       <Testimonials />
       <FAQ />
-      <Team />
       <Contact />
       <Footer />
       <LoginModal
