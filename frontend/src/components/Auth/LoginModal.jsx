@@ -35,6 +35,29 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
     }
   }, [isOpen, initialTab]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyHeight = document.body.style.height;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalHtmlHeight = document.documentElement.style.height;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.height = "100%";
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.height = "100%";
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow || "auto";
+      document.body.style.height = originalBodyHeight || "";
+      document.documentElement.style.overflow = originalHtmlOverflow || "";
+      document.documentElement.style.height = originalHtmlHeight || "";
+    };
+  }, [isOpen]);
+
   const showLoginError = (message) => {
     setLoginError(message);
     window.setTimeout(() => setLoginError(""), 3200);
@@ -117,6 +140,33 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
       return;
     }
 
+    if (signupData.role === "student") {
+      const roll = signupData.roll?.trim();
+      const branch = signupData.branch?.trim();
+      const year = signupData.year?.trim();
+      const semester = signupData.semester?.trim();
+
+      if (!roll || !branch || !year || !semester) {
+        showSignupError("Roll number, branch, year, and semester are required for students.");
+        return;
+      }
+    }
+
+    if (signupData.role === "teacher") {
+      const department = signupData.department?.trim();
+      const subjects = signupData.subjects || [];
+
+      if (!department) {
+        showSignupError("Department is required for teachers.");
+        return;
+      }
+
+      if (subjects.length === 0) {
+        showSignupError("Select at least one subject handled by the teacher.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -172,6 +222,10 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
     []
   );
 
+  const setSignupRole = (role) => {
+    setSignupData((prev) => ({ ...prev, role }));
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -200,78 +254,94 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
             <LeftPanel />
           </div>
 
-          <div className="auth-panel-right">
+          <div className="auth-panel-right auth-right">
             <div className="auth-panel-shell">
-              <div className="auth-panel-heading">
-                <div>
-                  <p className="auth-panel-eyebrow">Welcome back</p>
-                  <h3>{activeTab === "login" ? "Access your workspace" : "Create a free account"}</h3>
+              <div className="auth-header">
+                <div className="auth-panel-heading">
+                  <div>
+                    <p className="auth-panel-eyebrow">Welcome back</p>
+                    <h3>{activeTab === "login" ? "Access your workspace" : "Create a free account"}</h3>
+                  </div>
+                  <div className="auth-tab-group" role="tablist" aria-label="Authentication tabs">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={`auth-tab ${activeTab === tab.id ? "active" : ""}`}
+                        onClick={() => setActiveTab(tab.id)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                    <motion.div
+                      className="auth-tab-indicator"
+                      layout
+                      animate={{ x: activeTab === "login" ? 0 : "100%" }}
+                      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                    />
+                  </div>
                 </div>
-                <div className="auth-tab-group" role="tablist" aria-label="Authentication tabs">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={`auth-tab ${activeTab === tab.id ? "active" : ""}`}
-                      onClick={() => setActiveTab(tab.id)}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                  <motion.div
-                    className="auth-tab-indicator"
-                    layout
-                    animate={{ x: activeTab === "login" ? 0 : "100%" }}
-                    transition={{ type: "spring", stiffness: 260, damping: 24 }}
-                  />
-                </div>
+
+                {activeTab === "signup" ? (
+                  <div className="signup-role-switch" role="tablist" aria-label="Choose account type">
+                    <motion.button type="button" className={`signup-role-pill ${signupData.role === "student" ? "active" : ""}`} onClick={() => setSignupRole("student")} whileTap={{ scale: 0.98 }}>
+                      <span>Student</span>
+                    </motion.button>
+                    <motion.button type="button" className={`signup-role-pill ${signupData.role === "teacher" ? "active" : ""}`} onClick={() => setSignupRole("teacher")} whileTap={{ scale: 0.98 }}>
+                      <span>Teacher</span>
+                    </motion.button>
+                    <motion.div className="signup-role-indicator" layout animate={{ x: signupData.role === "student" ? 0 : "100%" }} transition={{ type: "spring", stiffness: 260, damping: 24 }} />
+                  </div>
+                ) : null}
               </div>
 
-              <AnimatePresence mode="wait">
-                {activeTab === "login" ? (
-                  <motion.div
-                    key="login"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    {loginError ? <div className="auth-form-alert">{loginError}</div> : null}
-                    <LoginForm
-                      loginData={loginData}
-                      setLoginData={setLoginData}
-                      loading={loading}
-                      handleLogin={handleLogin}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="signup"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    {signupError ? <div className="auth-form-alert">{signupError}</div> : null}
-                    <SignupForm
-                      signupData={signupData}
-                      setSignupData={setSignupData}
-                      loading={loading}
-                      handleSignup={handleSignup}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="auth-body">
+                <AnimatePresence mode="wait">
+                  {activeTab === "login" ? (
+                    <motion.div
+                      key="login"
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -24 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      {loginError ? <div className="auth-form-alert">{loginError}</div> : null}
+                      <LoginForm
+                        loginData={loginData}
+                        setLoginData={setLoginData}
+                        loading={loading}
+                        handleLogin={handleLogin}
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="signup"
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -24 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      {signupError ? <div className="auth-form-alert">{signupError}</div> : null}
+                      <SignupForm
+                        signupData={signupData}
+                        setSignupData={setSignupData}
+                        loading={loading}
+                        handleSignup={handleSignup}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              <div className="auth-footer">
-                <button type="button" className="auth-ghost-btn">
-                  <FiChrome />
-                  Continue with Google
-                </button>
-                <button type="button" className="auth-text-btn" onClick={() => setActiveTab(activeTab === "login" ? "signup" : "login")}>
-                  {activeTab === "login" ? "Need an account?" : "Already have an account?"}
-                  <FiArrowRight />
-                </button>
+                <div className="auth-footer">
+                  <button type="button" className="auth-ghost-btn">
+                    <FiChrome />
+                    Continue with Google
+                  </button>
+                  <button type="button" className="auth-text-btn" onClick={() => setActiveTab(activeTab === "login" ? "signup" : "login")}>
+                    {activeTab === "login" ? "Need an account?" : "Already have an account?"}
+                    <FiArrowRight />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
