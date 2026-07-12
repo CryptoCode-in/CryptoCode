@@ -13,15 +13,23 @@ function App() {
     }
   });
   
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cryptocode_theme");
+      return saved !== "light";
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
     const root = document.getElementById("htmlRoot") || document.documentElement;
     root.classList.toggle("light", !isDark);
+    localStorage.setItem("cryptocode_theme", isDark ? "dark" : "light");
   }, [isDark]);
 
   const handleToggleTheme = () => {
-    setIsDark(!isDark);
+    setIsDark(prev => !prev);
   };
 
   const handleLoginSuccess = (user) => {
@@ -58,6 +66,8 @@ function App() {
               <StudentDashboard
                 currentUser={currentUser}
                 onLogout={handleLogout}
+                isDark={isDark}
+                onToggleTheme={handleToggleTheme}
               />
             ) : (
               <Navigate to="/" replace />

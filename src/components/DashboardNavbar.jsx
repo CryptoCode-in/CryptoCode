@@ -49,7 +49,7 @@ function DashboardNavbar({ currentUser, activeSection, setActiveSection, onLogou
                 border: activeSection === "submissions" ? "1px solid var(--bd)" : "1px solid transparent"
               }}
             >
-              My Submissions
+              Code History
             </button>
             <button
               onClick={() => setActiveSection("progress")}

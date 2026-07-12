@@ -4,7 +4,7 @@ function DashboardSidebar({ activeSection, setActiveSection }) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "editor", label: "Start Coding", icon: Code },
-    { id: "submissions", label: "My Submissions", icon: Clock },
+    { id: "submissions", label: "Code History", icon: Clock },
     { id: "progress", label: "Progress", icon: LineChart },
     { id: "profile", label: "Profile", icon: User },
     { id: "settings", label: "Settings", icon: Settings },
@@ -38,7 +38,7 @@ function DashboardSidebar({ activeSection, setActiveSection }) {
             <button
               key={item.id}
               onClick={() => setActiveSection(item.id)}
-              className="db-nl"
+              className={`db-nl ${isActive ? "active" : ""}`}
               style={{
                 display: "flex",
                 alignItems: "center",
