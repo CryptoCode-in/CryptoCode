@@ -38,7 +38,7 @@ function DashboardSidebar({ activeSection, setActiveSection }) {
             <button
               key={item.id}
               onClick={() => setActiveSection(item.id)}
-              className={`db-nl ${isActive ? "active" : ""}`}
+              className="db-nl"
               style={{
                 display: "flex",
                 alignItems: "center",

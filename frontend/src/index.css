@@ -32,14 +32,19 @@ html.light {
   --grad2: linear-gradient(135deg, #6D5DFC, #8B5CF6);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root {
+  height: 100%;
+  overflow-x: hidden;
+}
 html { scroll-behavior: smooth; }
 body {
+  min-height: 100%;
   background: var(--bg);
   color: var(--tx);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  overflow-x: hidden;
+  overflow-y: auto;
 }
 a { text-decoration: none; color: inherit; }
 button { border: none; background: none; cursor: pointer; font-family: inherit; color: inherit; }
@@ -757,8 +762,6 @@ h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 700; letter-spacing: -.
 .privacy-sidebar {
   position: sticky;
   top: 100px;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
   background: var(--sf);
   border: 1px solid var(--bd);
   border-radius: 16px;

@@ -50,7 +50,7 @@ function StatsCard({ programsExecuted = 142, problemsSolved = 35, assignmentsSub
             <motion.div
               whileHover={{ y: -4 }}
               transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className={`cyber-card stats-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}
+              className="cyber-card"
               style={{
                 padding: "24px",
                 display: "flex",
@@ -88,7 +88,7 @@ function StatsCard({ programsExecuted = 142, problemsSolved = 35, assignmentsSub
                   style={{
                     fontSize: "1.75rem",
                     fontWeight: 800,
-                    color: "var(--tx)",
+                    color: "#fff",
                     lineHeight: "1.2",
                     marginBottom: "4px",
                   }}
