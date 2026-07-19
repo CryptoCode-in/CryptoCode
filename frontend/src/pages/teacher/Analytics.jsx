@@ -52,20 +52,26 @@ function Analytics() {
               <span>Problems Solved Over Time</span>
             </h5>
             <div style={{ height: "240px", width: "100%" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={problemsSolvedOverTime}>
-                  <defs>
-                    <linearGradient id="anGradSolve" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--pur)" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="var(--pur)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
-                  <Area type="monotone" dataKey="solved" stroke="var(--pur)" strokeWidth={2} fillOpacity={1} fill="url(#anGradSolve)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {problemsSolvedOverTime && problemsSolvedOverTime.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={problemsSolvedOverTime}>
+                    <defs>
+                      <linearGradient id="anGradSolve" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--pur)" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="var(--pur)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
+                    <Area type="monotone" dataKey="solved" stroke="var(--pur)" strokeWidth={2} fillOpacity={1} fill="url(#anGradSolve)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                  No solving history data available
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -112,14 +118,20 @@ function Analytics() {
               <span>Score Trend (%)</span>
             </h5>
             <div style={{ height: "240px", width: "100%" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={scoreTrend}>
-                  <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
-                  <Line type="monotone" dataKey="score" stroke="var(--pur)" strokeWidth={2.5} activeDot={{ r: 6 }} dot={{ strokeWidth: 2, r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {scoreTrend && scoreTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={scoreTrend}>
+                    <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
+                    <Line type="monotone" dataKey="score" stroke="var(--pur)" strokeWidth={2.5} activeDot={{ r: 6 }} dot={{ strokeWidth: 2, r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                  No score trend data available
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -132,34 +144,42 @@ function Analytics() {
               <span>Submission Status Distribution</span>
             </h5>
             <div className="d-flex align-items-center justify-content-center flex-wrap gap-4" style={{ height: "240px" }}>
-              <div style={{ width: "160px", height: "160px" }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={submissionStatus}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={65}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {submissionStatus.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {submissionStatus.map((entry, idx) => (
-                  <div key={idx} className="d-flex align-items-center gap-2" style={{ fontSize: "0.8rem" }}>
-                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: entry.color }}></span>
-                    <span style={{ color: "var(--tx2)" }}>{entry.name}:</span>
-                    <strong style={{ color: "var(--tx)" }}>{entry.value}%</strong>
+              {submissionStatus && submissionStatus.length > 0 ? (
+                <>
+                  <div style={{ width: "160px", height: "160px" }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={submissionStatus}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={65}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {submissionStatus.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {submissionStatus.map((entry, idx) => (
+                      <div key={idx} className="d-flex align-items-center gap-2" style={{ fontSize: "0.8rem" }}>
+                        <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: entry.color }}></span>
+                        <span style={{ color: "var(--tx2)" }}>{entry.name}:</span>
+                        <strong style={{ color: "var(--tx)" }}>{entry.value}%</strong>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                  No distribution data available
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -172,18 +192,24 @@ function Analytics() {
               <span>Language Usage Breakup</span>
             </h5>
             <div style={{ height: "240px", width: "100%" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={languageUsage}>
-                  <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
-                  <Bar dataKey="value" fill="var(--pur)" radius={[6, 6, 0, 0]} maxBarSize={45}>
-                    {languageUsage.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {languageUsage && languageUsage.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={languageUsage}>
+                    <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
+                    <Bar dataKey="value" fill="var(--pur)" radius={[6, 6, 0, 0]} maxBarSize={45}>
+                      {languageUsage.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                  No language usage data available
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -196,20 +222,26 @@ function Analytics() {
               <span>Weekly Submission Trend</span>
             </h5>
             <div style={{ height: "240px", width: "100%" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={weeklyTrend}>
-                  <defs>
-                    <linearGradient id="anGradTrend" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                  <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
-                  <Area type="monotone" dataKey="submissions" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#anGradTrend)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {weeklyTrend && weeklyTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={weeklyTrend}>
+                    <defs>
+                      <linearGradient id="anGradTrend" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                    <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
+                    <Area type="monotone" dataKey="submissions" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#anGradTrend)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                  No trend data available
+                </div>
+              )}
             </div>
           </div>
         </div>

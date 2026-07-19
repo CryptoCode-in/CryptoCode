@@ -135,6 +135,16 @@ function StudentDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
   const [isLoadingPractical, setIsLoadingPractical] = useState(true);
 
   useEffect(() => {
+    const FALLBACK_PRACTICAL = {
+      id: "p1",
+      title: "Java Sorting Algorithms",
+      description: "Write programs to implement Bubble Sort, Selection Sort, and Insertion Sort. Analyze time complexity for different input sizes.",
+      language: "Java",
+      assigned_by: "Prof. Patil",
+      assigned_date: "15 Aug 2024",
+      due_date: "25 Jul 2026, 11:59 PM"
+    };
+
     // Attempt real database fetch
     fetch("http://localhost:5000/practicals")
       .then((res) => {
@@ -145,13 +155,13 @@ function StudentDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
         if (data && data.length > 0) {
           setTodayPractical(data[0]);
         } else {
-          setTodayPractical(null);
+          setTodayPractical(FALLBACK_PRACTICAL);
         }
         setIsLoadingPractical(false);
       })
       .catch((err) => {
-        console.warn("Could not load database practicals (backend API not configured). Using clean placeholder state.");
-        setTodayPractical(null);
+        console.warn("Could not load database practicals (backend API not configured). Using local mock data fallback.");
+        setTodayPractical(FALLBACK_PRACTICAL);
         setIsLoadingPractical(false);
       });
   }, []);

@@ -195,20 +195,26 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
                     Submission Trend (This Week)
                   </label>
                   <div style={{ width: "100%", height: "180px" }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={trendData}>
-                        <defs>
-                          <linearGradient id="gradTrend" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--pur)" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="var(--pur)" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                        <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                        <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
-                        <Area type="monotone" dataKey="submissions" stroke="var(--pur)" strokeWidth={2} fillOpacity={1} fill="url(#gradTrend)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    {trendData && trendData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={trendData}>
+                          <defs>
+                            <linearGradient id="gradTrend" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="var(--pur)" stopOpacity={0.4}/>
+                              <stop offset="95%" stopColor="var(--pur)" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                          <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                          <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
+                          <Area type="monotone" dataKey="submissions" stroke="var(--pur)" strokeWidth={2} fillOpacity={1} fill="url(#gradTrend)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                        No trend data available
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -219,23 +225,29 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
                   </label>
                   <div className="d-flex align-items-center gap-3">
                     <div style={{ width: "120px", height: "120px" }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={langData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={35}
-                            outerRadius={50}
-                            paddingAngle={3}
-                            dataKey="value"
-                          >
-                            {langData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
+                      {langData && langData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={langData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={35}
+                              outerRadius={50}
+                              paddingAngle={3}
+                              dataKey="value"
+                            >
+                              {langData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.8rem" }}>
+                          Empty
+                        </div>
+                      )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                       {langData.map((entry, idx) => (
@@ -255,23 +267,29 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
                   </label>
                   <div className="d-flex align-items-center gap-3">
                     <div style={{ width: "120px", height: "120px" }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={statusData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={35}
-                            outerRadius={50}
-                            paddingAngle={3}
-                            dataKey="value"
-                          >
-                            {statusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
+                      {statusData && statusData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={statusData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={35}
+                              outerRadius={50}
+                              paddingAngle={3}
+                              dataKey="value"
+                            >
+                              {statusData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.8rem" }}>
+                          Empty
+                        </div>
+                      )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                       {statusData.slice(0, 3).map((entry, idx) => (

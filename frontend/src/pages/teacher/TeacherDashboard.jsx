@@ -297,20 +297,26 @@ function TeacherDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
                   {/* Submission Trend */}
                   <ChartCard title="Submissions Overview" subtitle="Frequency of weekly code executions">
                     <div style={{ width: "100%", height: "220px" }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={weeklyTrend}>
-                          <defs>
-                            <linearGradient id="gradOverview" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="var(--pur)" stopOpacity={0.4}/>
-                              <stop offset="95%" stopColor="var(--pur)" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                          <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                          <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
-                          <Area type="monotone" dataKey="submissions" stroke="var(--pur)" strokeWidth={2.5} fillOpacity={1} fill="url(#gradOverview)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
+                      {weeklyTrend && weeklyTrend.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={weeklyTrend}>
+                            <defs>
+                              <linearGradient id="gradOverview" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--pur)" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="var(--pur)" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                            <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
+                            <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
+                            <Area type="monotone" dataKey="submissions" stroke="var(--pur)" strokeWidth={2.5} fillOpacity={1} fill="url(#gradOverview)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                          No trend data available
+                        </div>
+                      )}
                     </div>
                   </ChartCard>
                 </div>
