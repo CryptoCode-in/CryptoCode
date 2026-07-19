@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import StudentDashboard from "./pages/StudentDashboard";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 function App() {
@@ -33,7 +34,6 @@ function App() {
     setIsDark(prev => !prev);
   };
 
-  
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     localStorage.setItem("cryptocode_user", JSON.stringify(user));
@@ -51,7 +51,11 @@ function App() {
           path="/"
           element={
             currentUser ? (
-              <Navigate to="/dashboard" replace />
+              currentUser.role === "teacher" ? (
+                <Navigate to="/teacher/dashboard" replace />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
             ) : (
               <Landing
                 isDark={isDark}
@@ -65,12 +69,35 @@ function App() {
           path="/dashboard"
           element={
             currentUser ? (
-              <StudentDashboard
-                currentUser={currentUser}
-                onLogout={handleLogout}
-                isDark={isDark}
-                onToggleTheme={handleToggleTheme}
-              />
+              currentUser.role === "teacher" ? (
+                <Navigate to="/teacher/dashboard" replace />
+              ) : (
+                <StudentDashboard
+                  currentUser={currentUser}
+                  onLogout={handleLogout}
+                  isDark={isDark}
+                  onToggleTheme={handleToggleTheme}
+                />
+              )
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/teacher/dashboard"
+          element={
+            currentUser ? (
+              currentUser.role === "teacher" ? (
+                <TeacherDashboard
+                  currentUser={currentUser}
+                  onLogout={handleLogout}
+                  isDark={isDark}
+                  onToggleTheme={handleToggleTheme}
+                />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
             ) : (
               <Navigate to="/" replace />
             )
