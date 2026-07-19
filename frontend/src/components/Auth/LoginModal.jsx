@@ -116,14 +116,19 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
         role: loginData.role,
       });
     } catch (error) {
-      console.warn("Backend server connection failed. Authenticating locally with mock credentials.", error);
-      const mockUser = {
-        name: email.split("@")[0],
-        email: email,
-        role: loginData.role,
-      };
-      localStorage.setItem("cryptocode_user", JSON.stringify(mockUser));
-      onLoginSuccess(mockUser);
+      console.error(error);
+      if (import.meta.env.DEV) {
+        console.warn("Backend server connection failed during development. Authenticating locally with mock credentials.", error);
+        const mockUser = {
+          name: email.split("@")[0],
+          email: email,
+          role: loginData.role,
+        };
+        localStorage.setItem("cryptocode_user", JSON.stringify(mockUser));
+        onLoginSuccess(mockUser);
+      } else {
+        showLoginError("Server error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -213,15 +218,20 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
       });
       onClose();
     } catch (error) {
-      console.warn("Backend server connection failed. Signing up locally with mock credentials.", error);
-      const mockUser = {
-        name,
-        email,
-        role: signupData.role,
-      };
-      localStorage.setItem("cryptocode_user", JSON.stringify(mockUser));
-      onLoginSuccess(mockUser);
-      onClose();
+      console.error(error);
+      if (import.meta.env.DEV) {
+        console.warn("Backend server connection failed during development. Signing up locally with mock credentials.", error);
+        const mockUser = {
+          name,
+          email,
+          role: signupData.role,
+        };
+        localStorage.setItem("cryptocode_user", JSON.stringify(mockUser));
+        onLoginSuccess(mockUser);
+        onClose();
+      } else {
+        showSignupError("Server error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
