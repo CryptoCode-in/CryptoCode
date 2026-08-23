@@ -47,11 +47,12 @@ const userId = authData.user.id;
 
 
 const login = async (req, res) => {
-    const { email, password } = req.body;
 
-    if (!email || !password) {
+    const { email, password, role } = req.body;
+
+    if (!email || !password || !role) {
         return res.status(400).json({
-            message: "Email and Password required"
+            message: "Email, Password and Role are required"
         });
     }
 
@@ -67,11 +68,37 @@ const login = async (req, res) => {
         });
     }
 
+    const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("name, email, role")
+        .eq("user_id", data.user.id)
+        .single();
+
+    if (profileError || !profile) {
+        return res.status(403).json({
+            success: false,
+            message: "User profile not found"
+        });
+    }
+
+    if (profile.role !== role) {
+        return res.status(403).json({
+            success: false,
+            message: `You are registered as ${profile.role}. Please select ${profile.role} login.`
+        });
+    }
+
     res.status(200).json({
         success: true,
-        user: data.user,
+        user: {
+            id: data.user.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role
+        },
         session: data.session
     });
+
 };
 
 module.exports = { signup,login };
