@@ -4,6 +4,7 @@ import {
   Play, RotateCcw, Save, Terminal, 
   FileCode, Cpu, CheckCircle2, AlertCircle
 } from "lucide-react";
+import InteractiveTerminal from "./InteractiveTerminal";
 
 const templates = {
   python: 'print("Welcome to CryptoCode")',
@@ -28,9 +29,6 @@ const langNameMap = {
 
 function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
   const [isRunning, setIsRunning] = useState(false);
-  const [consoleLogs, setConsoleLogs] = useState([
-    { text: "System ready. Press 'Run Code' to execute compile sandbox.", type: "default" },
-  ]);
 
   // Modal State
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -40,7 +38,6 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
 
   // Synchronize initial modal file name when opening
   const handleOpenSaveModal = () => {
-    // Strip extension from current fileName to show just base name in input
     const ext = extMap[lang];
     let baseName = fileName || `program.${ext}`;
     if (baseName.endsWith(`.${ext}`)) {
@@ -63,45 +60,7 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
   const handleReset = () => {
     if (confirm("Reset editor to default template? Your current edits will be lost.")) {
       setCode(templates[lang]);
-      setConsoleLogs([{ text: "✓ Code reset to default template.", type: "success_status" }]);
     }
-  };
-
-  const handleRun = () => {
-    setIsRunning(true);
-    setConsoleLogs([
-      { text: "⚡ Compilation started...", type: "running" },
-      { text: "⚡ Initializing secure compilation sandbox...", type: "running" }
-    ]);
-
-    setTimeout(() => {
-      const codeLower = code.toLowerCase();
-      let hasError = false;
-      let errorMsg = "";
-
-      if (lang === "c" && !codeLower.includes("stdio.h")) {
-        hasError = true;
-        errorMsg = "✗ Compilation Error\n\nLine 1: missing #include <stdio.h>";
-      } else if (lang === "cpp" && !codeLower.includes("iostream")) {
-        hasError = true;
-        errorMsg = "✗ Compilation Error\n\nLine 1: missing #include <iostream>";
-      } else if (lang === "java" && !codeLower.includes("class")) {
-        hasError = true;
-        errorMsg = "✗ Compilation Error\n\nLine 1: Missing class definition";
-      }
-
-      if (hasError) {
-        setConsoleLogs([
-          { text: errorMsg, type: "error" }
-        ]);
-      } else {
-        setConsoleLogs([
-          { text: "✓ Program executed successfully\n", type: "success_status" },
-          { text: "Welcome to CryptoCode", type: "success" }
-        ]);
-      }
-      setIsRunning(false);
-    }, 1200);
   };
 
   // Save File to localStorage
@@ -112,14 +71,12 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
       return;
     }
 
-    // Auto-detect extension from selected language
     const ext = extMap[lang];
     let finalFileName = baseName;
     if (!finalFileName.endsWith(`.${ext}`)) {
       finalFileName = `${finalFileName}.${ext}`;
     }
 
-    // Read existing files
     let savedFiles = [];
     const saved = localStorage.getItem("cryptocode_saved_files");
     if (saved) {
@@ -130,7 +87,6 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
       }
     }
 
-    // Check if filename already exists
     const nameExists = savedFiles.some(
       (f) => f.name.toLowerCase() === finalFileName.toLowerCase()
     );
@@ -144,18 +100,15 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
 
     let updatedFiles = [];
     if (nameExists) {
-      // Overwrite/update existing file
       updatedFiles = savedFiles.map((f) =>
         f.name.toLowerCase() === finalFileName.toLowerCase() ? newFileObj : f
       );
     } else {
-      // Add new file
       updatedFiles = [newFileObj, ...savedFiles];
     }
 
     localStorage.setItem("cryptocode_saved_files", JSON.stringify(updatedFiles));
     
-    // Update active document state
     setFileName(finalFileName);
     setSaveSuccess(true);
     
@@ -165,7 +118,6 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
     }, 800);
   };
 
-  // Determine modal extension preview
   const ext = extMap[lang];
   const previewFileName = modalFileName.trim() 
     ? (modalFileName.trim().endsWith(`.${ext}`) ? modalFileName.trim() : `${modalFileName.trim()}.${ext}`)
@@ -173,7 +125,7 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
 
   return (
     <div id="editor-section" className="ide-outer-container">
-      {/* Scoped CSS styling block for robust IDE width/layout requirements */}
+      {/* Scoped CSS styling block */}
       <style dangerouslySetInnerHTML={{__html: `
         .ide-outer-container {
           width: 100%;
@@ -221,26 +173,9 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
           justify-content: space-between;
           gap: 20px;
         }
-        .ide-console {
-          width: 100%;
-          background: var(--sf);
-          border: 1px solid var(--bd);
-          border-radius: 16px;
-          overflow: hidden;
-        }
-        .ide-console-body {
-          padding: 20px;
-          background: var(--bg3);
-          font-family: 'JetBrains Mono', Consolas, monospace;
-          font-size: 0.85rem;
-          height: 200px;
-          overflow-y: auto;
-          color: var(--tx2);
-        }
 
         /* Responsive Breakpoints */
         @media (max-width: 991.98px) {
-          /* Tablet Breakpoint: Stack Editor and Action Panel, Console below */
           .ide-main-row {
             grid-template-columns: 1fr;
           }
@@ -250,7 +185,6 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
           }
         }
         @media (max-width: 575.98px) {
-          /* Mobile Breakpoint: Everything stacked vertically */
           .ide-toolbar {
             flex-direction: column;
             height: auto;
@@ -298,7 +232,7 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
 
       {/* MAIN WORKSPACE GRID */}
       <div className="ide-main-row">
-        {/* Monaco Editor (Remaining dynamic width) */}
+        {/* Monaco Editor */}
         <div className="ide-editor-wrapper">
           {/* Editor Header */}
           <div 
@@ -332,7 +266,7 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
             </div>
           </div>
 
-          {/* Monaco Editor Component with min-height 650px */}
+          {/* Monaco Editor Component */}
           <div style={{ height: "650px", width: "100%" }}>
             <Editor
               height="100%"
@@ -356,32 +290,10 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
           </div>
         </div>
 
-        {/* ACTION PANEL (Fixed 260px width) */}
+        {/* ACTION PANEL */}
         <div className="ide-action-panel">
           {/* Buttons Stack */}
           <div className="d-flex flex-column gap-2.5 w-100">
-            <button
-              onClick={handleRun}
-              disabled={isRunning}
-              className="btn w-100 py-2.5"
-              style={{
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                background: "var(--grad)",
-                border: "none",
-                borderRadius: "8px",
-                color: "#fff",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                boxShadow: "0 4px 12px rgba(139, 92, 246, 0.15)"
-              }}
-            >
-              <Play size={14} fill="currentColor" />
-              <span>{isRunning ? "Running..." : "Run Code"}</span>
-            </button>
             <button
               onClick={handleOpenSaveModal}
               disabled={isRunning}
@@ -449,16 +361,16 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
 
               <div>
                 <div style={{ fontSize: "0.7rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>
-                  Compiler Status
+                  Engine Mode
                 </div>
-                <div style={{ fontSize: "0.82rem", color: "var(--tx)", fontWeight: 600, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>{isRunning ? "Running" : "Ready"}</span>
+                <div style={{ fontSize: "0.82rem", color: "#10b981", fontWeight: 600, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>Interactive WebSocket</span>
                   <span
                     style={{
                       width: "6px",
                       height: "6px",
                       borderRadius: "50%",
-                      background: isRunning ? "#fbbf24" : "#10b981",
+                      background: "#10b981",
                       display: "inline-block"
                     }}
                   ></span>
@@ -469,38 +381,12 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
         </div>
       </div>
 
-      {/* FULL-WIDTH CONSOLE (Span entire workspace below editor row) */}
-      <div className="ide-console">
-        <div 
-          style={{ 
-            background: "var(--bg3)", 
-            borderBottom: "1px solid var(--bd)", 
-            padding: "8px 14px" 
-          }}
-          className="d-flex align-items-center gap-2"
-        >
-          <Terminal size={14} style={{ color: "var(--pur)" }} />
-          <span style={{ fontWeight: 600, color: "var(--tx)", fontSize: "0.8rem" }}>
-            Console
-          </span>
-        </div>
-
-        <div className="ide-console-body">
-          {consoleLogs.map((log, index) => {
-            let color = "var(--tx3)";
-            if (log.type === "running") color = "#fbbf24";
-            if (log.type === "success") color = "var(--tx)";
-            if (log.type === "success_status") color = "#10b981"; // green
-            if (log.type === "error") color = "#ef4444"; // red
-
-            return (
-              <div key={index} style={{ color, whiteSpace: "pre-wrap", marginBottom: "4px" }}>
-                {log.text}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* REUSABLE INTERACTIVE TERMINAL COMPONENT */}
+      <InteractiveTerminal
+        language={lang}
+        code={code}
+        onRunStateChange={setIsRunning}
+      />
 
       {/* SAVE MODAL WINDOW */}
       {isSaveModalOpen && (
