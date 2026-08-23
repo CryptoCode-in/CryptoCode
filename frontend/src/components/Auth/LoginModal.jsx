@@ -89,6 +89,7 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
         body: JSON.stringify({
           email,
           password,
+          role: loginData.role,
         }),
       });
 
