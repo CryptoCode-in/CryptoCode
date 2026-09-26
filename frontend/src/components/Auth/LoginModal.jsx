@@ -18,14 +18,17 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
     role: "student",
   });
   const [signupData, setSignupData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    college: "",
-    roll: "",
-    role: "student",
-  });
+  name: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  college: "",
+  roll: "",
+  year: "",
+  semester: "",
+  branch: "",
+  role: "student",
+});
   const [loginError, setLoginError] = useState("");
   const [signupError, setSignupError] = useState("");
 
@@ -134,24 +137,24 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
       setLoading(false);
     }
   };
+const handleSignup = async (event) => {
+  event.preventDefault();
 
-  const handleSignup = async (event) => {
-    event.preventDefault();
-    const name = signupData.name.trim();
-    const email = signupData.email.trim();
-    const password = signupData.password.trim();
-    const confirmPassword = signupData.confirmPassword.trim();
+  const name = signupData.name.trim();
+  const email = signupData.email.trim();
+  const password = signupData.password.trim();
+  const confirmPassword = signupData.confirmPassword.trim();
 
-    if (!name || !email || !password || !confirmPassword) {
-      showSignupError("Please fill in every required field.");
-      return;
-    }
+console.log("SEMESTER VALUE:", signupData.semester);
+  if (!name || !email || !password || !confirmPassword) {
+    showSignupError("Please fill in every required field.");
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      showSignupError("Passwords do not match.");
-      return;
-    }
-
+  if (password !== confirmPassword) {
+    showSignupError("Passwords do not match.");
+    return;
+  }
     if (signupData.role === "student") {
       const roll = signupData.roll?.trim();
       const branch = signupData.branch?.trim();
@@ -163,6 +166,7 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
         return;
       }
     }
+    
 
     if (signupData.role === "teacher") {
       const department = signupData.department?.trim();
@@ -188,11 +192,16 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
-          email,
-          password,
-          role: signupData.role,
-        }),
+  name,
+  email,
+  password,
+  role: signupData.role,
+  roll_no: signupData.roll?.trim() || null,
+  year: signupData.year?.trim() || null,
+  semester: signupData.semester?.trim() || null,
+  branch: signupData.branch?.trim() || null,
+  college: signupData.college?.trim() || null,
+}),
       });
 
       const data = await response.json();

@@ -1,52 +1,84 @@
 const supabase = require("../config/supabase");
 
 const signup = async(req, res) => {
-    const { name, email,password, role } = req.body;
+
+    const {
+        name,
+        email,
+        password,
+        role,
+        roll_no,
+        year,
+        branch,
+        college,
+        semester
+    } = req.body;
+    console.log("SIGNUP BODY:", req.body);
 
     if (!name || !email || !password || !role) {
-        return res.status(400).json({ message: "All fields required" });
+        return res.status(400).json({
+            message: "All required fields must be filled"
+        });
     }
-    
+
+    // 1. Create user in Supabase Auth
     const { data: authData, error: authError } =
-  await supabase.auth.signUp({
-    email,
-    password,
-  });
+    await supabase.auth.signUp({
+        email,
+        password,
+    });
 
-console.log("Signup Request:", email);
-console.log("Auth Error:", authError);
+    console.log("Signup Request:", email);
+    console.log("Auth Error:", authError);
 
-  if (authError) {
-  return res.status(400).json({
-    success: false,
-    message: authError.message,
-  });
-}
+    if (authError) {
+        return res.status(400).json({
+            success: false,
+            message: authError.message,
+        });
+    }
 
-//console.log("AUTH USER:", authData.user);
+    console.log("AUTH DATA:", authData);
 
-console.log("AUTH DATA:", authData);
-console.log("AUTH ERROR:", authError);
+    const userId = authData.user.id;
 
-const userId = authData.user.id;
-
+    // 2. Insert user details into profiles table
     const { data, error } = await supabase
         .from("profiles")
-        .insert([{ user_id : userId , name, email, role }])
+        .insert([{
+            user_id: userId,
+            name,
+            email,
+            role,
+            roll_no,
+            year,
+            branch,
+            college,
+            semester
+        }])
         .select();
 
-        console.log("PROFILE ERROR:", error);
-        console.log("PROFILE DATA:", data);
+    console.log("PROFILE ERROR:", error);
+    console.log("PROFILE DATA:", data);
 
-    if (error) return res.status(500).json({ error });
+    if (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Profile creation failed",
+            error
+        });
+    }
 
-    res.status(201).json({ success: true, user: data });
+    // 3. Success response
+    res.status(201).json({
+        success: true,
+        user: data
+    });
 };
 
 
 
-
-const login = async (req, res) => {
+const login = async(req, res) => {
 
     const { email, password, role } = req.body;
 
@@ -101,4 +133,4 @@ const login = async (req, res) => {
 
 };
 
-module.exports = { signup,login };
+module.exports = { signup, login };
