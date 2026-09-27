@@ -1,204 +1,181 @@
-import CountUp from "react-countup";
-import logob from "../assets/images/logob.png";
-import logow from "../assets/images/logow.png";
+import React from "react";
 
 function Hero({ onOpenPanel }) {
   return (
-    <>
-      {/* HERO */}
-      <section id="hero" className="hero-split-section">
-        {/* Soft Background Glows */}
-        <div className="hero-glow-purple"></div>
-        <div className="hero-glow-cyan"></div>
+    <section id="hero" className="hero-section">
+      {/* Subtle Ambient Background Glows & Grid */}
+      <div className="hero-bg-glow hero-bg-glow-purple"></div>
+      <div className="hero-bg-glow hero-bg-glow-blue"></div>
+      <div className="hero-bg-grid"></div>
 
-        <div className="container position-relative" style={{ zIndex: 2 }}>
-          <div className="row align-items-center">
-            {/* LEFT SIDE (approximately 50% on desktop) */}
-            <div className="col-12 col-lg-7 hero-left-col">
-              <div className="hero-content">
-                <div className="afu" style={{ animationDelay: ".05s", marginBottom: "28px" }}>
-                  <span className="hbadge">
-                    <span className="bdot"></span> Code  •  Evaluate  •  Track  •  Improve
-                  </span>
-                </div>
-                
-                <h1 className="afu hero-main-heading" style={{ animationDelay: ".12s", margin: "0 0 32px 0" }}>
-                  Secure Online Coding Platform
-                  <br />
-                  for <span className="gt">Students & Teachers</span>
-                </h1>
-                
-                <p
-                  className="afu hero-desc"
-                  style={{
-                    fontSize: "clamp(.95rem, 1.8vw, 1.15rem)",
-                    color: "var(--tx2)",
-                    animationDelay: ".2s",
-                    margin: "0 0 32px 0",
-                  }}
-                >
-                  Practice coding, submit assignments and track <br />progress through
-                  secure code execution and <br /> teacher-friendly analytics.
-                </p>
-                
-                <div
-                  className="d-flex align-items-center flex-wrap afu hero-ctas"
-                  style={{ animationDelay: ".28s", marginBottom: "32px", gap: "16px" }}
-                >
-                  <button className="bgrd btn px-4 py-3 fs-6" onClick={() => onOpenPanel("signup")}>
-                    <i className="fa-solid fa-play me-2"></i>Start Coding
-                  </button>
-                  <a href="#features" className="boc btn px-4 py-3 fs-6">
-                    <i className="fa-solid fa-layer-group me-2" style={{ color: "var(--pur)" }}></i>Explore Features
-                  </a>
-                </div>
-
-               {/* Subtle Stats Badges */}
-                <div className="hero-stats-row afu" style={{ animationDelay: ".35s", marginTop: "0" }}>
-                  
-                  
-                </div>
+      <div className="container position-relative hero-container" style={{ zIndex: 2 }}>
+        <div className="hero-grid">
+          
+          {/* LEFT COLUMN */}
+          <div className="hero-left-col">
+            <div className="hero-content">
+              
+              {/* Eyebrow Badge */}
+              <div className="hero-badge-wrapper">
+                <span className="hero-badge">
+                  <span className="hero-badge-dot"></span>
+                  Code &bull; Evaluate &bull; Track &bull; Improve
+                </span>
               </div>
+
+              {/* Main Heading */}
+              <h1 className="hero-title">
+                Secure Online Coding Platform for{" "}
+                <span className="hero-title-accent">Students & Teachers</span>
+              </h1>
+
+              {/* Subtitle / Description */}
+              <p className="hero-description">
+                Practice coding, submit assignments and track progress through secure code execution and teacher-friendly analytics.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="hero-actions">
+                <button
+                  className="hero-btn hero-btn-primary"
+                  onClick={() => onOpenPanel("signup")}
+                >
+                  <span>Start Coding</span>
+                  <i className="fa-solid fa-arrow-right"></i>
+                </button>
+                <a href="#features" className="hero-btn hero-btn-secondary">
+                  <span>Explore Features</span>
+                  <i className="fa-solid fa-arrow-down"></i>
+                </a>
+              </div>
+
             </div>
+          </div>
 
-            {/* RIGHT SIDE (approximately 50% on desktop) */}
-            <div className="col-12 col-lg-5 hero-right-col mt-5 mt-lg-0 d-flex justify-content-center">
-              <div className="hero-right afu" style={{ animationDelay: ".4s" }}>
-                <div className="logo-showcase-container">
-                  {/* Soft purple glow behind the logo */}
-                  <div className="logo-glow-behind"></div>
+          {/* RIGHT COLUMN - CLEAN IDE MOCKUP VISUAL */}
+          <div className="hero-right-col">
+            <div className="hero-ide-wrapper">
+              
+              {/* Soft Radial Ambient Glow behind IDE */}
+              <div className="hero-ide-glow"></div>
 
-                  {/* Concentric Orbit Rings (3 perfectly concentric rings) */}
-                  <div className="logo-orbit-ring r-inner"></div>
-                  <div className="logo-orbit-ring r-middle"></div>
-                  <div className="logo-orbit-ring r-outer"></div>
-
-                  {/* Repeated Branding text ring */}
-                  <div className="branding-text-ring">
-                    <svg viewBox="0 0 200 200" width="100%" height="100%">
-                      <path
-                        id="brandingPath"
-                        d="M 100, 100 m -95, 0 a 95,95 0 1,1 190,0 a 95,95 0 1,1 -190,0"
-                        fill="none"
-                      />
-                      <text fill="rgba(139, 92, 246, 0.16)" fontSize="7" letterSpacing="3.5" fontFamily="monospace" fontWeight="700">
-                        <textPath href="#brandingPath" startOffset="0%">
-                          CC • CRYPTOCODE • CC • CRYPTOCODE • CC • CRYPTOCODE • CC • CRYPTOCODE • CC • CRYPTOCODE •
-                        </textPath>
-                      </text>
-                    </svg>
+              {/* IDE Mockup Container */}
+              <div className="hero-ide">
+                
+                {/* Top Window Header Bar */}
+                <div className="hero-ide-header">
+                  <div className="hero-ide-controls">
+                    <span className="control-dot dot-close"></span>
+                    <span className="control-dot dot-minimize"></span>
+                    <span className="control-dot dot-expand"></span>
                   </div>
-
-                  {/* Floating Particles */}
-                  <div className="floating-particle p1"></div>
-                  <div className="floating-particle p2"></div>
-                  <div className="floating-particle p3"></div>
-                  <div className="floating-particle p4"></div>
-                  <div className="floating-particle p5"></div>
-                  <div className="floating-particle p6"></div>
-                  <div className="floating-particle p7"></div>
-                  <div className="floating-particle p8"></div>
-                  
-                  {/* Floating Tech/Coding Symbols */}
-                  <div className="float-tech-element t1">&lt;/&gt;</div>
-                  <div className="float-tech-element t2">&#123;&#125;</div>
-                  <div className="float-tech-element t4">[]</div>
-                  <div className="float-tech-element t5">&gt;</div>
-                  
-                  {/* Cinematic Central Logo Showcase */}
-                  <div className="central-logo-wrapper">
-                    <div className="central-logo-inner">
-                      <img src={logob} className="showcase-logo-emblem" alt="CryptoCode Emblem" />
+                  <div className="hero-ide-tabs">
+                    <div className="hero-ide-tab active">
+                      <i className="fa-solid fa-file-code file-icon-cpp"></i>
+                      <span>main.cpp</span>
                     </div>
                   </div>
-                  
-                  {/* 8 Symmetrical Satellites at Exact Clock Positions */}
-                  {/* Python (12 O'Clock) */}
-                  <div className="float-badge-card python">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" />
-                  </div>
-                  
-                  {/* Java (2 O'Clock) */}
-                  <div className="float-badge-card java">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java" />
-                  </div>
-
-                  {/* JavaScript (4 O'Clock) */}
-                  <div className="float-badge-card js">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JavaScript" />
-                  </div>
-
-                  {/* HTML5 (5 O'Clock) */}
-                  <div className="float-badge-card html5">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" alt="HTML5" />
-                  </div>
-
-                  {/* C (6 O'Clock) */}
-                  <div className="float-badge-card c">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" alt="C" />
-                  </div>
-
-                  {/* PHP (7 O'Clock) */}
-                  <div className="float-badge-card php">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" alt="PHP" />
-                  </div>
-
-                  {/* Node JS (9 O'Clock) */}
-                  <div className="float-badge-card node">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node JS" />
-                  </div>
-                  
-                  {/* C++ (10 O'Clock) */}
-                  <div className="float-badge-card cpp">
-                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" alt="C++" />
+                  <div className="hero-ide-status">
+                    <span className="status-badge success">
+                      <i className="fa-solid fa-circle-check"></i> Executed
+                    </span>
                   </div>
                 </div>
+
+                {/* Main IDE Body (Sidebar + Code Area) */}
+                <div className="hero-ide-body">
+                  
+                  {/* Clean File Sidebar */}
+                  <div className="hero-ide-sidebar">
+                    <div className="sidebar-title">FILES</div>
+                    <div className="sidebar-item active">
+                      <i className="fa-solid fa-file-code"></i>
+                      <span>main.cpp</span>
+                    </div>
+                  </div>
+
+                  {/* Code Editor */}
+                  <div className="hero-ide-editor">
+                    <div className="editor-topbar">
+                      <div className="lang-indicator">
+                        <span className="lang-tag">C++</span>
+                        <span className="lang-std">C++17</span>
+                      </div>
+                      <div className="run-button">
+                        <i className="fa-solid fa-play"></i> Run
+                      </div>
+                    </div>
+
+                    {/* Code Content */}
+                    <div className="editor-code">
+                      <div className="code-line">
+                        <span className="line-num">1</span>
+                        <span className="line-content">
+                          <span className="token-pp">#include</span> <span className="token-str">&lt;iostream&gt;</span>
+                        </span>
+                      </div>
+                      <div className="code-line">
+                        <span className="line-num">2</span>
+                        <span className="line-content">
+                          <span className="token-kw">using namespace</span> <span className="token-nm">std</span>;
+                        </span>
+                      </div>
+                      <div className="code-line">
+                        <span className="line-num">3</span>
+                        <span className="line-content"></span>
+                      </div>
+                      <div className="code-line">
+                        <span className="line-num">4</span>
+                        <span className="line-content">
+                          <span className="token-type">int</span> <span className="token-fn">main</span>() &#123;
+                        </span>
+                      </div>
+                      <div className="code-line">
+                        <span className="line-num">5</span>
+                        <span className="line-content indent">
+                          <span className="token-var">cout</span> &lt;&lt; <span className="token-str">"Hello, CryptoCode!"</span>;
+                        </span>
+                      </div>
+                      <div className="code-line">
+                        <span className="line-num">6</span>
+                        <span className="line-content indent">
+                          <span className="token-kw">return</span> <span className="token-num">0</span>;
+                        </span>
+                      </div>
+                      <div className="code-line">
+                        <span className="line-num">7</span>
+                        <span className="line-content">&#125;</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Terminal / Output Section */}
+                <div className="hero-ide-terminal">
+                  <div className="terminal-header">
+                    <span className="terminal-title">
+                      <i className="fa-solid fa-terminal me-1"></i> TERMINAL (STDOUT)
+                    </span>
+                    <span className="terminal-exit-code">EXIT STATUS: 0</span>
+                  </div>
+                  <div className="terminal-output">
+                    <div className="terminal-line success">
+                      <span className="prompt">&gt;</span> CryptoCode: Execution Success!
+                    </div>
+                    <div className="terminal-line info">
+                      Program finished in 0.03s
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* SOCIAL PROOF */}
-      <section id="proof">
-        <div className="container">
-          <div className="row g-3 align-items-center text-center">
-            <div className="col-6 col-sm-3">
-              <div className="pnum">500+</div>
-              <div className="plbl">Active Students</div>
-            </div>
-            <div className="col-6 col-sm-3">
-              <div className="pnum">2500+</div>
-              <div className="plbl">Code Submissions</div>
-            </div>
-            <div className="col-6 col-sm-3">
-              <div className="pnum">120+</div>
-              <div className="plbl">Assignments</div>
-            </div>
-            <div className="col-6 col-sm-3">
-              <div className="pnum">6+</div>
-              <div className="plbl">Languages</div>
-            </div>
-          </div>
-          <div className="lscroll">
-            <div className="ltrack">
-              <span className="lbr">Python</span>
-              <span className="lbr">Java</span>
-              <span className="lbr">C++</span>
-              <span className="lbr">C</span>
-              <span className="lbr">GP Nashik</span>
-              <span className="lbr">Secure Sandbox</span>
-              <span className="lbr">Python</span>
-              <span className="lbr">Java</span>
-              <span className="lbr">C++</span>
-              <span className="lbr">C</span>
-              <span className="lbr">GP Nashik</span>
-              <span className="lbr">Secure Sandbox</span>
-            </div>
-          </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
 
