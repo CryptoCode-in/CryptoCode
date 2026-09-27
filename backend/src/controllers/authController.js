@@ -106,7 +106,7 @@ const login = async(req, res) => {
 
     const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("name, email, role")
+        .select("name, email, role, roll_no, year, semester, branch, college, department, subjects")
         .eq("user_id", data.user.id)
         .single();
 
@@ -127,11 +127,18 @@ const login = async(req, res) => {
     res.status(200).json({
         success: true,
         user: {
-            id: data.user.id,
-            name: profile.name,
-            email: profile.email,
-            role: profile.role
-        },
+    id: data.user.id,
+    name: profile.name,
+    email: profile.email,
+    role: profile.role,
+    roll_no: profile.roll_no,
+    year: profile.year,
+    semester: profile.semester,
+    branch: profile.branch,
+    college: profile.college,
+    department: profile.department,
+    subjects: profile.subjects
+},
         session: data.session
     });
 

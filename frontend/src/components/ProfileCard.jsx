@@ -2,13 +2,14 @@ import { useState } from "react";
 import { User, Mail, Hash, Calendar, BookOpen, School, Phone, Edit, ShieldCheck, UserCheck, GraduationCap } from "lucide-react";
 
 function ProfileCard({ currentUser }) {
-  const [name, setName] = useState(currentUser?.name || "Rahul Sharma");
-  const [email, setEmail] = useState(currentUser?.email || "rahul.sharma@gpnasik.edu.in");
-  const [rollNo, setRollNo] = useState(currentUser?.rollNo || "220501");
-  const [year, setYear] = useState(currentUser?.year || "Third Year (TY)");
-  const [branch, setBranch] = useState(currentUser?.branch || "Computer Technology (CM)");
-  const [college, setCollege] = useState(currentUser?.college || "Government Polytechnic Nashik");
-  const [mobileNo, setMobileNo] = useState(currentUser?.mobileNo || "+91 98765 43210");
+  console.log("PROFILE CURRENT USER:", currentUser);
+  const [name, setName] = useState(currentUser?.name || "");
+const [email, setEmail] = useState(currentUser?.email || "");
+const [rollNo, setRollNo] = useState(currentUser?.rollNo || "");
+const [year, setYear] = useState(currentUser?.year || "");
+const [branch, setBranch] = useState(currentUser?.branch || "");
+const [college, setCollege] = useState(currentUser?.college || "");
+const [mobileNo, setMobileNo] = useState(currentUser?.mobileNo || "");
   const [isEditing, setIsEditing] = useState(false);
 
   const initial = name ? name[0].toUpperCase() : "U";

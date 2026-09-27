@@ -122,10 +122,18 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
       );
 
       onLoginSuccess({
-        name: data.user.email.split("@")[0],
-        email: data.user.email,
-        role: loginData.role,
-      });
+  id: data.user.id,
+  name: data.user.name,
+  email: data.user.email,
+  role: data.user.role,
+  rollNo: data.user.roll_no,
+  year: data.user.year,
+  semester: data.user.semester,
+  branch: data.user.branch,
+  college: data.user.college,
+  department: data.user.department,
+  subjects: data.user.subjects,
+});
     } catch (error) {
       console.error(error);
       if (import.meta.env.DEV) {
