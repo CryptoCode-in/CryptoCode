@@ -17,16 +17,23 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
     password: "",
     role: "student",
   });
-  const [signupData, setSignupData] = useState({
+ const [signupData, setSignupData] = useState({
   name: "",
   email: "",
   password: "",
   confirmPassword: "",
+
+  // Student fields
   college: "",
   roll: "",
   year: "",
   semester: "",
   branch: "",
+
+  // Teacher fields
+  department: "",
+  subjects: [],
+
   role: "student",
 });
   const [loginError, setLoginError] = useState("");
@@ -191,16 +198,20 @@ console.log("SEMESTER VALUE:", signupData.semester);
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+      body: JSON.stringify({
   name,
   email,
   password,
   role: signupData.role,
+
   roll_no: signupData.roll?.trim() || null,
   year: signupData.year?.trim() || null,
   semester: signupData.semester?.trim() || null,
   branch: signupData.branch?.trim() || null,
   college: signupData.college?.trim() || null,
+
+  department: signupData.department?.trim() || null,
+  subjects: signupData.subjects || [],
 }),
       });
 

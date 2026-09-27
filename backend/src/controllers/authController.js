@@ -11,7 +11,9 @@ const signup = async(req, res) => {
         year,
         branch,
         college,
-        semester
+        semester,
+        department,
+        subjects
     } = req.body;
     console.log("SIGNUP BODY:", req.body);
 
@@ -54,7 +56,9 @@ const signup = async(req, res) => {
             year,
             branch,
             college,
-            semester
+            semester,
+            department,
+            subjects
         }])
         .select();
 
