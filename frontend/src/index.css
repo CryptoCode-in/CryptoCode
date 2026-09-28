@@ -65,8 +65,49 @@ input, textarea { font-family: inherit; }
 }
 .boc:hover { border-color: var(--pur); background: rgba(139,92,246,.08); transform: translateY(-1px); }
 
-/* ======= NAVBAR ======= */
-#nbar {
+/* ======= DASHBOARD & STANDARD FULL-WIDTH NAVBAR ======= */
+#dashboard-nbar,
+.dashboard-navbar,
+#nbar:not(#landing-nbar):not(.landing-navbar-pill) {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 999;
+  padding: 14px 0;
+  background: var(--bg3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--bd);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  height: auto;
+  transition: background 0.3s ease;
+}
+
+#dashboard-nbar .container,
+.dashboard-navbar .container,
+#nbar:not(#landing-nbar):not(.landing-navbar-pill) .container {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: block;
+  height: auto;
+}
+
+#dashboard-nbar .nav-link,
+.dashboard-navbar .nav-link {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* ======= PUBLIC LANDING NAVBAR (FLOATING ROUNDED PILL) ======= */
+#landing-nbar,
+.landing-navbar-pill {
   position: fixed;
   top: 8px;
   left: 0;
@@ -88,7 +129,9 @@ input, textarea { font-family: inherit; }
   padding: 0 30px;
   transition: all 0.3s ease;
 }
-#nbar .container {
+
+#landing-nbar .container,
+.landing-navbar-pill .container {
   max-width: 100%;
   width: 100%;
   margin: 0;
@@ -97,6 +140,7 @@ input, textarea { font-family: inherit; }
   display: flex;
   align-items: center;
 }
+
 .nav-link { 
   color: var(--tx2); 
   padding: 8px 15px; 
@@ -142,20 +186,23 @@ input, textarea { font-family: inherit; }
 #mbmenu.open { display: block; }
 
 @media (min-width: 992px) and (max-width: 1199.98px) {
-  #nbar {
+  #landing-nbar,
+  .landing-navbar-pill {
     width: 95%;
     padding: 0 20px;
     height: 78px;
     border-radius: 28px;
   }
-  .nav-link {
+  #landing-nbar .nav-link,
+  .landing-navbar-pill .nav-link {
     padding: 6px 10px;
     font-size: 0.84rem;
   }
 }
 
 @media (max-width: 991.98px) {
-  #nbar {
+  #landing-nbar,
+  .landing-navbar-pill {
     width: calc(100% - 24px);
     top: 8px;
     height: 72px;
@@ -171,7 +218,8 @@ input, textarea { font-family: inherit; }
 }
 
 @media (max-width: 575.98px) {
-  #nbar {
+  #landing-nbar,
+  .landing-navbar-pill {
     width: calc(100% - 16px);
     top: 6px;
     height: 66px;

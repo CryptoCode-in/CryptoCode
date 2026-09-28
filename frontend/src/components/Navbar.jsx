@@ -62,7 +62,7 @@ function Navbar({ onOpenPanel }) {
   return (
     <>
       {/* NAVBAR */}
-      <nav id="nbar">
+      <nav id="landing-nbar" className="landing-navbar-pill">
         <div className="container">
           <div className="d-flex align-items-center justify-content-between w-100">
             <a

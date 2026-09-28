@@ -7,7 +7,8 @@ function DashboardNavbar({ currentUser, activeSection, setActiveSection, onLogou
 
   return (
     <nav
-      id="nbar"
+      id="dashboard-nbar"
+      className="dashboard-navbar"
       style={{
         position: "sticky",
         top: 0,
@@ -16,6 +17,7 @@ function DashboardNavbar({ currentUser, activeSection, setActiveSection, onLogou
         backdropFilter: "blur(16px)",
         borderBottom: "1px solid var(--bd)",
         padding: "14px 0",
+        width: "100%",
       }}
     >
       <div className="container">
