@@ -68,10 +68,10 @@ function Navbar({ onOpenPanel }) {
             <a
               href="/#hero"
               className="d-flex align-items-center gap-2"
-              style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--tx)" }}
+              style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--tx)", textDecoration: "none" }}
             >
-              <img src={logob} style={{ height: "50px", width: "auto" }} alt="Logo Dark" />
-              <img src={logow} style={{ height: "45px", width: "auto" }} alt="Logo Light" />
+              <img src={logob} style={{ height: "46px", width: "auto" }} alt="Logo Dark" />
+              <img src={logow} style={{ height: "40px", width: "auto" }} alt="Logo Light" />
               <span></span>
             </a>
             <div className="d-none d-lg-flex align-items-center gap-1 ms-auto me-auto">
