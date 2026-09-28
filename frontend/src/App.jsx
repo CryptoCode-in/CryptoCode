@@ -4,6 +4,8 @@ import Landing from "./pages/Landing";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import FAQ from "./pages/FAQ";
+import Contact from "./pages/Contact";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -90,6 +92,26 @@ function App() {
           path="/privacy-policy"
           element={
             <PrivacyPolicy
+              onLoginSuccess={handleLoginSuccess}
+            />
+          }
+        />
+        <Route
+          path="/policy"
+          element={<Navigate to="/privacy-policy" replace />}
+        />
+        <Route
+          path="/faq"
+          element={
+            <FAQ
+              onLoginSuccess={handleLoginSuccess}
+            />
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <Contact
               onLoginSuccess={handleLoginSuccess}
             />
           }

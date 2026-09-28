@@ -1,19 +1,23 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
-import Hero from "../components/Hero";
-import Problem from "../components/Problem";
-import Features from "../components/Features";
-import HowItWorks from "../components/HowItWorks";
-import Languages from "../components/Languages";
-import Security from "../components/Security";
-import Testimonials from "../components/Testimonials";
+import ContactComponent from "../components/Contact";
 import Footer from "../components/Footer";
 import LoginModal from "../components/LoginModal";
 
-function Landing({ onLoginSuccess }) {
-  const [authModalOpen, setAuthModalOpen] = useState(null); // null, 'login', 'signup'
+function Contact({ onLoginSuccess }) {
+  const [authModalOpen, setAuthModalOpen] = useState(null);
+
+  const openPanel = (tab) => {
+    setAuthModalOpen(tab);
+  };
+
+  const closePanel = () => {
+    setAuthModalOpen(null);
+  };
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -34,25 +38,20 @@ function Landing({ onLoginSuccess }) {
     };
   }, []);
 
-  const openPanel = (tab) => {
-    setAuthModalOpen(tab);
-  };
-
-  const closePanel = () => {
-    setAuthModalOpen(null);
-  };
-
   return (
-    <div id="landing">
+    <div style={{ background: "var(--bg)", minHeight: "100vh", color: "var(--tx)", display: "flex", flexDirection: "column" }}>
+      {/* Global Navbar */}
       <Navbar onOpenPanel={openPanel} />
-      <Hero onOpenPanel={openPanel} />
-      <Problem />
-      <Features />
-      <HowItWorks />
-      <Languages />
-      <Security />
-      <Testimonials />
+
+      {/* Standalone Contact Us Content */}
+      <main style={{ flex: 1, paddingTop: "70px" }}>
+        <ContactComponent />
+      </main>
+
+      {/* Global Footer */}
       <Footer />
+
+      {/* Reusable Login/Signup Modal */}
       <LoginModal
         isOpen={authModalOpen !== null}
         initialTab={authModalOpen}
@@ -63,4 +62,4 @@ function Landing({ onLoginSuccess }) {
   );
 }
 
-export default Landing;
+export default Contact;
