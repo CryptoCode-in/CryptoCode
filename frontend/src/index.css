@@ -321,8 +321,7 @@ input, textarea { font-family: inherit; }
 .acco .accordion-item { background: var(--sf); border: 1px solid var(--bd); border-radius: 14px !important; margin-bottom: 10px; overflow: hidden; }
 .acco .accordion-button { background: var(--sf); color: var(--tx); font-weight: 600; font-size: .95rem; padding: 18px 22px; box-shadow: none; }
 .acco .accordion-button::after { filter: invert(1) hue-rotate(240deg); }
-.acco .accordion-button:not(.collapsed) { background: rgba(139,92,246,.08); color: var(--pur); }
-.acco .accordion-body { background: var(--sf); color: var(--tx2); font-size: .875rem; padding: 0 22px 18px; line-height: 1.7; }
+.acco .accordion-body { background: var(--sf); color: #cbd5e1; font-size: .9rem; padding: 0 22px 18px; line-height: 1.7; visibility: visible !important; opacity: 1 !important; }
 
 /* ======= FINAL CTA ======= */
 #cta {
@@ -627,9 +626,10 @@ input, textarea { font-family: inherit; }
 .accordion-button::after { content: '▾'; float: right; transition: transform .3s; }
 .accordion-button.collapsed::after { transform: rotate(-90deg); }
 .accordion-collapse { }
-.accordion-collapse.collapse { display: none; }
-.accordion-collapse.collapse.show { display: block; }
-.accordion-body { }
+.accordion-collapse.collapse { display: none !important; }
+.accordion-collapse.collapse.show,
+.acco .accordion-collapse.show { display: block !important; visibility: visible !important; }
+.accordion-body { color: #cbd5e1; visibility: visible !important; opacity: 1 !important; }
 .fa-sm { font-size: .85em; }
 .fa-xs { font-size: .75em; }
 .fa-lg { font-size: 1.1em; }

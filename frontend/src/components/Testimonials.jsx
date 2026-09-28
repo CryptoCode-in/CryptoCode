@@ -3,7 +3,7 @@ function Testimonials() {
     <section id="testimonials" className="sp">
       <div className="container">
         <div className="text-center mb-5 rv">
-          <span className="slbl">Testimonials</span>
+          <span className="slbl">Feedback</span>
           <h2 className="stitle">
             Loved by <span className="gt">students & teachers</span>
           </h2>
@@ -19,8 +19,7 @@ function Testimonials() {
                 <i className="fa-solid fa-star text-warning"></i>
               </div>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)", lineHeight: 1.65, fontStyle: "italic", marginBottom: "18px" }}>
-                "CryptoCode helped me improve my coding skills with instant AI feedback and progress tracking. I can see
-                exactly where I need to improve."
+                “CryptoCode provides a focused environment for students to practice programming, run their code and organize their practical work.”
               </p>
               <div className="d-flex align-items-center gap-2">
                 <div
@@ -37,10 +36,10 @@ function Testimonials() {
                     color: "#fff",
                   }}
                 >
-                  R
+                  S
                 </div>
                 <div>
-                  <div style={{ fontSize: ".88rem", fontWeight: 600 }}>Rahul Sharma</div>
+                  <div style={{ fontSize: ".88rem", fontWeight: 600 }}>Sai Navarkar</div>
                   <div style={{ fontSize: ".76rem", color: "var(--tx3)" }}>Student, GP Nashik</div>
                 </div>
               </div>
@@ -56,8 +55,7 @@ function Testimonials() {
                 <i className="fa-solid fa-star text-warning"></i>
               </div>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)", lineHeight: 1.65, fontStyle: "italic", marginBottom: "18px" }}>
-                "CryptoCode makes assignment evaluation and plagiarism detection much easier. I can review all student
-                submissions from one dashboard in minutes."
+                “CryptoCode helps teachers manage student programming activities and review practical submissions through a centralized platform.”
               </p>
               <div className="d-flex align-items-center gap-2">
                 <div
@@ -65,7 +63,7 @@ function Testimonials() {
                     width: "40px",
                     height: "40px",
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                    background: "linear-gradient(135deg, #f63b8f, #8b5cf6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -74,12 +72,12 @@ function Testimonials() {
                     color: "#fff",
                   }}
                 >
-                  P
+                  D
                 </div>
                 <div>
-                  <div style={{ fontSize: ".88rem", fontWeight: 600 }}>Prof. Priya Joshi</div>
+                  <div style={{ fontSize: ".88rem", fontWeight: 600 }}>Prof. D.N.Bhoye</div>
                   <div style={{ fontSize: ".76rem", color: "var(--tx3)" }}>
-                    Computer Science Teacher, GP Nashik
+                    Faculty, Government Polytechnic Nashik
                   </div>
                 </div>
               </div>
@@ -95,8 +93,7 @@ function Testimonials() {
                 <i className="fa-solid fa-star text-warning"></i>
               </div>
               <p style={{ fontSize: ".875rem", color: "var(--tx2)", lineHeight: 1.65, fontStyle: "italic", marginBottom: "18px" }}>
-                "A complete coding platform for academic institutions and coding labs. CryptoCode digitized our entire
-                practical lab — setup was seamless."
+                “CryptoCode provides a simple and focused coding environment for academic practicals. It helps me write programs, test them and submit my work conveniently.”
               </p>
               <div className="d-flex align-items-center gap-2">
                 <div
@@ -113,12 +110,12 @@ function Testimonials() {
                     color: "#fff",
                   }}
                 >
-                  S
+                  D
                 </div>
                 <div>
-                  <div style={{ fontSize: ".88rem", fontWeight: 600 }}>Dr. Suresh Patil</div>
+                  <div style={{ fontSize: ".88rem", fontWeight: 600 }}>Devesh Sonawane</div>
                   <div style={{ fontSize: ".76rem", color: "var(--tx3)" }}>
-                    HOD, Government Polytechnic Nashik
+                    Student, GP Nashik
                   </div>
                 </div>
               </div>

@@ -7,10 +7,15 @@ function Navbar({ onOpenPanel }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const location = useLocation();
-  const isPrivacyPage = location.pathname === "/privacy-policy";
+  const isPrivacyPage = location.pathname === "/privacy-policy" || location.pathname === "/policy";
+  const isFaqPage = location.pathname === "/faq";
+  const isContactPage = location.pathname === "/contact";
+  const isSubPage = isPrivacyPage || isFaqPage || isContactPage;
 
   useEffect(() => {
-    const sections = ["hero", "problem", "features", "languages", "security", "faq", "contact"];
+    if (isSubPage) return;
+
+    const sections = ["hero", "problem", "features", "languages", "security"];
     const observerOptions = {
       root: null,
       rootMargin: "-40% 0px -40% 0px", // triggers when section occupies the middle 20% of viewport
@@ -18,7 +23,6 @@ function Navbar({ onOpenPanel }) {
     };
 
     const observer = new IntersectionObserver((entries) => {
-      if (location.pathname === "/privacy-policy") return;
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           setActiveSection(entry.target.id);
@@ -32,11 +36,8 @@ function Navbar({ onOpenPanel }) {
     });
 
     const handleScrollFallback = () => {
-      if (location.pathname === "/privacy-policy") return;
       if (window.scrollY < 50) {
         setActiveSection("hero");
-      } else if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50) {
-        setActiveSection("contact");
       }
     };
     window.addEventListener("scroll", handleScrollFallback);
@@ -48,7 +49,7 @@ function Navbar({ onOpenPanel }) {
       });
       window.removeEventListener("scroll", handleScrollFallback);
     };
-  }, [location.pathname]);
+  }, [location.pathname, isSubPage]);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -74,13 +75,13 @@ function Navbar({ onOpenPanel }) {
               <span></span>
             </a>
             <div className="d-none d-lg-flex align-items-center gap-1 ms-auto me-auto">
-              <a href="/#hero" className={`nav-link ${!isPrivacyPage && activeSection === "hero" ? "active" : ""}`}>Home</a>
+              <a href="/#hero" className={`nav-link ${!isSubPage && activeSection === "hero" ? "active" : ""}`}>Home</a>
               
-              <a href="/#features" className={`nav-link ${!isPrivacyPage && activeSection === "features" ? "active" : ""}`}>Features</a>
-              <a href="/#languages" className={`nav-link ${!isPrivacyPage && activeSection === "languages" ? "active" : ""}`}>Languages</a>
-              <a href="/#security" className={`nav-link ${!isPrivacyPage && activeSection === "security" ? "active" : ""}`}>Security</a>
-              <a href="/#faq" className={`nav-link ${!isPrivacyPage && activeSection === "faq" ? "active" : ""}`}>FAQ</a>
-              <a href="/#contact" className={`nav-link ${!isPrivacyPage && activeSection === "contact" ? "active" : ""}`}>Contact Us</a>
+              <a href="/#features" className={`nav-link ${!isSubPage && activeSection === "features" ? "active" : ""}`}>Features</a>
+              <a href="/#languages" className={`nav-link ${!isSubPage && activeSection === "languages" ? "active" : ""}`}>Languages</a>
+              <a href="/#security" className={`nav-link ${!isSubPage && activeSection === "security" ? "active" : ""}`}>Security</a>
+              <Link to="/faq" className={`nav-link ${isFaqPage ? "active" : ""}`}>FAQ</Link>
+              <Link to="/contact" className={`nav-link ${isContactPage ? "active" : ""}`}>Contact Us</Link>
               <Link to="/privacy-policy" className={`nav-link ${isPrivacyPage ? "active" : ""}`}>Policy</Link>
             </div>
             <div className="d-flex align-items-center gap-2">
@@ -112,13 +113,13 @@ function Navbar({ onOpenPanel }) {
 
       {/* MOBILE MENU */}
       <div id="mbmenu" className={mobileMenuOpen ? "open" : ""}>
-        <a href="/#hero" className={`nav-link d-block py-3 border-bottom ${!isPrivacyPage && activeSection === "hero" ? "active" : ""}`} onClick={closeMobileMenu}>Home</a>
-        <a href="/#problem" className={`nav-link d-block py-3 border-bottom ${!isPrivacyPage && activeSection === "problem" ? "active" : ""}`} onClick={closeMobileMenu}>Problem</a>
-        <a href="/#features" className={`nav-link d-block py-3 border-bottom ${!isPrivacyPage && activeSection === "features" ? "active" : ""}`} onClick={closeMobileMenu}>Features</a>
-        <a href="/#languages" className={`nav-link d-block py-3 border-bottom ${!isPrivacyPage && activeSection === "languages" ? "active" : ""}`} onClick={closeMobileMenu}>Languages</a>
-        <a href="/#security" className={`nav-link d-block py-3 border-bottom ${!isPrivacyPage && activeSection === "security" ? "active" : ""}`} onClick={closeMobileMenu}>Security</a>
-        <a href="/#faq" className={`nav-link d-block py-3 border-bottom ${!isPrivacyPage && activeSection === "faq" ? "active" : ""}`} onClick={closeMobileMenu}>FAQ</a>
-        <a href="/#contact" className={`nav-link d-block py-3 border-bottom ${!isPrivacyPage && activeSection === "contact" ? "active" : ""}`} onClick={closeMobileMenu}>Contact Us</a>
+        <a href="/#hero" className={`nav-link d-block py-3 border-bottom ${!isSubPage && activeSection === "hero" ? "active" : ""}`} onClick={closeMobileMenu}>Home</a>
+        <a href="/#problem" className={`nav-link d-block py-3 border-bottom ${!isSubPage && activeSection === "problem" ? "active" : ""}`} onClick={closeMobileMenu}>Problem</a>
+        <a href="/#features" className={`nav-link d-block py-3 border-bottom ${!isSubPage && activeSection === "features" ? "active" : ""}`} onClick={closeMobileMenu}>Features</a>
+        <a href="/#languages" className={`nav-link d-block py-3 border-bottom ${!isSubPage && activeSection === "languages" ? "active" : ""}`} onClick={closeMobileMenu}>Languages</a>
+        <a href="/#security" className={`nav-link d-block py-3 border-bottom ${!isSubPage && activeSection === "security" ? "active" : ""}`} onClick={closeMobileMenu}>Security</a>
+        <Link to="/faq" className={`nav-link d-block py-3 border-bottom ${isFaqPage ? "active" : ""}`} onClick={closeMobileMenu}>FAQ</Link>
+        <Link to="/contact" className={`nav-link d-block py-3 border-bottom ${isContactPage ? "active" : ""}`} onClick={closeMobileMenu}>Contact Us</Link>
         <Link to="/privacy-policy" className={`nav-link d-block py-3 ${isPrivacyPage ? "active" : ""}`} onClick={closeMobileMenu}>Privacy Policy</Link>
         <div className="d-flex gap-2 mt-3">
           <button
