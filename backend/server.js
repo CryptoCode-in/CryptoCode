@@ -6,13 +6,14 @@ const cors = require("cors");
 const supabase = require("./src/config/supabase");
 
 const authRoutes = require("./src/routes/authRoutes");
+const submissionRoutes = require("./src/routes/submissionRoutes");
 const executionManager = require("./execution/executionManager");
 const { initSocketServer } = require("./socket/socketHandler");
 
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO server
+// Initialize Socket.IO server 
 initSocketServer(server);
 
 app.use(cors());
@@ -51,6 +52,7 @@ app.get("/profiles", async (req, res) => {
 
 // Authentication routes
 app.use("/auth", authRoutes);
+app.use("/submissions", submissionRoutes);
 
 
 // Code execution route (batch / backwards-compatible)

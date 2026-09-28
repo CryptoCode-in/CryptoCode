@@ -64,7 +64,7 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
   };
 
   // Save File to localStorage
-  const handleSaveFile = () => {
+  const handleSaveFile = async () => {
     const baseName = modalFileName.trim();
     if (!baseName) {
       setSaveError("File name cannot be empty");
@@ -106,7 +106,36 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
     } else {
       updatedFiles = [newFileObj, ...savedFiles];
     }
+const currentUser = JSON.parse(
+  localStorage.getItem("cryptocode_user")
+);
+console.log("CURRENT USER:", currentUser);
 
+try {
+  const response = await fetch("http://localhost:5000/submissions/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_id: currentUser?.id,
+      source_code: code,
+      language: lang,
+      status: "saved",
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Save submission failed:", data);
+    return;
+  }
+
+  console.log("Submission saved to DB:", data);
+} catch (error) {
+  console.error("Save submission error:", error);
+}
     localStorage.setItem("cryptocode_saved_files", JSON.stringify(updatedFiles));
     
     setFileName(finalFileName);

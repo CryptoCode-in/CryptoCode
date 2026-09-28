@@ -24,20 +24,46 @@ function CodeHistory({ onOpenFile }) {
   const [renameError, setRenameError] = useState("");
 
   // Load files from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("cryptocode_saved_files");
-    if (saved) {
-      try {
-        setFiles(JSON.parse(saved));
-      } catch (e) {
+ useEffect(() => {
+  const fetchSubmissions = async () => {
+    try {
+      const currentUser = JSON.parse(
+        localStorage.getItem("cryptocode_user")
+      );
+
+      if (!currentUser?.id) {
         setFiles([]);
-        localStorage.setItem("cryptocode_saved_files", JSON.stringify([]));
+        return;
       }
-    } else {
+
+      const response = await fetch(
+        `http://localhost:5000/submissions?user_id=${currentUser.id}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Failed to fetch submissions:", data);
+        setFiles([]);
+        return;
+      }
+
+      const formattedFiles = data.submissions.map((submission) => ({
+        name: `submission-${submission.id}`,
+        lang: submission.language,
+        code: submission.source_code,
+        savedAt: submission.submitted_at,
+      }));
+
+      setFiles(formattedFiles);
+    } catch (error) {
+      console.error("Fetch submissions error:", error);
       setFiles([]);
-      localStorage.setItem("cryptocode_saved_files", JSON.stringify([]));
     }
-  }, []);
+  };
+
+  fetchSubmissions();
+}, []);
 
   const saveFilesToStorage = (updatedFiles) => {
     setFiles(updatedFiles);
