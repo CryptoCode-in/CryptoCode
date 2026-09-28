@@ -24,7 +24,7 @@ import Practicals from "./Practicals";
 // Utils
 import { mockTeacherData } from "../../utils/mockTeacherData";
 
-function TeacherDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
+function TeacherDashboard({ currentUser, onLogout }) {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -49,12 +49,6 @@ function TeacherDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
   const [allSubmissions, setAllSubmissions] = useState([]);
 
   useEffect(() => {
-    // Force dark theme as CryptoCode default if not active
-    const root = document.getElementById("htmlRoot") || document.documentElement;
-    if (!root.classList.contains("light") && !isDark) {
-      // In case theme was toggled light, respect it, otherwise default dark
-    }
-
     setActivities(mockTeacherData.getActivities());
     setWeeklyTrend(mockTeacherData.getAnalytics().weeklyTrend);
     setAllSubmissions(mockTeacherData.getSubmissions());
@@ -392,7 +386,7 @@ function TeacherDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
 
             {/* View 9: Settings panel */}
             {activeSection === "settings" && (
-              <Settings isDark={isDark} onToggleTheme={onToggleTheme} />
+              <Settings />
             )}
 
           </AnimatePresence>

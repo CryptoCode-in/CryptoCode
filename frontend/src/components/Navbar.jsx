@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import logob from "../assets/images/logob.png";
 import logow from "../assets/images/logow.png";
 
-function Navbar({ isDark, onToggleTheme, onOpenPanel }) {
+function Navbar({ onOpenPanel }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const location = useLocation();
@@ -84,16 +84,6 @@ function Navbar({ isDark, onToggleTheme, onOpenPanel }) {
               <Link to="/privacy-policy" className={`nav-link ${isPrivacyPage ? "active" : ""}`}>Policy</Link>
             </div>
             <div className="d-flex align-items-center gap-2">
-              <button
-                className="boc d-flex align-items-center justify-content-center"
-                id="thbtn"
-                style={{ width: "38px", height: "38px", padding: 0, borderRadius: "12px" }}
-                aria-label="Toggle theme"
-                onClick={onToggleTheme}
-              >
-                <i className="fa-solid fa-sun" id="suni" style={{ display: isDark ? "none" : "" }}></i>
-                <i className="fa-solid fa-moon" id="mooni" style={{ display: isDark ? "" : "none" }}></i>
-              </button>
               <button
                 className="boc px-3 py-2 d-none d-sm-flex align-items-center gap-1"
                 onClick={() => onOpenPanel("login")}

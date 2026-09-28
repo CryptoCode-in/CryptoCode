@@ -14,25 +14,14 @@ function App() {
       return null;
     }
   });
-  
-  const [isDark, setIsDark] = useState(() => {
-    try {
-      const saved = localStorage.getItem("cryptocode_theme");
-      return saved !== "light";
-    } catch {
-      return true;
-    }
-  });
 
   useEffect(() => {
     const root = document.getElementById("htmlRoot") || document.documentElement;
-    root.classList.toggle("light", !isDark);
-    localStorage.setItem("cryptocode_theme", isDark ? "dark" : "light");
-  }, [isDark]);
-
-  const handleToggleTheme = () => {
-    setIsDark(prev => !prev);
-  };
+    root.classList.remove("light");
+    if (localStorage.getItem("cryptocode_theme") === "light") {
+      localStorage.removeItem("cryptocode_theme");
+    }
+  }, []);
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
@@ -58,8 +47,6 @@ function App() {
               )
             ) : (
               <Landing
-                isDark={isDark}
-                onToggleTheme={handleToggleTheme}
                 onLoginSuccess={handleLoginSuccess}
               />
             )
@@ -75,8 +62,6 @@ function App() {
                 <StudentDashboard
                   currentUser={currentUser}
                   onLogout={handleLogout}
-                  isDark={isDark}
-                  onToggleTheme={handleToggleTheme}
                 />
               )
             ) : (
@@ -92,8 +77,6 @@ function App() {
                 <TeacherDashboard
                   currentUser={currentUser}
                   onLogout={handleLogout}
-                  isDark={isDark}
-                  onToggleTheme={handleToggleTheme}
                 />
               ) : (
                 <Navigate to="/dashboard" replace />
@@ -107,8 +90,6 @@ function App() {
           path="/privacy-policy"
           element={
             <PrivacyPolicy
-              isDark={isDark}
-              onToggleTheme={handleToggleTheme}
               onLoginSuccess={handleLoginSuccess}
             />
           }

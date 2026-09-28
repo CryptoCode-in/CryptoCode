@@ -70,10 +70,6 @@ function Team() {
           opacity: 0.06;
           pointer-events: none;
         }
-        html.light .team-orb {
-          opacity: 0.025;
-          filter: blur(110px);
-        }
         .team-orb-1 {
           top: 15%;
           left: 10%;
@@ -124,12 +120,6 @@ function Team() {
           box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
         }
 
-        html.light .team-card {
-          background: rgba(255, 255, 255, 0.65);
-          border: 1px solid rgba(124, 58, 237, 0.08);
-          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-        }
-
         /* Glow border outline overlay */
         .team-card::after {
           content: '';
@@ -150,10 +140,6 @@ function Team() {
           transform: translateY(-10px);
           border-color: transparent;
           box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.25), 0 0 25px rgba(139, 92, 246, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
-        }
-
-        html.light .team-card:hover {
-          box-shadow: 0 20px 40px -15px rgba(124, 58, 237, 0.12), 0 0 25px rgba(124, 58, 237, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
         }
 
         .team-card:hover::after {
@@ -223,11 +209,6 @@ function Team() {
           letter-spacing: 0.02em;
           transition: all 0.3s ease;
           display: inline-block;
-        }
-
-        html.light .team-role-badge {
-          background: rgba(124, 58, 237, 0.05);
-          border: 1px solid rgba(124, 58, 237, 0.1);
         }
 
         .team-card:hover .team-role-badge {

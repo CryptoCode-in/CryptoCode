@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import LoginModal from "../components/LoginModal";
 
-function PrivacyPolicy({ isDark, onToggleTheme, onLoginSuccess }) {
+function PrivacyPolicy({ onLoginSuccess }) {
   const [authModalOpen, setAuthModalOpen] = useState(null);
   const [activeDocSection, setActiveDocSection] = useState("collection");
 
@@ -95,7 +95,7 @@ function PrivacyPolicy({ isDark, onToggleTheme, onLoginSuccess }) {
   return (
     <div style={{ background: "var(--bg)", minHeight: "100vh", color: "var(--tx)" }}>
       {/* Global Navbar */}
-      <Navbar isDark={isDark} onToggleTheme={onToggleTheme} onOpenPanel={openPanel} />
+      <Navbar onOpenPanel={openPanel} />
 
       {/* Main Privacy Policy Page Wrapper */}
       <section className="sp" style={{ paddingTop: "140px", paddingBottom: "80px", position: "relative", overflow: "hidden" }}>

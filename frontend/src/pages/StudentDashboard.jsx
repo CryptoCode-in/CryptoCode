@@ -13,7 +13,7 @@ import {
   Trash2, History, Layout, Bell, Calendar, Lock, LogOut, User
 } from "lucide-react";
 
-function StudentDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
+function StudentDashboard({ currentUser, onLogout }) {
   const [activeSection, setActiveSection] = useState("dashboard");
 
   // Lifted editor states for sharing file load/save across pages
@@ -557,28 +557,6 @@ function StudentDashboard({ currentUser, onLogout, isDark, onToggleTheme }) {
                       <Palette size={16} />
                       <span>Appearance</span>
                     </h5>
-                    
-                    <div className="setting-row-item">
-                      <div className="setting-left">
-                        <div className="setting-icon-wrapper">
-                          <Moon size={16} />
-                        </div>
-                        <div className="setting-info">
-                          <span className="setting-label">Dark Mode</span>
-                          <span className="setting-desc">Switch between dark and light theme</span>
-                        </div>
-                      </div>
-                      <div className="setting-right">
-                        <label className="toggle-switch">
-                          <input
-                            type="checkbox"
-                            checked={isDark}
-                            onChange={onToggleTheme}
-                          />
-                          <span className="toggle-thumb"></span>
-                        </label>
-                      </div>
-                    </div>
 
                     <div className="setting-row-item">
                       <div className="setting-left">

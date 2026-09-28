@@ -12,7 +12,7 @@ import Contact from "../components/Contact";
 import Footer from "../components/Footer";
 import LoginModal from "../components/LoginModal";
 
-function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
+function Landing({ onLoginSuccess }) {
   const [authModalOpen, setAuthModalOpen] = useState(null); // null, 'login', 'signup'
 
   useEffect(() => {
@@ -46,7 +46,7 @@ function Landing({ isDark, onToggleTheme, onLoginSuccess }) {
 
   return (
     <div id="landing">
-      <Navbar isDark={isDark} onToggleTheme={onToggleTheme} onOpenPanel={openPanel} />
+      <Navbar onOpenPanel={openPanel} />
       <Hero onOpenPanel={openPanel} />
       <Problem />
       <Features />

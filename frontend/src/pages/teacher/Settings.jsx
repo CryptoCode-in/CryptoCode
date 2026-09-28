@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Moon, Bell, Mail, Lock, User, Layout } from "lucide-react";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
-function Settings({ isDark, onToggleTheme }) {
+function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [submissionAlerts, setSubmissionAlerts] = useState(false);
@@ -13,33 +13,6 @@ function Settings({ isDark, onToggleTheme }) {
       description="Configure user preferences, system alerts, and security settings."
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        
-        {/* Section 1: Appearance */}
-        <div className="setting-section-card" style={{ background: "var(--sf)", border: "1px solid var(--bd)", borderRadius: "18px", padding: "24px" }}>
-          <h5 className="setting-section-title mb-4 d-flex align-items-center gap-2" style={{ fontSize: "1rem", fontWeight: 700, color: "#fff", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
-            <Moon size={16} style={{ color: "var(--pur)" }} />
-            <span>Appearance</span>
-          </h5>
-
-          <div className="setting-row-item d-flex align-items-center justify-content-between" style={{ padding: "8px 0" }}>
-            <div className="setting-left">
-              <div className="setting-info">
-                <span className="setting-label" style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--tx)", display: "block" }}>Dark Theme</span>
-                <span className="setting-desc" style={{ fontSize: "0.78rem", color: "var(--tx3)" }}>Toggle dark mode interface elements</span>
-              </div>
-            </div>
-            <div className="setting-right">
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={isDark}
-                  onChange={onToggleTheme}
-                />
-                <span className="toggle-thumb"></span>
-              </label>
-            </div>
-          </div>
-        </div>
 
         {/* Section 2: Notifications */}
         <div className="setting-section-card" style={{ background: "var(--sf)", border: "1px solid var(--bd)", borderRadius: "18px", padding: "24px" }}>
