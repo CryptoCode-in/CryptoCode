@@ -1,4 +1,100 @@
-function ProgressCards() {
+import { useState, useEffect } from "react";
+  function ProgressCards() {
+  const [submissions, setSubmissions] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [languageCounts, setLanguageCounts] = useState({});
+ const maxCount = Math.max(
+  ...chartData.map((item) => item.count),
+  1
+);
+
+const chartMax = Math.max(
+  6,
+  Math.ceil(maxCount / 3) * 3
+);
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const currentUser = JSON.parse(
+          localStorage.getItem("cryptocode_user")
+        );
+
+        if (!currentUser?.id) {
+          setSubmissions([]);
+          return;
+        }
+
+        const response = await fetch(
+          `http://localhost:5000/submissions?user_id=${currentUser.id}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error("Failed to fetch submissions:", data);
+          return;
+        }
+
+        console.log("PROGRESS SUBMISSIONS:", data.submissions);
+        console.log(
+  "SUBMISSION DATES:",
+  (data.submissions || []).map((submission) => submission.submitted_at)
+);
+const monthlyCounts = {};
+
+(data.submissions || []).forEach((submission) => {
+  const date = new Date(submission.submitted_at);
+  const month = date.toLocaleString("en-US", {
+    month: "short",
+  });
+
+  monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
+});
+const languageCountData = {};
+
+(data.submissions || []).forEach((submission) => {
+  const language = submission.language;
+
+  if (!language) return;
+
+  languageCountData[language] =
+    (languageCountData[language] || 0) + 1;
+});
+
+console.log("LANGUAGE COUNTS:", languageCountData);
+
+setLanguageCounts(languageCountData);
+console.log("MONTHLY COUNTS:", monthlyCounts);
+const monthOrder = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+const monthlyData = monthOrder.map((month) => ({
+  month,
+  count: monthlyCounts[month] || 0,
+}));
+
+console.log("MONTHLY DATA:", monthlyData);
+const currentMonthIndex = new Date().getMonth();
+
+const latestChartData = Array.from({ length: 6 }, (_, i) => {
+  const index = (currentMonthIndex - 5 + i + 12) % 12;
+  return monthlyData[index];
+});
+
+console.log("CHART DATA:", latestChartData);
+
+setChartData(latestChartData);
+        setSubmissions(data.submissions || []);
+      } catch (error) {
+        console.error("Progress fetch error:", error);
+      }
+    };
+
+    fetchSubmissions();
+  }, []);
+
   return (
     <div id="progress-section" style={{ marginBottom: "32px" }}>
       {/* Title Header */}
@@ -34,78 +130,108 @@ function ProgressCards() {
 
                 {/* Area Fill */}
                 <path
-                  d="M 60 181.7 L 200 142 L 340 164.7 L 480 125 L 620 96.7 L 760 68.3 L 760 210 L 60 210 Z"
-                  fill="url(#gradient-area)"
-                />
+  d={`${chartData
+    .map((item, idx) => {
+      const x = 60 + (idx * 140);
+
+      const maxValue = chartMax;
+
+      const y = 210 - ((item.count / maxValue) * 170);
+
+      return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ")} L 760 210 L 60 210 Z`}
+  fill="url(#gradient-area)"
+/>
 
                 {/* Trend Line */}
                 <path
-                  d="M 60 181.7 L 200 142 L 340 164.7 L 480 125 L 620 96.7 L 760 68.3"
-                  fill="none"
-                  stroke="var(--pur)"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+  d={chartData
+    .map((item, idx) => {
+      const x = 60 + (idx * 140);
+
+      const maxValue = chartMax;
+
+      const y = 210 - ((item.count / maxValue) * 170);
+
+      return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ")}
+  fill="none"
+  stroke="var(--pur)"
+  strokeWidth="3.5"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+/>
 
                 {/* Points and Values */}
-                {[
-                  { x: 60, y: 181.7, val: 5 },
-                  { x: 200, y: 142, val: 12 },
-                  { x: 340, y: 164.7, val: 8 },
-                  { x: 480, y: 125, val: 15 },
-                  { x: 620, y: 96.7, val: 20 },
-                  { x: 760, y: 68.3, val: 25 }
-                ].map((pt, idx) => (
-                  <g key={idx}>
-                    <circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r="5"
-                      fill="var(--bg)"
-                      stroke="var(--pur)"
-                      strokeWidth="3"
-                    />
-                    <text
-                      x={pt.x}
-                      y={pt.y - 12}
-                      textAnchor="middle"
-                      fill="var(--tx)"
-                      fontSize="0.75rem"
-                      fontWeight="600"
-                    >
-                      {pt.val}
-                    </text>
-                  </g>
-                ))}
+{chartData.map((item, idx) => {
+  const x = 60 + (idx * 140);
+
+  const maxValue = chartMax;
+
+  const y = 210 - ((item.count / maxValue) * 170);
+
+  return (
+    <g key={idx}>
+      <circle
+        cx={x}
+        cy={y}
+        r="5"
+        fill="var(--bg)"
+        stroke="var(--pur)"
+        strokeWidth="3"
+      />
+      <text
+        x={x}
+        y={y - 12}
+        textAnchor="middle"
+        fill="var(--tx)"
+        fontSize="0.75rem"
+        fontWeight="600"
+      >
+        {item.count}
+      </text>
+    </g>
+  );
+})}
+                
 
                 {/* Y-axis Labels */}
-                <text x="45" y="44" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">30</text>
-                <text x="45" y="100.7" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">20</text>
-                <text x="45" y="157.3" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">10</text>
-                <text x="45" y="214" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">0</text>
+         <text x="45" y="44" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">
+  {chartMax}
+</text>
 
-                {/* X-axis Labels */}
-                {[
-                  { label: "Jan", x: 60 },
-                  { label: "Feb", x: 200 },
-                  { label: "Mar", x: 340 },
-                  { label: "Apr", x: 480 },
-                  { label: "May", x: 620 },
-                  { label: "Jun", x: 760 }
-                ].map((m, idx) => (
-                  <text
-                    key={idx}
-                    x={m.x}
-                    y="232"
-                    textAnchor="middle"
-                    fill="var(--tx2)"
-                    fontSize="0.75rem"
-                    fontWeight="600"
-                  >
-                    {m.label}
-                  </text>
-                ))}
+<text x="45" y="100.7" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">
+  {Math.round((chartMax * 2) / 3)}
+</text>
+
+<text x="45" y="157.3" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">
+  {Math.round(chartMax / 3)}
+</text>
+
+<text x="45" y="214" textAnchor="end" fill="var(--tx3)" fontSize="0.72rem">
+  0
+</text>
+
+               {/* X-axis Labels */}
+{chartData.map((item, idx) => {
+  const x = 60 + (idx * 140);
+
+  return (
+    <text
+      key={idx}
+      x={x}
+      y="232"
+      textAnchor="middle"
+      fill="var(--tx2)"
+      fontSize="0.75rem"
+      fontWeight="600"
+    >
+      {item.month}
+    </text>
+  );
+})}
               </svg>
             </div>
           </div>
@@ -122,18 +248,26 @@ function ProgressCards() {
             </h5>
             <div className="d-flex flex-column gap-3">
               {[
-                { lang: "C Programming", completed: 12, total: 15, color: "#3b82f6" },
-                { lang: "C++ Programming", completed: 8, total: 12, color: "#8b5cf6" },
-                { lang: "Java Programming", completed: 10, total: 16, color: "#f59e0b" },
-                { lang: "Python Programming", completed: 14, total: 18, color: "#10b981" }
-              ].map((item, idx) => {
-                const percentage = Math.round((item.completed / item.total) * 100);
+  { key: "c", lang: "C Programming", color: "#3b82f6" },
+  { key: "cpp", lang: "C++ Programming", color: "#8b5cf6" },
+  { key: "java", lang: "Java Programming", color: "#f59e0b" },
+  { key: "python", lang: "Python Programming", color: "#10b981" }
+].map((item, idx) => {
+  const count = languageCounts[item.key] || 0;
+
+  const maxCount = Math.max(
+    ...Object.values(languageCounts),
+    1
+  );
+
+
+const percentage = Math.round((count / maxCount) * 100);
                 return (
                   <div key={idx}>
                     <div className="d-flex justify-content-between align-items-center mb-1.5" style={{ fontSize: "0.82rem" }}>
                       <span style={{ fontWeight: 600, color: "var(--tx)" }}>{item.lang}</span>
                       <span style={{ color: "var(--tx2)" }}>
-                        {item.completed} / {item.total} Completed ({percentage}%)
+{count} submissions
                       </span>
                     </div>
                     <div style={{ height: "8px", background: "var(--bg3)", borderRadius: "4px", overflow: "hidden" }}>
