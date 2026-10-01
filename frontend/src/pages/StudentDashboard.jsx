@@ -391,6 +391,7 @@ function StudentDashboard({ currentUser, onLogout }) {
                 animate="visible"
                 exit="exit"
                 variants={sectionVariants}
+                className="dashboard-inner-container"
               >
                 <ProgressCards />
               </motion.div>
@@ -403,8 +404,12 @@ function StudentDashboard({ currentUser, onLogout }) {
                 animate="visible"
                 exit="exit"
                 variants={sectionVariants}
+                className="dashboard-inner-container"
               >
-                <ProfileCard currentUser={currentUser} />
+                <ProfileCard 
+                  currentUser={currentUser} 
+                  onNavigateSettings={() => setActiveSection("settings")}
+                />
               </motion.div>
             )}
 

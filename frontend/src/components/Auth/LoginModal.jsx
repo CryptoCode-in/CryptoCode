@@ -231,20 +231,23 @@ console.log("SEMESTER VALUE:", signupData.semester);
         return;
       }
 
-      localStorage.setItem(
-        "cryptocode_user",
-        JSON.stringify({
-          name,
-          email,
-          role: signupData.role,
-        })
-      );
+      const createdProfile = Array.isArray(data.user) ? data.user[0] : data.user;
+      const userObj = {
+        id: createdProfile?.user_id || createdProfile?.id,
+        name: createdProfile?.name || name,
+        email: createdProfile?.email || email,
+        role: createdProfile?.role || signupData.role,
+        rollNo: createdProfile?.roll_no || signupData.roll?.trim() || "",
+        year: createdProfile?.year || signupData.year?.trim() || "",
+        semester: createdProfile?.semester || signupData.semester?.trim() || "",
+        branch: createdProfile?.branch || signupData.branch?.trim() || "",
+        college: createdProfile?.college || signupData.college?.trim() || "",
+        department: createdProfile?.department || signupData.department?.trim() || "",
+        subjects: createdProfile?.subjects || signupData.subjects || [],
+      };
 
-      onLoginSuccess({
-        name,
-        email,
-        role: signupData.role,
-      });
+      localStorage.setItem("cryptocode_user", JSON.stringify(userObj));
+      onLoginSuccess(userObj);
       onClose();
     } catch (error) {
       console.error(error);
