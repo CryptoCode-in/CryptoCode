@@ -70,6 +70,57 @@ const saveSubmission = async (req, res) => {
         });
     }
 };
+const updateSubmission = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            source_code,
+            language,
+            status
+        } = req.body;
+
+        if (!id || !source_code || !language) {
+            return res.status(400).json({
+                success: false,
+                message: "id, source_code and language are required"
+            });
+        }
+
+        const { data: submission, error: submissionError } =
+            await supabaseAdmin
+                .from("submissions")
+                .update({
+                    source_code,
+                    language,
+                    status: status || "saved"
+                })
+                .eq("id", id)
+                .select()
+                .single();
+
+        if (submissionError) {
+            console.error("Submission update error:", submissionError);
+
+            return res.status(500).json({
+                success: false,
+                message: "Failed to update submission"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            submission: submission
+        });
+
+    } catch (error) {
+        console.error("Update submission error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
 const getSubmissions = async (req, res) => {
     try {
         const { user_id } = req.query;
@@ -127,5 +178,6 @@ const getSubmissions = async (req, res) => {
 };
 module.exports = {
     saveSubmission,
+    updateSubmission,
     getSubmissions
 };

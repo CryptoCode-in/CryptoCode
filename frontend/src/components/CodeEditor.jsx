@@ -27,7 +27,15 @@ const langNameMap = {
   java: "Java"
 };
 
-function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
+function CodeEditor({
+  lang,
+  setLang,
+  code,
+  setCode,
+  fileName,
+  setFileName,
+  submissionId
+}) {
   const [isRunning, setIsRunning] = useState(false);
 
   // Modal State
@@ -35,6 +43,7 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
   const [modalFileName, setModalFileName] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Synchronize initial modal file name when opening
   const handleOpenSaveModal = () => {
@@ -64,12 +73,15 @@ function CodeEditor({ lang, setLang, code, setCode, fileName, setFileName }) {
   };
 
   // Save File to localStorage
-  const handleSaveFile = async () => {
-    const baseName = modalFileName.trim();
+const handleSaveFile = async () => {
+  if (isSaving) return;
+
+  const baseName = modalFileName.trim();
     if (!baseName) {
       setSaveError("File name cannot be empty");
       return;
     }
+    setIsSaving(true);
 
     const ext = extMap[lang];
     let finalFileName = baseName;
@@ -110,10 +122,15 @@ const currentUser = JSON.parse(
   localStorage.getItem("cryptocode_user")
 );
 console.log("CURRENT USER:", currentUser);
-
 try {
-  const response = await fetch("http://localhost:5000/submissions/save", {
-    method: "POST",
+  const url = submissionId
+    ? `http://localhost:5000/submissions/${submissionId}`
+    : "http://localhost:5000/submissions/save";
+
+  const method = submissionId ? "PUT" : "POST";
+
+  const response = await fetch(url, {
+    method,
     headers: {
       "Content-Type": "application/json",
     },
@@ -131,12 +148,22 @@ try {
     console.error("Save submission failed:", data);
     return;
   }
-
-  console.log("Submission saved to DB:", data);
+if (!submissionId && data.submission?.id) {
+  setSubmissionId(data.submission.id);
+}
+  console.log(
+    submissionId
+      ? "Submission updated in DB:"
+      : "Submission saved to DB:",
+    data
+  );
 } catch (error) {
   console.error("Save submission error:", error);
+} finally {
+  setIsSaving(false);
 }
-    localStorage.setItem("cryptocode_saved_files", JSON.stringify(updatedFiles));
+
+localStorage.setItem("cryptocode_saved_files", JSON.stringify(updatedFiles));
     
     setFileName(finalFileName);
     setSaveSuccess(true);
@@ -324,8 +351,8 @@ try {
           {/* Buttons Stack */}
           <div className="d-flex flex-column gap-2.5 w-100">
             <button
-              onClick={handleOpenSaveModal}
-              disabled={isRunning}
+  onClick={handleOpenSaveModal}
+  disabled={isRunning || isSaving}
               className="btn btn-secondary w-100 py-2.5"
               style={{
                 fontSize: "0.85rem",

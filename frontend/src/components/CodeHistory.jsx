@@ -48,12 +48,13 @@ function CodeHistory({ onOpenFile }) {
         return;
       }
 
-      const formattedFiles = data.submissions.map((submission) => ({
-        name: `submission-${submission.id}`,
-        lang: submission.language,
-        code: submission.source_code,
-        savedAt: submission.submitted_at,
-      }));
+const formattedFiles = data.submissions.map((submission) => ({
+  id: submission.id,
+  name: `submission-${submission.id}`,
+  lang: submission.language,
+  code: submission.source_code,
+  savedAt: submission.submitted_at,
+}));
 
       setFiles(formattedFiles);
     } catch (error) {

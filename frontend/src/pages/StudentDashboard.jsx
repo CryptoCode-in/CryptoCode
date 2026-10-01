@@ -30,6 +30,7 @@ function StudentDashboard({ currentUser, onLogout }) {
   const [editorLang, setEditorLang] = useState(initialEditorState.lang);
   const [editorCode, setEditorCode] = useState(initialEditorState.code);
   const [editorFileName, setEditorFileName] = useState(initialEditorState.name);
+  const [editorSubmissionId, setEditorSubmissionId] = useState(null);
 
   // Settings States
   const [accentColor, setAccentColor] = useState(() => {
@@ -350,13 +351,15 @@ function StudentDashboard({ currentUser, onLogout }) {
                 style={{ width: "100%" }}
               >
                 <CodeEditor 
-                  lang={editorLang}
-                  setLang={setEditorLang}
-                  code={editorCode}
-                  setCode={setEditorCode}
-                  fileName={editorFileName}
-                  setFileName={setEditorFileName}
-                />
+  lang={editorLang}
+  setLang={setEditorLang}
+  code={editorCode}
+  setCode={setEditorCode}
+  fileName={editorFileName}
+  setFileName={setEditorFileName}
+  submissionId={editorSubmissionId}
+  setSubmissionId={setEditorSubmissionId}
+/>
               </motion.div>
             )}
 
@@ -370,13 +373,14 @@ function StudentDashboard({ currentUser, onLogout }) {
                 style={{ width: "100%" }}
               >
                 <CodeHistory 
-                  onOpenFile={(file) => {
-                    setEditorLang(file.lang);
-                    setEditorCode(file.code);
-                    setEditorFileName(file.name);
-                    setActiveSection("editor");
-                  }}
-                />
+  onOpenFile={(file) => {
+    setEditorLang(file.lang);
+    setEditorCode(file.code);
+    setEditorFileName(file.name);
+    setEditorSubmissionId(file.id);
+    setActiveSection("editor");
+  }}
+/>
               </motion.div>
             )}
 
