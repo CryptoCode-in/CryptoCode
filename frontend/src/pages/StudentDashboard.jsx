@@ -387,6 +387,7 @@ function StudentDashboard({ currentUser, onLogout }) {
                 animate="visible"
                 exit="exit"
                 variants={sectionVariants}
+                className="dashboard-inner-container"
               >
                 <ProgressCards />
               </motion.div>
