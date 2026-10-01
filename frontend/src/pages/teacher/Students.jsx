@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Search, Filter, X } from "lucide-react";
 import StudentTable from "../../components/teacher/StudentTable";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
-import { mockTeacherData } from "../../utils/mockTeacherData";
 
 function Students({ onViewProfile }) {
   const [students, setStudents] = useState([]);
@@ -12,9 +11,38 @@ function Students({ onViewProfile }) {
   const [branch, setBranch] = useState("All");
   const [status, setStatus] = useState("All");
 
-  useEffect(() => {
-    setStudents(mockTeacherData.getStudents());
-  }, []);
+ useEffect(() => {
+  const fetchStudents = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/students");
+      const result = await response.json();
+
+      console.log("API RESULT:", result);
+      console.log("STUDENTS FROM API:", result.students);
+
+      if (result.success) {
+        const formattedStudents = result.students.map((student) => ({
+          id: student.id,
+          name: student.name || "N/A",
+          rollNo: student.roll_no || "N/A",
+          year: student.year || "N/A",
+          branch: student.branch || "N/A",
+          email: student.email || "N/A",
+          subject: "N/A",
+          status: "Active",
+        }));
+
+        console.log("FORMATTED STUDENTS:", formattedStudents);
+
+        setStudents(formattedStudents);
+      }
+    } catch (error) {
+      console.error("Failed to fetch students:", error);
+    }
+  };
+
+  fetchStudents();
+}, []);
 
   const clearFilters = () => {
     setSearch("");
@@ -25,18 +53,24 @@ function Students({ onViewProfile }) {
   };
 
   // Filtering Logic
-  const filteredStudents = students.filter((s) => {
-    const matchesSearch = 
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.rollNo.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesSubject = subject === "All" || s.subject === subject;
-    const matchesYear = year === "All" || s.year === year;
-    const matchesBranch = branch === "All" || s.branch === branch;
-    const matchesStatus = status === "All" || s.status === status;
+ const filteredStudents = students.filter((s) => {
+  const matchesSearch =
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.rollNo.toLowerCase().includes(search.toLowerCase());
 
-    return matchesSearch && matchesSubject && matchesYear && matchesBranch && matchesStatus;
-  });
+  const matchesSubject = true;
+  const matchesYear = year === "All" || s.year === year;
+  const matchesBranch = branch === "All" || s.branch === branch;
+  const matchesStatus = true;
+
+  return (
+    matchesSearch &&
+    matchesSubject &&
+    matchesYear &&
+    matchesBranch &&
+    matchesStatus
+  );
+});
 
   return (
     <TeacherLayout

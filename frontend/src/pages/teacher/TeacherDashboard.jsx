@@ -25,6 +25,8 @@ import Practicals from "./Practicals";
 import { mockTeacherData } from "../../utils/mockTeacherData";
 
 function TeacherDashboard({ currentUser, onLogout }) {
+  console.log("TEACHER CURRENT USER:", currentUser);
+
   const [activeSection, setActiveSection] = useState("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -34,8 +36,10 @@ function TeacherDashboard({ currentUser, onLogout }) {
   const [practicalFilter, setPracticalFilter] = useState(""); // Filter submissions by practical title
   
   // Profile state for header syncing
-  const [profile, setProfile] = useState(() => mockTeacherData.getProfile());
-
+const [profile, setProfile] = useState(() => ({
+  ...mockTeacherData.getProfile(),
+  ...currentUser,
+}));
   // Statistics summaries
   const [stats, setStats] = useState({
     totalStudents: 180,

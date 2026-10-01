@@ -7,6 +7,7 @@ const supabase = require("./src/config/supabase");
 
 const authRoutes = require("./src/routes/authRoutes");
 const submissionRoutes = require("./src/routes/submissionRoutes");
+const studentRoutes = require("./src/routes/studentRoutes");
 const executionManager = require("./execution/executionManager");
 const { initSocketServer } = require("./socket/socketHandler");
 
@@ -27,7 +28,7 @@ app.get("/", (req, res) => {
 
 
 // Profiles
-app.get("/profiles", async (req, res) => {
+app.get("/profiles", async(req, res) => {
     try {
         const { data, error } = await supabase
             .from("profiles")
@@ -53,10 +54,11 @@ app.get("/profiles", async (req, res) => {
 // Authentication routes
 app.use("/auth", authRoutes);
 app.use("/submissions", submissionRoutes);
+app.use("/students", studentRoutes);
 
 
 // Code execution route (batch / backwards-compatible)
-app.post("/api/execute", async (req, res) => {
+app.post("/api/execute", async(req, res) => {
     try {
         const {
             language,
