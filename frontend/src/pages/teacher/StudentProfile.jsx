@@ -1,37 +1,159 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, User, Mail, Calendar, BookOpen, Clock, Activity, CheckCircle2, ShieldAlert, Award, FileCode } from "lucide-react";
-import { AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
-import { mockTeacherData } from "../../utils/mockTeacherData";
+import {
+  ArrowLeft,
+  Mail,
+  Calendar,
+  BookOpen,
+  Award,
+  FileCode,
+} from "lucide-react";
+
+import {
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
+
 import SubmissionCard from "../../components/teacher/SubmissionCard";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
-function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
+function StudentProfile({ studentId, onBack, onViewSubmission }) {
   const [student, setStudent] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (studentRoll) {
-      setStudent(mockTeacherData.getStudentByRoll(studentRoll));
-      setSubmissions(mockTeacherData.getSubmissionsByStudent(studentRoll));
-      setAnalytics(mockTeacherData.getAnalytics());
-    }
-  }, [studentRoll]);
+    const fetchStudentProfile = async () => {
+      console.log("STUDENT ID RECEIVED:", studentId);
 
-  if (!student) {
+      if (!studentId) {
+        console.log("No student ID received");
+        setLoading(false);
+        setError("Student ID was not received.");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+
+        console.log("Fetching student profile for ID:", studentId);
+
+        const response = await fetch(
+          `http://localhost:5000/students/${studentId}`
+        );
+
+        const result = await response.json();
+
+        console.log("STUDENT PROFILE RESULT:", result);
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.message || "Failed to fetch student profile"
+          );
+        }
+
+        setStudent(result.student);
+
+        // These will be connected to backend later
+        setSubmissions([]);
+        setAnalytics(null);
+      } catch (error) {
+        console.error("Failed to fetch student profile:", error);
+        setError(error.message || "Failed to load student profile.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentProfile();
+  }, [studentId]);
+
+  // Loading state
+  if (loading) {
     return (
-      <div style={{ padding: "40px", textAlign: "center", color: "var(--tx2)" }}>
-        Loading student profile...
-      </div>
+      <TeacherLayout
+        title="Student Profile"
+        description="Loading student information..."
+      >
+        <div
+          style={{
+            padding: "60px 20px",
+            textAlign: "center",
+            color: "var(--tx2)",
+          }}
+        >
+          Loading student profile...
+        </div>
+      </TeacherLayout>
     );
   }
 
-  // Fallbacks for charts
+  // Error state
+  if (error || !student) {
+    return (
+      <TeacherLayout
+        title="Student Profile"
+        description="Unable to load student information."
+        actions={
+          <button
+            onClick={onBack}
+            className="boc d-inline-flex align-items-center gap-2 px-3 py-2"
+            style={{
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+            }}
+          >
+            <ArrowLeft size={14} />
+            <span>Back to Students</span>
+          </button>
+        }
+      >
+        <div
+          className="cyber-card"
+          style={{
+            padding: "40px",
+            textAlign: "center",
+            color: "var(--tx2)",
+          }}
+        >
+          <p style={{ marginBottom: "20px" }}>
+            {error || "Student profile not found."}
+          </p>
+
+          <button
+            onClick={onBack}
+            className="boc"
+            style={{
+              padding: "8px 16px",
+              borderRadius: "8px",
+              fontWeight: 600,
+            }}
+          >
+            Back to Students
+          </button>
+        </div>
+      </TeacherLayout>
+    );
+  }
+
+  // Analytics fallbacks
   const trendData = analytics?.weeklyTrend || [];
   const langData = analytics?.languageUsage || [];
   const statusData = analytics?.submissionStatus || [];
 
-  const userInitial = student.name ? student.name[0].toUpperCase() : "S";
+  const userInitial = student.name
+    ? student.name[0].toUpperCase()
+    : "S";
 
   return (
     <TeacherLayout
@@ -41,22 +163,26 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
         <button
           onClick={onBack}
           className="boc d-inline-flex align-items-center gap-2 px-3 py-2"
-          style={{ borderRadius: "8px", fontSize: "0.85rem", fontWeight: 600 }}
+          style={{
+            borderRadius: "8px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+          }}
         >
           <ArrowLeft size={14} />
           <span>Back to Students</span>
         </button>
       }
     >
-
-      {/* Main Grid */}
       <div className="row g-4">
-        {/* Left Side: Profile Details & Submission History */}
+
+        {/* LEFT SIDE */}
         <div className="col-12 col-lg-5">
           <div className="d-flex flex-column gap-4">
-            
-            {/* Profile Card */}
+
+            {/* PROFILE CARD */}
             <div className="cyber-card" style={{ padding: "28px" }}>
+
               <div className="d-flex align-items-center gap-3 mb-4">
                 <div
                   style={{
@@ -70,15 +196,24 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
                     fontSize: "1.8rem",
                     fontWeight: 700,
                     color: "#fff",
-                    boxShadow: "0 0 15px rgba(139, 92, 246, 0.3)"
+                    boxShadow: "0 0 15px rgba(139, 92, 246, 0.3)",
                   }}
                 >
                   {userInitial}
                 </div>
+
                 <div>
-                  <h4 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-                    {student.name}
+                  <h4
+                    style={{
+                      fontSize: "1.35rem",
+                      fontWeight: 700,
+                      color: "#fff",
+                      margin: 0,
+                    }}
+                  >
+                    {student.name || "N/A"}
                   </h4>
+
                   <span
                     style={{
                       fontFamily: "'JetBrains Mono', monospace",
@@ -89,144 +224,561 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
                       padding: "2px 8px",
                       borderRadius: "6px",
                       marginTop: "4px",
-                      display: "inline-block"
+                      display: "inline-block",
                     }}
                   >
-                    {student.rollNo}
+                    {student.rollNo || "N/A"}
                   </span>
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", borderTop: "1px solid var(--bd)", paddingTop: "20px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  borderTop: "1px solid var(--bd)",
+                  paddingTop: "20px",
+                }}
+              >
+
+                {/* Branch */}
                 <div className="d-flex align-items-center gap-2">
-                  <BookOpen size={16} style={{ color: "var(--tx3)", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx2)", width: "100px" }}>Branch</span>
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx)", fontWeight: 600 }}>{student.branch} Engineering</span>
+                  <BookOpen
+                    size={16}
+                    style={{ color: "var(--tx3)", flexShrink: 0 }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx2)",
+                      width: "100px",
+                    }}
+                  >
+                    Branch
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {student.branch || "N/A"}
+                  </span>
                 </div>
+
+                {/* Year */}
                 <div className="d-flex align-items-center gap-2">
-                  <Award size={16} style={{ color: "var(--tx3)", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx2)", width: "100px" }}>Year</span>
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx)", fontWeight: 600 }}>{student.year}</span>
+                  <Award
+                    size={16}
+                    style={{ color: "var(--tx3)", flexShrink: 0 }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx2)",
+                      width: "100px",
+                    }}
+                  >
+                    Year
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {student.year || "N/A"}
+                  </span>
                 </div>
+
+                {/* Semester */}
                 <div className="d-flex align-items-center gap-2">
-                  <FileCode size={16} style={{ color: "var(--tx3)", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx2)", width: "100px" }}>Subject</span>
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx)", fontWeight: 600 }}>{student.subject}</span>
+                  <Award
+                    size={16}
+                    style={{ color: "var(--tx3)", flexShrink: 0 }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx2)",
+                      width: "100px",
+                    }}
+                  >
+                    Semester
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {student.semester || "N/A"}
+                  </span>
                 </div>
+
+                {/* Subject */}
                 <div className="d-flex align-items-center gap-2">
-                  <Mail size={16} style={{ color: "var(--tx3)", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx2)", width: "100px" }}>Email</span>
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx)", fontWeight: 600, wordBreak: "break-all" }}>{student.email}</span>
+                  <FileCode
+                    size={16}
+                    style={{ color: "var(--tx3)", flexShrink: 0 }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx2)",
+                      width: "100px",
+                    }}
+                  >
+                    Subject
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {student.subject || "N/A"}
+                  </span>
                 </div>
+
+                {/* College */}
                 <div className="d-flex align-items-center gap-2">
-                  <Calendar size={16} style={{ color: "var(--tx3)", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx2)", width: "100px" }}>Joined On</span>
-                  <span style={{ fontSize: "0.85rem", color: "var(--tx)", fontWeight: 600 }}>{student.joinedOn}</span>
+                  <BookOpen
+                    size={16}
+                    style={{ color: "var(--tx3)", flexShrink: 0 }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx2)",
+                      width: "100px",
+                    }}
+                  >
+                    College
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {student.college || "N/A"}
+                  </span>
+                </div>
+
+                {/* Email */}
+                <div className="d-flex align-items-center gap-2">
+                  <Mail
+                    size={16}
+                    style={{ color: "var(--tx3)", flexShrink: 0 }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx2)",
+                      width: "100px",
+                    }}
+                  >
+                    Email
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx)",
+                      fontWeight: 600,
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {student.email || "N/A"}
+                  </span>
+                </div>
+
+                {/* Joined On */}
+                <div className="d-flex align-items-center gap-2">
+                  <Calendar
+                    size={16}
+                    style={{ color: "var(--tx3)", flexShrink: 0 }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx2)",
+                      width: "100px",
+                    }}
+                  >
+                    Joined On
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--tx)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {student.joinedOn || "N/A"}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Submission History Title */}
+            {/* SUBMISSION HISTORY */}
             <div>
               <div className="mb-2">
-                <h5 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                <h5
+                  style={{
+                    fontSize: "1.05rem",
+                    fontWeight: 700,
+                    color: "#fff",
+                    margin: 0,
+                  }}
+                >
                   Submission History
                 </h5>
               </div>
-              <SubmissionCard submissions={submissions} onViewDetails={onViewSubmission} showStudentInfo={false} />
-            </div>
 
+              <SubmissionCard
+                submissions={submissions}
+                onViewDetails={onViewSubmission}
+                showStudentInfo={false}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Right Side: Performance Summary & Charts */}
+        {/* RIGHT SIDE */}
         <div className="col-12 col-lg-7">
           <div className="d-flex flex-column gap-4">
-            
-            {/* Performance Summary Panel */}
+
+            {/* PERFORMANCE SUMMARY */}
             <div className="cyber-card" style={{ padding: "28px" }}>
-              <h5 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#fff", marginBottom: "20px" }}>
+              <h5
+                style={{
+                  fontSize: "1.05rem",
+                  fontWeight: 700,
+                  color: "#fff",
+                  marginBottom: "20px",
+                }}
+              >
                 Performance Summary
               </h5>
-              
+
               <div className="row g-3 mb-4">
+
                 <div className="col-6 col-sm-3">
-                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--bd)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                    <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#fff" }}>{student.problemsSolved}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--tx3)", fontWeight: 600, marginTop: "2px" }}>Problems Solved</div>
+                  <div
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid var(--bd)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "1.6rem",
+                        fontWeight: 800,
+                        color: "#fff",
+                      }}
+                    >
+                      {student.problemsSolved || 0}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--tx3)",
+                        fontWeight: 600,
+                        marginTop: "2px",
+                      }}
+                    >
+                      Problems Solved
+                    </div>
                   </div>
                 </div>
+
                 <div className="col-6 col-sm-3">
-                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--bd)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                    <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#fff" }}>{student.assignmentsCompleted}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--tx3)", fontWeight: 600, marginTop: "2px" }}>Assignments</div>
+                  <div
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid var(--bd)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "1.6rem",
+                        fontWeight: 800,
+                        color: "#fff",
+                      }}
+                    >
+                      {student.assignmentsCompleted || 0}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--tx3)",
+                        fontWeight: 600,
+                        marginTop: "2px",
+                      }}
+                    >
+                      Assignments
+                    </div>
                   </div>
                 </div>
+
                 <div className="col-6 col-sm-3">
-                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--bd)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                    <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--pur)" }}>{student.avgScore}%</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--tx3)", fontWeight: 600, marginTop: "2px" }}>Average Score</div>
+                  <div
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid var(--bd)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "1.6rem",
+                        fontWeight: 800,
+                        color: "var(--pur)",
+                      }}
+                    >
+                      {student.avgScore || 0}%
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--tx3)",
+                        fontWeight: 600,
+                        marginTop: "2px",
+                      }}
+                    >
+                      Average Score
+                    </div>
                   </div>
                 </div>
+
                 <div className="col-6 col-sm-3">
-                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--bd)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                    <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#10b981" }}>{student.acceptanceRate}%</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--tx3)", fontWeight: 600, marginTop: "2px" }}>Acceptance Rate</div>
+                  <div
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid var(--bd)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "1.6rem",
+                        fontWeight: 800,
+                        color: "#10b981",
+                      }}
+                    >
+                      {student.acceptanceRate || 0}%
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--tx3)",
+                        fontWeight: 600,
+                        marginTop: "2px",
+                      }}
+                    >
+                      Acceptance Rate
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="d-flex align-items-center gap-2" style={{ fontSize: "0.8rem", color: "var(--tx2)" }}>
-                <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }}></span>
-                <span>Last Active: <strong>{student.lastActive}</strong></span>
+              <div
+                className="d-flex align-items-center gap-2"
+                style={{
+                  fontSize: "0.8rem",
+                  color: "var(--tx2)",
+                }}
+              >
+                <span
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "50%",
+                    background: "#10b981",
+                    boxShadow: "0 0 8px #10b981",
+                  }}
+                />
+
+                <span>
+                  Last Active:{" "}
+                  <strong>{student.lastActive || "N/A"}</strong>
+                </span>
               </div>
             </div>
 
-            {/* Charts section */}
+            {/* ANALYTICS */}
             <div className="cyber-card" style={{ padding: "28px" }}>
-              <h5 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#fff", marginBottom: "20px" }}>
+              <h5
+                style={{
+                  fontSize: "1.05rem",
+                  fontWeight: 700,
+                  color: "#fff",
+                  marginBottom: "20px",
+                }}
+              >
                 Analytics Overview
               </h5>
 
               <div className="row g-3">
-                {/* Submission Trend Chart */}
+
+                {/* Submission Trend */}
                 <div className="col-12 mb-4">
-                  <label style={{ fontSize: "0.82rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "12px" }}>
+                  <label
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--tx2)",
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: "12px",
+                    }}
+                  >
                     Submission Trend (This Week)
                   </label>
-                  <div style={{ width: "100%", height: "180px" }}>
-                    {trendData && trendData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
+
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "180px",
+                    }}
+                  >
+                    {trendData.length > 0 ? (
+                      <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                      >
                         <AreaChart data={trendData}>
                           <defs>
-                            <linearGradient id="gradTrend" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="var(--pur)" stopOpacity={0.4}/>
-                              <stop offset="95%" stopColor="var(--pur)" stopOpacity={0}/>
+                            <linearGradient
+                              id="gradTrend"
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="1"
+                            >
+                              <stop
+                                offset="5%"
+                                stopColor="var(--pur)"
+                                stopOpacity={0.4}
+                              />
+
+                              <stop
+                                offset="95%"
+                                stopColor="var(--pur)"
+                                stopOpacity={0}
+                              />
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="name" stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                          <YAxis stroke="var(--tx3)" fontSize={10} tickLine={false} />
-                          <Tooltip contentStyle={{ background: "var(--bg3)", border: "1px solid var(--bd)", borderRadius: "8px", color: "var(--tx)" }} />
-                          <Area type="monotone" dataKey="submissions" stroke="var(--pur)" strokeWidth={2} fillOpacity={1} fill="url(#gradTrend)" />
+
+                          <XAxis
+                            dataKey="name"
+                            stroke="var(--tx3)"
+                            fontSize={10}
+                            tickLine={false}
+                          />
+
+                          <YAxis
+                            stroke="var(--tx3)"
+                            fontSize={10}
+                            tickLine={false}
+                          />
+
+                          <Tooltip
+                            contentStyle={{
+                              background: "var(--bg3)",
+                              border: "1px solid var(--bd)",
+                              borderRadius: "8px",
+                              color: "var(--tx)",
+                            }}
+                          />
+
+                          <Area
+                            type="monotone"
+                            dataKey="submissions"
+                            stroke="var(--pur)"
+                            strokeWidth={2}
+                            fillOpacity={1}
+                            fill="url(#gradTrend)"
+                          />
                         </AreaChart>
                       </ResponsiveContainer>
                     ) : (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.85rem" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          height: "100%",
+                          color: "var(--tx3)",
+                          fontSize: "0.85rem",
+                        }}
+                      >
                         No trend data available
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Donut Charts grid */}
+                {/* Language Usage */}
                 <div className="col-12 col-sm-6">
-                  <label style={{ fontSize: "0.82rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "12px" }}>
+                  <label
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--tx2)",
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: "12px",
+                    }}
+                  >
                     Language Usage
                   </label>
+
                   <div className="d-flex align-items-center gap-3">
-                    <div style={{ width: "120px", height: "120px" }}>
-                      {langData && langData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div
+                      style={{
+                        width: "120px",
+                        height: "120px",
+                      }}
+                    >
+                      {langData.length > 0 ? (
+                        <ResponsiveContainer
+                          width="100%"
+                          height="100%"
+                        >
                           <PieChart>
                             <Pie
                               data={langData}
@@ -238,37 +790,91 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
                               dataKey="value"
                             >
                               {langData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                <Cell
+                                  key={`lang-${index}`}
+                                  fill={entry.color}
+                                />
                               ))}
                             </Pie>
                           </PieChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.8rem" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: "100%",
+                            color: "var(--tx3)",
+                            fontSize: "0.8rem",
+                          }}
+                        >
                           Empty
                         </div>
                       )}
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
                       {langData.map((entry, idx) => (
-                        <div key={idx} className="d-flex align-items-center gap-2" style={{ fontSize: "0.75rem" }}>
-                          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: entry.color }}></span>
-                          <span style={{ color: "var(--tx2)" }}>{entry.name}:</span>
-                          <strong style={{ color: "var(--tx)" }}>{entry.value}%</strong>
+                        <div
+                          key={idx}
+                          className="d-flex align-items-center gap-2"
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              background: entry.color,
+                            }}
+                          />
+
+                          <span style={{ color: "var(--tx2)" }}>
+                            {entry.name}:
+                          </span>
+
+                          <strong style={{ color: "var(--tx)" }}>
+                            {entry.value}%
+                          </strong>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
 
+                {/* Submission Status */}
                 <div className="col-12 col-sm-6">
-                  <label style={{ fontSize: "0.82rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "12px" }}>
+                  <label
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--tx2)",
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: "12px",
+                    }}
+                  >
                     Submission Status
                   </label>
+
                   <div className="d-flex align-items-center gap-3">
-                    <div style={{ width: "120px", height: "120px" }}>
-                      {statusData && statusData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div
+                      style={{
+                        width: "120px",
+                        height: "120px",
+                      }}
+                    >
+                      {statusData.length > 0 ? (
+                        <ResponsiveContainer
+                          width="100%"
+                          height="100%"
+                        >
                           <PieChart>
                             <Pie
                               data={statusData}
@@ -280,32 +886,67 @@ function StudentProfile({ studentRoll, onBack, onViewSubmission }) {
                               dataKey="value"
                             >
                               {statusData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                <Cell
+                                  key={`status-${index}`}
+                                  fill={entry.color}
+                                />
                               ))}
                             </Pie>
                           </PieChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--tx3)", fontSize: "0.8rem" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: "100%",
+                            color: "var(--tx3)",
+                            fontSize: "0.8rem",
+                          }}
+                        >
                           Empty
                         </div>
                       )}
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
                       {statusData.slice(0, 3).map((entry, idx) => (
-                        <div key={idx} className="d-flex align-items-center gap-2" style={{ fontSize: "0.75rem" }}>
-                          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: entry.color }}></span>
-                          <span style={{ color: "var(--tx2)" }}>{entry.name}:</span>
-                          <strong style={{ color: "var(--tx)" }}>{entry.value}%</strong>
+                        <div
+                          key={idx}
+                          className="d-flex align-items-center gap-2"
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              background: entry.color,
+                            }}
+                          />
+
+                          <span style={{ color: "var(--tx2)" }}>
+                            {entry.name}:
+                          </span>
+
+                          <strong style={{ color: "var(--tx)" }}>
+                            {entry.value}%
+                          </strong>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
+
               </div>
-
             </div>
-
           </div>
         </div>
       </div>

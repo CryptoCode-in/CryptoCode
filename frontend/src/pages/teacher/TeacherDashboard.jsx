@@ -62,11 +62,10 @@ const [profile, setProfile] = useState(() => ({
     setProfile(updated);
   };
 
-  const handleViewStudentProfile = (rollNo) => {
-    setSelectedStudentRoll(rollNo);
-    setActiveSection("student-profile");
-  };
-
+const handleViewStudentProfile = (studentId) => {
+  setSelectedStudentRoll(studentId);
+  setActiveSection("student-profile");
+};
   const handleViewSubmissionDetails = (subId) => {
     setSelectedSubmissionId(subId);
     setActiveSection("submission-details");

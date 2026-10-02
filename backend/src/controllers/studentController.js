@@ -31,5 +31,57 @@ const getStudents = async(req, res) => {
         });
     }
 };
+const getStudentById = async(req, res) => {
+    try {
+        const { id } = req.params;
 
-module.exports = { getStudents };
+        const { data, error } = await supabase
+            .from("profiles")
+            .select("id, name, email, roll_no, year, semester, branch, college")
+            .eq("id", id)
+            .eq("role", "student")
+            .single();
+
+        console.log("STUDENT PROFILE DATA:", data);
+        console.log("STUDENT PROFILE ERROR:", error);
+
+        if (error) {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            student: {
+                ...data,
+                rollNo: data.roll_no || "N/A",
+                year: data.year || "N/A",
+                semester: data.semester || "N/A",
+                branch: data.branch || "N/A",
+                college: data.college || "N/A",
+                subject: "N/A",
+                joinedOn: "N/A",
+                problemsSolved: 0,
+                assignmentsCompleted: 0,
+                avgScore: 0,
+                acceptanceRate: 0,
+                lastActive: "N/A"
+            }
+        });
+
+    } catch (error) {
+        console.error("Get Student Profile Exception:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+module.exports = {
+    getStudents,
+    getStudentById
+};

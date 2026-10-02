@@ -47,7 +47,7 @@ function StudentTable({ students = [], onViewProfile }) {
               </tr>
             ) : (
               students.map((student) => (
-                <tr key={student.rollNo} style={{ borderBottom: "1px solid var(--bd)" }}>
+                <tr key={student.id} style={{ borderBottom: "1px solid var(--bd)" }}>
                   <td style={{ padding: "14px 16px", color: "var(--tx2)", fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", fontSize: "0.82rem" }}>
                     {student.rollNo}
                   </td>
@@ -76,7 +76,7 @@ function StudentTable({ students = [], onViewProfile }) {
                   </td>
                   <td style={{ padding: "14px 16px", textAlign: "center" }}>
                     <button
-                      onClick={() => onViewProfile && onViewProfile(student.rollNo)}
+                      onClick={() => onViewProfile && onViewProfile(student.id)}
                       className="boc"
                       style={{
                         fontSize: "0.78rem",
