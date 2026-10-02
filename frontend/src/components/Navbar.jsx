@@ -1,11 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logob from "../assets/images/logob.png";
 import logow from "../assets/images/logow.png";
 
-function Navbar({ onOpenPanel }) {
+function Navbar({ onOpenPanel, onOpenAdminLogin }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef(null);
+
+  const handleLogoClick = (e) => {
+    clickCountRef.current += 1;
+
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+
+    if (clickCountRef.current === 5) {
+      e.preventDefault();
+      clickCountRef.current = 0;
+      if (onOpenAdminLogin) {
+        onOpenAdminLogin();
+      }
+    } else {
+      clickTimerRef.current = setTimeout(() => {
+        clickCountRef.current = 0;
+      }, 3000);
+    }
+  };
+
   const location = useLocation();
   const isPrivacyPage = location.pathname === "/privacy-policy" || location.pathname === "/policy";
   const isFaqPage = location.pathname === "/faq";
@@ -67,6 +90,7 @@ function Navbar({ onOpenPanel }) {
           <div className="d-flex align-items-center justify-content-between w-100">
             <a
               href="/#hero"
+              onClick={handleLogoClick}
               className="d-flex align-items-center gap-2"
               style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--tx)", textDecoration: "none" }}
             >
