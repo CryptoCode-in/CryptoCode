@@ -31,7 +31,6 @@ import SubmissionDetails from "./SubmissionDetails";
 import Analytics from "./Analytics";
 import Profile from "./Profile";
 import Settings from "./Settings";
-import Practicals from "./Practicals";
 
 // Utils
 import { mockTeacherData } from "../../utils/mockTeacherData";
@@ -101,14 +100,6 @@ const [selectedStudentId, setSelectedStudentId] = useState(null);
   const handleViewSubmissionDetails = (subId) => {
     setSelectedSubmissionId(subId);
     setActiveSection("submission-details");
-  };
-
-  // =========================================================
-  // VIEW SUBMISSIONS FOR PRACTICAL
-  // =========================================================
-  const handleViewSubmissionsForPractical = (practicalTitle) => {
-    setPracticalFilter(practicalTitle);
-    setActiveSection("submissions");
   };
 
   // =========================================================
@@ -635,6 +626,7 @@ const [selectedStudentId, setSelectedStudentId] = useState(null);
             {activeSection === "students" && (
               <Students
                 onViewProfile={handleViewStudentProfile}
+                navbarSearchQuery={searchQuery}
               />
             )}
 
@@ -711,18 +703,7 @@ const [selectedStudentId, setSelectedStudentId] = useState(null);
             )}
 
             {/* =================================================
-                6. PRACTICALS
-            ================================================== */}
-            {activeSection === "practicals" && (
-              <Practicals
-                onViewSubmissions={
-                  handleViewSubmissionsForPractical
-                }
-              />
-            )}
-
-            {/* =================================================
-                7. ANALYTICS
+                6. ANALYTICS
             ================================================== */}
             {activeSection === "analytics" && (
               <Analytics />

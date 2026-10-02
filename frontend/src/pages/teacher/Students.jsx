@@ -1,78 +1,261 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import StudentTable from "../../components/teacher/StudentTable";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
-function Students({ onViewProfile }) {
-  const [students, setStudents] = useState([]);
-  const [search, setSearch] = useState("");
-  const [subject, setSubject] = useState("All");
-  const [year, setYear] = useState("All");
-  const [branch, setBranch] = useState("All");
-  const [status, setStatus] = useState("All");
+// Semester options dependent on selected Year
+const semesterOptionsByYear = {
+  "First Year": [
+    { value: "First Semester", label: "First Semester" },
+    { value: "Second Semester", label: "Second Semester" },
+  ],
+  "Second Year": [
+    { value: "Third Semester", label: "Third Semester" },
+    { value: "Fourth Semester", label: "Fourth Semester" },
+  ],
+  "Third Year": [
+    { value: "Fifth Semester", label: "Fifth Semester" },
+    { value: "Sixth Semester", label: "Sixth Semester" },
+  ],
+};
 
- useEffect(() => {
-  const fetchStudents = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/students");
-      const result = await response.json();
+function normalizeYear(yearVal) {
+  if (!yearVal) return "";
+  const str = String(yearVal).trim().toLowerCase();
+  if (str === "1" || str.includes("first") || str.includes("1st")) return "First Year";
+  if (str === "2" || str.includes("second") || str.includes("2nd")) return "Second Year";
+  if (str === "3" || str.includes("third") || str.includes("3rd")) return "Third Year";
+  return "";
+}
 
-      console.log("API RESULT:", result);
-      console.log("STUDENTS FROM API:", result.students);
+function formatYearDisplay(yearVal) {
+  const norm = normalizeYear(yearVal);
+  if (norm) return norm;
+  return yearVal ? String(yearVal) : "N/A";
+}
 
-      if (result.success) {
-        console.log("FIRST STUDENT ID:", result.students[0]?.id);
-console.log("FIRST STUDENT FULL DATA:", result.students[0]);
-        const formattedStudents = result.students.map((student) => ({
-          id: student.id,
-          name: student.name || "N/A",
-          rollNo: student.roll_no || "N/A",
-          year: student.year || "N/A",
-          branch: student.branch || "N/A",
-          email: student.email || "N/A",
-          subject: "N/A",
-          status: "Active",
-        }));
+function normalizeSemester(semVal) {
+  if (!semVal) return "";
+  const str = String(semVal).trim().toLowerCase();
+  if (str === "1" || str.includes("sem 1") || str.includes("semester 1") || str.includes("first")) return "First Semester";
+  if (str === "2" || str.includes("sem 2") || str.includes("semester 2") || str.includes("second")) return "Second Semester";
+  if (str === "3" || str.includes("sem 3") || str.includes("semester 3") || str.includes("third")) return "Third Semester";
+  if (str === "4" || str.includes("sem 4") || str.includes("semester 4") || str.includes("fourth")) return "Fourth Semester";
+  if (str === "5" || str.includes("sem 5") || str.includes("semester 5") || str.includes("fifth")) return "Fifth Semester";
+  if (str === "6" || str.includes("sem 6") || str.includes("semester 6") || str.includes("sixth")) return "Sixth Semester";
+  return "";
+}
 
-        console.log("FORMATTED STUDENTS:", formattedStudents);
+function normalizeBranch(branchVal) {
+  if (!branchVal) return "";
+  const str = String(branchVal).trim().toLowerCase();
+  if (str.includes("computer") || str === "ct" || str === "co") return "Computer Technology";
+  if (str.includes("information") || str === "it") return "Information Technology";
+  return "";
+}
 
-        setStudents(formattedStudents);
-      }
-    } catch (error) {
-      console.error("Failed to fetch students:", error);
+function formatBranchDisplay(branchVal) {
+  const norm = normalizeBranch(branchVal);
+  if (norm) return norm;
+  return branchVal ? String(branchVal) : "N/A";
+}
+
+function matchesStudentLanguage(student, selectedLanguage) {
+  if (!selectedLanguage || selectedLanguage === "All") return true;
+
+  const target = selectedLanguage.toLowerCase(); // 'c', 'c++', 'java', 'python'
+
+  const matchesSubjectString = (subj) => {
+    if (!subj) return false;
+    const str = String(subj).trim().toLowerCase();
+    if (target === "c++") {
+      return str.includes("c++") || str.includes("cpp");
     }
+    if (target === "c") {
+      if (str.includes("c++") || str.includes("cpp")) return false;
+      return (
+        str === "c" ||
+        str.includes("c programming") ||
+        str.includes("c-programming") ||
+        str.includes("c lang") ||
+        str.includes("core c") ||
+        str.includes("cs-101") ||
+        str.includes("data structures") ||
+        /\bc\b/.test(str)
+      );
+    }
+    if (target === "java") {
+      return str.includes("java") && !str.includes("javascript");
+    }
+    if (target === "python") {
+      return str.includes("python");
+    }
+    return str.includes(target);
   };
 
-  fetchStudents();
-}, []);
+  // 1. Direct language field on student
+  if (student.language && matchesSubjectString(student.language)) return true;
+  if (Array.isArray(student.languages) && student.languages.some(matchesSubjectString)) return true;
+
+  // 2. Explicit subjects array or string
+  if (Array.isArray(student.subjects) && student.subjects.length > 0) {
+    if (student.subjects.some(matchesSubjectString)) return true;
+  }
+  if (student.subject && student.subject !== "N/A" && matchesSubjectString(student.subject)) {
+    return true;
+  }
+
+  // If explicit subjects exist and none matched, return false
+  const hasExplicitSubjects =
+    (Array.isArray(student.subjects) && student.subjects.length > 0) ||
+    (student.subject && student.subject !== "N/A");
+
+  if (hasExplicitSubjects) {
+    return false;
+  }
+
+  // 3. Curriculum-based mapping based on Year & Semester (for students without explicit subjects list)
+  const normYear = normalizeYear(student.year);
+  const normSem = normalizeSemester(student.semester);
+
+  if (normYear === "First Year") {
+    return target === "c";
+  }
+
+  if (normYear === "Second Year") {
+    if (normSem === "Third Semester") {
+      return target === "c++" || target === "c";
+    }
+    if (normSem === "Fourth Semester") {
+      return target === "java";
+    }
+    return target === "c++" || target === "java" || target === "c";
+  }
+
+  if (normYear === "Third Year") {
+    if (normSem === "Fifth Semester") {
+      return target === "java" || target === "python";
+    }
+    if (normSem === "Sixth Semester") {
+      return target === "python";
+    }
+    return target === "java" || target === "python";
+  }
+
+  return false;
+}
+
+function Students({ onViewProfile, navbarSearchQuery = "" }) {
+  const [students, setStudents] = useState([]);
+  const [search, setSearch] = useState("");
+  const [language, setLanguage] = useState("All");
+  const [year, setYear] = useState("All");
+  const [semester, setSemester] = useState("All");
+  const [branch, setBranch] = useState("All");
+
+  // Keep search in sync if navbar search is used
+  useEffect(() => {
+    if (navbarSearchQuery) {
+      setSearch(navbarSearchQuery);
+    }
+  }, [navbarSearchQuery]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/students");
+        const result = await response.json();
+
+        console.log("API RESULT:", result);
+        console.log("STUDENTS FROM API:", result.students);
+
+        if (result.success && Array.isArray(result.students)) {
+          const formattedStudents = result.students.map((student) => ({
+            id: student.id,
+            name: student.name || "N/A",
+            rollNo: student.roll_no || "N/A",
+            year: formatYearDisplay(student.year),
+            rawYear: student.year,
+            semester: student.semester || "N/A",
+            branch: formatBranchDisplay(student.branch),
+            rawBranch: student.branch,
+            email: student.email || "N/A",
+            subjects: student.subjects || [],
+            subject:
+              student.subject ||
+              (Array.isArray(student.subjects) && student.subjects.length > 0
+                ? student.subjects.join(", ")
+                : "N/A"),
+            language: student.language,
+            languages: student.languages,
+            progress: student.progress ?? 0,
+            avgScore: student.avgScore ?? 0,
+            lastActive: student.lastActive || "Active",
+            status: "Active",
+          }));
+
+          console.log("FORMATTED STUDENTS:", formattedStudents);
+          setStudents(formattedStudents);
+        }
+      } catch (error) {
+        console.error("Failed to fetch students:", error);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  const handleYearChange = (newYear) => {
+    setYear(newYear);
+    // Reset semester whenever year is changed
+    setSemester("All");
+  };
 
   const clearFilters = () => {
     setSearch("");
-    setSubject("All");
+    setLanguage("All");
     setYear("All");
+    setSemester("All");
     setBranch("All");
-    setStatus("All");
   };
 
-  // Filtering Logic
- const filteredStudents = students.filter((s) => {
-  const matchesSearch =
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.rollNo.toLowerCase().includes(search.toLowerCase());
+  // Available semester options based on the currently selected year
+  const availableSemesterOptions =
+    year !== "All" && semesterOptionsByYear[year]
+      ? semesterOptionsByYear[year]
+      : [];
 
-  const matchesSubject = true;
-  const matchesYear = year === "All" || s.year === year;
-  const matchesBranch = branch === "All" || s.branch === branch;
-  const matchesStatus = true;
+  // Combined Filtering Logic
+  const filteredStudents = students.filter((s) => {
+    // 1. Search Name / Roll No
+    const term = search.trim().toLowerCase();
+    const matchesSearch =
+      !term ||
+      (s.name && s.name !== "N/A" && s.name.toLowerCase().includes(term)) ||
+      (s.rollNo && s.rollNo !== "N/A" && s.rollNo.toLowerCase().includes(term));
 
-  return (
-    matchesSearch &&
-    matchesSubject &&
-    matchesYear &&
-    matchesBranch &&
-    matchesStatus
-  );
-});
+    // 2. Language
+    const matchesLanguage = matchesStudentLanguage(s, language);
+
+    // 3. Year
+    const matchesYear = year === "All" || normalizeYear(s.rawYear || s.year) === year;
+
+    // 4. Semester
+    const matchesSemester =
+      semester === "All" || normalizeSemester(s.semester) === semester;
+
+    // 5. Branch
+    const matchesBranch =
+      branch === "All" || normalizeBranch(s.rawBranch || s.branch) === branch;
+
+    return (
+      matchesSearch &&
+      matchesLanguage &&
+      matchesYear &&
+      matchesSemester &&
+      matchesBranch
+    );
+  });
 
   return (
     <TeacherLayout
@@ -89,10 +272,18 @@ console.log("FIRST STUDENT FULL DATA:", result.students[0]);
           gap: "16px",
         }}
       >
-        <div className="row g-3">
-          {/* Search */}
+        <div className="row g-3 align-items-end">
+          {/* 1. Search Name / Roll No */}
           <div className="col-12 col-md-4 col-lg-3">
-            <label style={{ fontSize: "0.78rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+            <label
+              style={{
+                fontSize: "0.78rem",
+                color: "var(--tx2)",
+                fontWeight: 600,
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
               Search Name / Roll No
             </label>
             <div
@@ -102,11 +293,12 @@ console.log("FIRST STUDENT FULL DATA:", result.students[0]);
                 background: "var(--bg)",
                 border: "1px solid var(--bd)",
                 borderRadius: "8px",
-                padding: "8px 12px",
-                gap: "8px"
+                padding: "0 12px",
+                height: "38px",
+                gap: "8px",
               }}
             >
-              <Search size={14} style={{ color: "var(--tx3)" }} />
+              <Search size={14} style={{ color: "var(--tx3)", flexShrink: 0 }} />
               <input
                 type="text"
                 placeholder="Search..."
@@ -118,88 +310,193 @@ console.log("FIRST STUDENT FULL DATA:", result.students[0]);
                   outline: "none",
                   color: "var(--tx)",
                   fontSize: "0.82rem",
-                  width: "100%"
+                  width: "100%",
                 }}
               />
             </div>
           </div>
 
-          {/* Subject */}
-          <div className="col-12 col-sm-6 col-md-2 col-lg-2">
-            <label style={{ fontSize: "0.78rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-              Subject
+          {/* 2. Language */}
+          <div className="col-12 col-sm-6 col-md-4 col-lg-2">
+            <label
+              style={{
+                fontSize: "0.78rem",
+                color: "var(--tx2)",
+                fontWeight: 600,
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Language
             </label>
             <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
               className="code-topbar select"
-              style={{ width: "100%", padding: "8px 10px", borderRadius: "8px" }}
+              style={{
+                width: "100%",
+                height: "38px",
+                padding: "0 10px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
+                background: "var(--bg)",
+                border: "1px solid var(--bd)",
+                color: "var(--tx)",
+                outline: "none",
+              }}
             >
-              <option value="All">All Subjects</option>
-              <option value="Java Programming">Java Programming</option>
-              <option value="Python Programming">Python Programming</option>
+              <option value="All">All Languages</option>
+              <option value="C">C</option>
+              <option value="C++">C++</option>
+              <option value="Java">Java</option>
+              <option value="Python">Python</option>
             </select>
           </div>
 
-          {/* Year */}
-          <div className="col-12 col-sm-6 col-md-2 col-lg-2">
-            <label style={{ fontSize: "0.78rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+          {/* 3. Year */}
+          <div className="col-12 col-sm-6 col-md-4 col-lg-2">
+            <label
+              style={{
+                fontSize: "0.78rem",
+                color: "var(--tx2)",
+                fontWeight: 600,
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
               Year
             </label>
             <select
               value={year}
-              onChange={(e) => setYear(e.target.value)}
+              onChange={(e) => handleYearChange(e.target.value)}
               className="code-topbar select"
-              style={{ width: "100%", padding: "8px 10px", borderRadius: "8px" }}
+              style={{
+                width: "100%",
+                height: "38px",
+                padding: "0 10px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
+                background: "var(--bg)",
+                border: "1px solid var(--bd)",
+                color: "var(--tx)",
+                outline: "none",
+              }}
             >
               <option value="All">All Years</option>
-              <option value="2nd Year">Second Year</option>
-              <option value="3rd Year">Third Year</option>
+              <option value="First Year">First Year</option>
+              <option value="Second Year">Second Year</option>
+              <option value="Third Year">Third Year</option>
             </select>
           </div>
 
-          {/* Branch */}
-          <div className="col-12 col-sm-6 col-md-2 col-lg-2">
-            <label style={{ fontSize: "0.78rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+          {/* 4. Semester */}
+          <div className="col-12 col-sm-6 col-md-4 col-lg-2">
+            <label
+              style={{
+                fontSize: "0.78rem",
+                color: "var(--tx2)",
+                fontWeight: 600,
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Semester
+            </label>
+            <select
+              value={semester}
+              onChange={(e) => setSemester(e.target.value)}
+              disabled={year === "All"}
+              className="code-topbar select"
+              style={{
+                width: "100%",
+                height: "38px",
+                padding: "0 10px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
+                background: "var(--bg)",
+                border: "1px solid var(--bd)",
+                color: year === "All" ? "var(--tx3)" : "var(--tx)",
+                outline: "none",
+                cursor: year === "All" ? "not-allowed" : "pointer",
+                opacity: year === "All" ? 0.6 : 1,
+              }}
+            >
+              <option value="All">All Semesters</option>
+              {availableSemesterOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 5. Branch */}
+          <div className="col-12 col-sm-6 col-md-4 col-lg-2">
+            <label
+              style={{
+                fontSize: "0.78rem",
+                color: "var(--tx2)",
+                fontWeight: 600,
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
               Branch
             </label>
             <select
               value={branch}
               onChange={(e) => setBranch(e.target.value)}
               className="code-topbar select"
-              style={{ width: "100%", padding: "8px 10px", borderRadius: "8px" }}
+              style={{
+                width: "100%",
+                height: "38px",
+                padding: "0 10px",
+                borderRadius: "8px",
+                fontSize: "0.82rem",
+                background: "var(--bg)",
+                border: "1px solid var(--bd)",
+                color: "var(--tx)",
+                outline: "none",
+              }}
             >
               <option value="All">All Branches</option>
-              <option value="Computer">Computer</option>
-              <option value="IT">IT</option>
+              <option value="Computer Technology">Computer Technology</option>
+              <option value="Information Technology">Information Technology</option>
             </select>
           </div>
 
-          {/* Status */}
-          <div className="col-12 col-sm-6 col-md-2 col-lg-2">
-            <label style={{ fontSize: "0.78rem", color: "var(--tx2)", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="code-topbar select"
-              style={{ width: "100%", padding: "8px 10px", borderRadius: "8px" }}
+          {/* 6. Clear Button */}
+          <div
+            className="col-12 col-sm-6 col-md-4 col-lg-1 d-flex flex-column justify-content-end"
+            style={{ minWidth: "80px" }}
+          >
+            <label
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                display: "block",
+                marginBottom: "6px",
+                visibility: "hidden",
+                userSelect: "none",
+              }}
             >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
-          {/* Clear Button */}
-          <div className="col-12 col-lg-1 d-flex align-items-end">
+              &nbsp;
+            </label>
             <button
               onClick={clearFilters}
-              className="boc d-flex align-items-center justify-content-center gap-1 py-2 w-100"
-              style={{ borderRadius: "8px", fontSize: "0.78rem" }}
+              className="boc d-flex align-items-center justify-content-center gap-1 w-100"
+              style={{
+                height: "38px",
+                borderRadius: "8px",
+                fontSize: "0.78rem",
+                padding: "0 10px",
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              title="Reset all filters"
             >
-              <X size={12} />
+              <X size={13} style={{ flexShrink: 0 }} />
               <span>Clear</span>
             </button>
           </div>

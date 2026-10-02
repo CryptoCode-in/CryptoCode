@@ -87,17 +87,6 @@ function DashboardNavbar({ currentUser, activeSection, setActiveSection, onLogou
                     Students
                   </button>
                   <button
-                    onClick={() => setActiveSection("practicals")}
-                    className={`nav-link ${activeSection === "practicals" ? "on" : ""}`}
-                    style={{
-                      color: activeSection === "practicals" ? "var(--tx)" : "var(--tx2)",
-                      background: activeSection === "practicals" ? "rgba(139,92,246,.15)" : "transparent",
-                      border: activeSection === "practicals" ? "1px solid var(--bd)" : "1px solid transparent"
-                    }}
-                  >
-                    Practicals
-                  </button>
-                  <button
                     onClick={() => setActiveSection("submissions")}
                     className={`nav-link ${activeSection === "submissions" || activeSection === "submission-details" ? "on" : ""}`}
                     style={{

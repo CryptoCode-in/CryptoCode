@@ -1,10 +1,9 @@
-import { LayoutDashboard, Users, Terminal, History, BarChart3, User, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, History, BarChart3, User, Settings, LogOut } from "lucide-react";
 
 function Sidebar({ activeSection, setActiveSection, onLogout }) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "students", label: "Students", icon: Users },
-    { id: "practicals", label: "Practicals", icon: Terminal },
     { id: "submissions", label: "Submissions", icon: History },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "profile", label: "Profile", icon: User },
