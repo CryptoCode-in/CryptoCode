@@ -21,6 +21,8 @@ function Students({ onViewProfile }) {
       console.log("STUDENTS FROM API:", result.students);
 
       if (result.success) {
+        console.log("FIRST STUDENT ID:", result.students[0]?.id);
+console.log("FIRST STUDENT FULL DATA:", result.students[0]);
         const formattedStudents = result.students.map((student) => ({
           id: student.id,
           name: student.name || "N/A",

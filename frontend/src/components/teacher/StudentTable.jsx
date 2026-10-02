@@ -76,7 +76,14 @@ function StudentTable({ students = [], onViewProfile }) {
                   </td>
                   <td style={{ padding: "14px 16px", textAlign: "center" }}>
                     <button
-                      onClick={() => onViewProfile && onViewProfile(student.id)}
+                      onClick={() => {
+  console.log("VIEW PROFILE CLICKED STUDENT:", student);
+  console.log("VIEW PROFILE STUDENT ID:", student.id);
+
+  if (onViewProfile) {
+    onViewProfile(student.id);
+  }
+}}
                       className="boc"
                       style={{
                         fontSize: "0.78rem",
