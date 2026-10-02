@@ -2,16 +2,17 @@ const supabaseAdmin = require("../config/supabaseAdmin");
 const saveSubmission = async (req, res) => {
     try {
         const {
-            user_id,
-            source_code,
-            language,
-            status
-        } = req.body;
+    user_id,
+    source_code,
+    language,
+    status,
+    filename
+} = req.body;
 
-        if (!user_id || !source_code || !language) {
+       if (!user_id || !source_code || !language || !filename) {
             return res.status(400).json({
                 success: false,
-                message: "user_id, source_code and language are required"
+                message: "user_id, source_code, language and filename are required"
             });
         }
 
@@ -38,12 +39,13 @@ const saveSubmission = async (req, res) => {
         // Save submission using profiles.id
         const { data: submission, error: submissionError } = await supabaseAdmin
             .from("submissions")
-            .insert([{
-                student_id: profile.id,
-                source_code,
-                language,
-                status: status || "saved"
-            }])
+           .insert([{
+    student_id: profile.id,
+    source_code,
+    language,
+    filename,
+    status: status || "saved"
+}])
             .select()
             .single();
 
@@ -73,16 +75,17 @@ const saveSubmission = async (req, res) => {
 const updateSubmission = async (req, res) => {
     try {
         const { id } = req.params;
-        const {
-            source_code,
-            language,
-            status
-        } = req.body;
+const {
+    source_code,
+    language,
+    status,
+    filename
+} = req.body;
 
-        if (!id || !source_code || !language) {
+        if (!id || !source_code || !language || !filename) {
             return res.status(400).json({
                 success: false,
-                message: "id, source_code and language are required"
+                message: "id, source_code, language and filename are required"
             });
         }
 
@@ -90,10 +93,11 @@ const updateSubmission = async (req, res) => {
             await supabaseAdmin
                 .from("submissions")
                 .update({
-                    source_code,
-                    language,
-                    status: status || "saved"
-                })
+    source_code,
+    language,
+    filename,
+    status: status || "saved"
+})
                 .eq("id", id)
                 .select()
                 .single();

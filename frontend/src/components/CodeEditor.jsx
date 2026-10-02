@@ -535,12 +535,13 @@ function CodeEditor({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          user_id: currentUser?.id,
-          source_code: code,
-          language: lang,
-          status: "saved",
-        }),
+       body: JSON.stringify({
+    user_id: currentUser?.id,
+    source_code: code,
+    language: lang,
+    filename: finalFileName,
+    status: "saved",
+}),
       });
 
       const data = await response.json();
