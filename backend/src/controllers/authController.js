@@ -1,5 +1,5 @@
 const supabase = require("../config/supabase");
-
+const supabaseAdmin = require("../config/supabaseAdmin");
 const signup = async(req, res) => {
 
     const {
@@ -143,5 +143,66 @@ const login = async(req, res) => {
     });
 
 };
+const updateProfile = async (req, res) => {
+    try {
+        const {
+            user_id,
+            name,
+            email,
+            roll_no,
+            year,
+            semester,
+            branch,
+            college
+        } = req.body;
 
-module.exports = { signup, login };
+        if (!user_id) {
+            return res.status(400).json({
+                success: false,
+                message: "user_id is required"
+            });
+        }
+
+       const { data: profile, error } = await supabaseAdmin
+    .from("profiles")
+    .update({
+        name,
+        email,
+        roll_no,
+        year,
+        semester,
+        branch,
+        college
+    })
+    .eq("user_id", user_id)
+    .select()
+    .single();
+
+        if (error) {
+            console.error("Update profile error:", error);
+
+            return res.status(500).json({
+                success: false,
+                message: "Failed to update profile"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            user: profile
+        });
+
+    } catch (error) {
+        console.error("Update profile error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+module.exports = {
+    signup,
+    login,
+    updateProfile
+};
