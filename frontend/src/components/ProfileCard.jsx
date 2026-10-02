@@ -98,25 +98,69 @@ function ProfileCard({ currentUser, onNavigateSettings }) {
     setProfileData((prev) => ({ ...prev, [key]: val }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    try {
-      const stored = JSON.parse(localStorage.getItem("cryptocode_user") || "{}");
-      const updated = {
-        ...stored,
-        name: profileData.name,
-        email: profileData.email,
-        rollNo: profileData.rollNo,
-        year: profileData.year,
-        branch: profileData.branch,
-        college: profileData.college,
-        semester: profileData.semester,
-      };
-      localStorage.setItem("cryptocode_user", JSON.stringify(updated));
-    } catch (e) {
-      console.error("Error saving updated profile locally:", e);
+const handleSave = async () => {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem("cryptocode_user") || "{}"
+    );
+    console.log("PROFILE UPDATE USER ID:", stored.id);
+console.log("PROFILE UPDATE USER:", stored);
+
+    if (!stored?.id) {
+      console.error("User ID not found");
+      return;
     }
-  };
+
+    const response = await fetch(
+      "http://localhost:5000/auth/profile",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: stored.id,
+          name: profileData.name,
+          email: profileData.email,
+          roll_no: profileData.rollNo,
+          year: profileData.year,
+          semester: profileData.semester,
+          branch: profileData.branch,
+          college: profileData.college,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Profile update failed:", data);
+      return;
+    }
+
+    const updated = {
+      ...stored,
+      name: profileData.name,
+      email: profileData.email,
+      rollNo: profileData.rollNo,
+      year: profileData.year,
+      branch: profileData.branch,
+      college: profileData.college,
+      semester: profileData.semester,
+    };
+
+    localStorage.setItem(
+      "cryptocode_user",
+      JSON.stringify(updated)
+    );
+
+    setIsEditing(false);
+
+    console.log("Profile updated successfully:", data);
+  } catch (error) {
+    console.error("Error updating profile:", error);
+  }
+};
 
   const initial = profileData.name ? profileData.name.trim()[0].toUpperCase() : "S";
 

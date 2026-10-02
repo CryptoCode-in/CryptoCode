@@ -330,6 +330,7 @@ name: submission.filename,
                         {filesInFolder.map((file) => (
                           <div
                             key={file.id}
+                            
                             onClick={() => onOpenFile(file)}
                             className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between px-4 py-3 file-item-row"
                             style={{
