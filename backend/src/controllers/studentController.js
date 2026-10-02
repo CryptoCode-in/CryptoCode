@@ -1,6 +1,6 @@
 const supabase = require("../config/supabase");
 
-const getStudents = async(req, res) => {
+const getStudents = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from("profiles")
@@ -31,13 +31,19 @@ const getStudents = async(req, res) => {
         });
     }
 };
-const getStudentById = async(req, res) => {
+
+
+const getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
 
+        console.log("GET STUDENT BY ID:", id);
+
         const { data, error } = await supabase
             .from("profiles")
-            .select("id, name, email, roll_no, year, semester, branch, college")
+            .select(
+                "id, name, email, roll_no, year, semester, branch, college"
+            )
             .eq("id", id)
             .eq("role", "student")
             .single();
@@ -45,10 +51,10 @@ const getStudentById = async(req, res) => {
         console.log("STUDENT PROFILE DATA:", data);
         console.log("STUDENT PROFILE ERROR:", error);
 
-        if (error) {
+        if (error || !data) {
             return res.status(404).json({
                 success: false,
-                message: error.message
+                message: error?.message || "Student not found"
             });
         }
 
@@ -81,7 +87,96 @@ const getStudentById = async(req, res) => {
     }
 };
 
+
+const registerStudent = async (req, res) => {
+    try {
+        const {
+            name,
+            email,
+            password,
+            roll_no,
+            year,
+            semester,
+            branch,
+            college
+        } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Name, email and password are required"
+            });
+        }
+
+        const {
+            data: authData,
+            error: authError
+        } = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true
+        });
+
+        if (authError) {
+            console.error("AUTH CREATE ERROR:", authError);
+
+            return res.status(400).json({
+                success: false,
+                message: authError.message
+            });
+        }
+
+        const userId = authData.user.id;
+
+        const {
+            data: profileData,
+            error: profileError
+        } = await supabase
+            .from("profiles")
+            .insert([
+                {
+                    id: userId,
+                    name,
+                    email,
+                    role: "student",
+                    roll_no: roll_no || null,
+                    year: year || null,
+                    semester: semester || null,
+                    branch: branch || null,
+                    college: college || null
+                }
+            ])
+            .select()
+            .single();
+
+        if (profileError) {
+            console.error("PROFILE CREATE ERROR:", profileError);
+
+            return res.status(400).json({
+                success: false,
+                message: profileError.message
+            });
+        }
+
+        return res.status(201).json({
+            success: true,
+            message: "Student registered successfully",
+            student: profileData
+        });
+
+    } catch (error) {
+        console.error("Register Student Exception:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
 module.exports = {
     getStudents,
-    getStudentById
+    getStudentById,
+    registerStudent
 };

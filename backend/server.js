@@ -8,6 +8,7 @@ const supabase = require("./src/config/supabase");
 const authRoutes = require("./src/routes/authRoutes");
 const submissionRoutes = require("./src/routes/submissionRoutes");
 const studentRoutes = require("./src/routes/studentRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
 const executionManager = require("./execution/executionManager");
 const { initSocketServer } = require("./socket/socketHandler");
 
@@ -55,6 +56,7 @@ app.get("/profiles", async(req, res) => {
 app.use("/auth", authRoutes);
 app.use("/submissions", submissionRoutes);
 app.use("/students", studentRoutes);
+app.use("/admin", adminRoutes);
 
 
 // Code execution route (batch / backwards-compatible)
