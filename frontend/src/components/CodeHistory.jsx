@@ -50,7 +50,7 @@ function CodeHistory({ onOpenFile }) {
 
 const formattedFiles = data.submissions.map((submission) => ({
   id: submission.id,
-  name: `submission-${submission.id}`,
+name: submission.filename,
   lang: submission.language,
   code: submission.source_code,
   savedAt: submission.submitted_at,
@@ -144,7 +144,7 @@ const formattedFiles = data.submissions.map((submission) => ({
 
   // Filtering files
   const filteredFiles = files.filter(file => {
-    const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (file.name || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = activeFilter === "all" || file.lang === activeFilter;
     return matchesSearch && matchesFilter;
   });
@@ -329,7 +329,7 @@ const formattedFiles = data.submissions.map((submission) => ({
                       <div>
                         {filesInFolder.map((file) => (
                           <div
-                            key={file.name}
+                            key={file.id}
                             onClick={() => onOpenFile(file)}
                             className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between px-4 py-3 file-item-row"
                             style={{
