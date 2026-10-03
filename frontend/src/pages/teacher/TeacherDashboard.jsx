@@ -28,6 +28,7 @@ import TeacherLayout from "../../components/teacher/TeacherLayout";
 import Students from "./Students";
 import StudentProfile from "./StudentProfile";
 import SubmissionDetails from "./SubmissionDetails";
+import Submissions from "./Submissions";
 import Analytics from "./Analytics";
 import Profile from "./Profile";
 import Settings from "./Settings";
@@ -42,9 +43,11 @@ function TeacherDashboard({ currentUser, onLogout }) {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Selected student
-const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
   // Selected submission
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
+  // Selected student for student-centric submissions view
+  const [selectedStudentForSubmissions, setSelectedStudentForSubmissions] = useState(null);
 
   // Practical filter
   const [practicalFilter, setPracticalFilter] = useState("");
@@ -645,40 +648,16 @@ const [selectedStudentId, setSelectedStudentId] = useState(null);
 )}
 
             {/* =================================================
-                4. SUBMISSIONS
+                4. SUBMISSIONS (STUDENT-CENTRIC)
             ================================================== */}
             {activeSection === "submissions" && (
-              <TeacherLayout
-                key="submissions"
-                title="Code Submissions"
-                description={
-                  practicalFilter
-                    ? `Viewing submissions for: ${practicalFilter}`
-                    : "Review compiling history, scores, and runtime logs."
-                }
-                actions={
-                  practicalFilter && (
-                    <button
-                      onClick={() => setPracticalFilter("")}
-                      className="boc px-3 py-1.5"
-                      style={{
-                        fontSize: "0.78rem",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      Clear Practical Filter
-                    </button>
-                  )
-                }
-              >
-                <SubmissionCard
-                  submissions={filteredSubmissions}
-                  onViewDetails={
-                    handleViewSubmissionDetails
-                  }
-                  showStudentInfo={true}
-                />
-              </TeacherLayout>
+              <Submissions
+                onViewSubmissionDetails={handleViewSubmissionDetails}
+                navbarSearchQuery={searchQuery}
+                currentUser={currentUser}
+                selectedStudentId={selectedStudentForSubmissions}
+                onSelectStudent={setSelectedStudentForSubmissions}
+              />
             )}
 
             {/* =================================================
@@ -706,7 +685,7 @@ const [selectedStudentId, setSelectedStudentId] = useState(null);
                 6. ANALYTICS
             ================================================== */}
             {activeSection === "analytics" && (
-              <Analytics />
+              <Analytics currentUser={currentUser} />
             )}
 
             {/* =================================================
@@ -714,9 +693,11 @@ const [selectedStudentId, setSelectedStudentId] = useState(null);
             ================================================== */}
             {activeSection === "profile" && (
               <Profile
+                currentUser={currentUser}
                 onProfileUpdate={
                   handleProfileUpdateInHeader
                 }
+                onNavigateSettings={() => setActiveSection("settings")}
               />
             )}
 
@@ -724,7 +705,7 @@ const [selectedStudentId, setSelectedStudentId] = useState(null);
                 9. SETTINGS
             ================================================== */}
             {activeSection === "settings" && (
-              <Settings />
+              <Settings currentUser={currentUser} onLogout={onLogout} />
             )}
 
           </AnimatePresence>

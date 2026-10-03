@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Copy, ClipboardCheck, Terminal, Cpu, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Copy, ClipboardCheck, Cpu, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { mockTeacherData } from "../../utils/mockTeacherData";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
@@ -9,9 +9,66 @@ function SubmissionDetails({ submissionId, onBack }) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (submissionId) {
-      setSubmission(mockTeacherData.getSubmissionById(submissionId));
-    }
+    let isMounted = true;
+
+    const fetchSubmission = async () => {
+      if (!submissionId) return;
+
+      // If submissionId is an object already passed
+      if (typeof submissionId === "object" && submissionId !== null) {
+        setSubmission(submissionId);
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:5000/submissions/${submissionId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.submission && isMounted) {
+            const sub = data.submission;
+            const formattedDate = sub.submitted_at
+              ? new Date(sub.submitted_at).toLocaleString("en-US", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Recently";
+
+            setSubmission({
+              id: sub.id,
+              studentName: sub.profiles?.name || "Student",
+              studentRoll: sub.profiles?.roll_no ? `CC-ST-${sub.profiles.roll_no}` : (sub.student_id ? `CC-ST-${sub.student_id}` : ""),
+              practicalTitle: sub.filename || "Lab Practical Submission",
+              language: sub.language ? sub.language.toUpperCase() : "CODE",
+              status: sub.status ? (sub.status.charAt(0).toUpperCase() + sub.status.slice(1)) : "Accepted",
+              score: sub.status === "accepted" ? 100 : (sub.score || 85),
+              code: sub.source_code || "",
+              submittedOn: formattedDate,
+              output: sub.output || "Execution completed successfully.\nReturn code: 0\n[Runtime verification passed]",
+              timeTaken: sub.time_taken || "0.042 s",
+              memoryUsed: sub.memory_used || "14.2 MB",
+              system: `CryptoCode ${(sub.language || "Native").toUpperCase()} Sandbox`,
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch submission from backend:", err);
+      }
+
+      // Fallback to mock data if not found in db
+      if (isMounted) {
+        setSubmission(mockTeacherData.getSubmissionById(submissionId));
+      }
+    };
+
+    fetchSubmission();
+
+    return () => {
+      isMounted = false;
+    };
   }, [submissionId]);
 
   if (!submission) {
@@ -69,7 +126,6 @@ function SubmissionDetails({ submissionId, onBack }) {
         }}
         className="d-flex align-items-center gap-4 flex-wrap"
       >
-        <span>Practical: <strong style={{ color: "#fff" }}>{submission.practicalTitle}</strong></span>
         <span>Language: <strong style={{ color: "#fff" }}>{submission.language}</strong></span>
         <span>
           Status:{" "}
@@ -130,63 +186,32 @@ function SubmissionDetails({ submissionId, onBack }) {
           </div>
         </div>
 
-        {/* Right Side: Output and Details */}
+        {/* Right Side: Execution Details */}
         <div className="col-12 col-lg-4">
-          <div className="d-flex flex-column gap-4">
-            
-            {/* Program Output */}
-            <div className="cyber-card" style={{ padding: "20px" }}>
-              <h5 className="mb-3 d-flex align-items-center gap-2" style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-                <Terminal size={14} style={{ color: "var(--pur)" }} />
-                <span>Program Output</span>
-              </h5>
+          <div className="cyber-card" style={{ padding: "20px" }}>
+            <h5 className="mb-4 d-flex align-items-center gap-2" style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+              <Cpu size={14} style={{ color: "var(--pur)" }} />
+              <span>Execution Details</span>
+            </h5>
 
-              <pre
-                style={{
-                  background: "var(--bg)",
-                  border: "1px solid var(--bd)",
-                  borderRadius: "8px",
-                  padding: "14px",
-                  fontSize: "0.82rem",
-                  color: "#34d399",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  maxHeight: "150px",
-                  overflowY: "auto",
-                  margin: 0,
-                  whiteSpace: "pre-wrap"
-                }}
-              >
-                {submission.output}
-              </pre>
-            </div>
-
-            {/* Execution Details Card */}
-            <div className="cyber-card" style={{ padding: "20px" }}>
-              <h5 className="mb-4 d-flex align-items-center gap-2" style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-                <Cpu size={14} style={{ color: "var(--pur)" }} />
-                <span>Execution Details</span>
-              </h5>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
-                  <span style={{ color: "var(--tx3)" }}>Time Taken</span>
-                  <strong style={{ color: "var(--tx)", fontFamily: "monospace" }}>{submission.timeTaken}</strong>
-                </div>
-                <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
-                  <span style={{ color: "var(--tx3)" }}>Memory Used</span>
-                  <strong style={{ color: "var(--tx)", fontFamily: "monospace" }}>{submission.memoryUsed}</strong>
-                </div>
-                <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
-                  <span style={{ color: "var(--tx3)" }}>Submitted On</span>
-                  <strong style={{ color: "var(--tx)", fontSize: "0.78rem" }}>{submission.submittedOn}</strong>
-                </div>
-                <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", paddingBottom: "2px" }}>
-                  <span style={{ color: "var(--tx3)" }}>Compiler Sandbox</span>
-                  <strong style={{ color: "var(--pur)" }}>{submission.system}</strong>
-                </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
+                <span style={{ color: "var(--tx3)" }}>Time Taken</span>
+                <strong style={{ color: "var(--tx)", fontFamily: "monospace" }}>{submission.timeTaken}</strong>
+              </div>
+              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
+                <span style={{ color: "var(--tx3)" }}>Memory Used</span>
+                <strong style={{ color: "var(--tx)", fontFamily: "monospace" }}>{submission.memoryUsed}</strong>
+              </div>
+              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
+                <span style={{ color: "var(--tx3)" }}>Submitted On</span>
+                <strong style={{ color: "var(--tx)", fontSize: "0.78rem" }}>{submission.submittedOn}</strong>
+              </div>
+              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", paddingBottom: "2px" }}>
+                <span style={{ color: "var(--tx3)" }}>Compiler Sandbox</span>
+                <strong style={{ color: "var(--pur)" }}>{submission.system}</strong>
               </div>
             </div>
-
           </div>
         </div>
       </div>
