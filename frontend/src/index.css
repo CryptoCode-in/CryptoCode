@@ -1171,7 +1171,6 @@ input, textarea { font-family: inherit; }
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
   align-items: stretch;
-  margin-bottom: 24px;
 }
 .teacher-trends-grid {
   display: grid;

@@ -6,22 +6,11 @@ import {
   Activity,
   Terminal,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 
 // Components
 import Sidebar from "../../components/teacher/Sidebar";
 import DashboardNavbar from "../../components/DashboardNavbar";
 import StatCard from "../../components/teacher/StatCard";
-import ActivityCard from "../../components/teacher/ActivityCard";
-import ChartCard from "../../components/teacher/ChartCard";
-import SubmissionCard from "../../components/teacher/SubmissionCard";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
 // Sub-pages
@@ -58,24 +47,81 @@ function TeacherDashboard({ currentUser, onLogout }) {
     ...currentUser,
   }));
 
-  // Dashboard statistics
+  // Dashboard statistics (null = loading)
   const [stats, setStats] = useState({
-    totalStudents: 180,
-    subjects: 2,
-    submissions: 1842,
-    activeStudents: 152,
+    totalStudents: null,
+    subjects: null,
+    submissions: null,
+    activeStudents: null,
   });
+  const [statsError, setStatsError] = useState(null);
 
-  const [activities, setActivities] = useState([]);
-  const [weeklyTrend, setWeeklyTrend] = useState([]);
-  const [allSubmissions, setAllSubmissions] = useState([]);
-
-  // Load dashboard data
+  // Fetch real dashboard counts from existing backend APIs
   useEffect(() => {
-    setActivities(mockTeacherData.getActivities());
-    setWeeklyTrend(mockTeacherData.getAnalytics().weeklyTrend);
-    setAllSubmissions(mockTeacherData.getSubmissions());
-  }, [activeSection]);
+    let cancelled = false;
+
+    const fetchStats = async () => {
+      try {
+        // 1. Fetch total students (role=student) and active student count
+        const studentsRes = await fetch("http://localhost:5000/students");
+        const studentsData = await studentsRes.json();
+
+        // 2. Fetch all submissions for total count and active students
+        const subsRes = await fetch("http://localhost:5000/submissions");
+        const subsData = await subsRes.json();
+
+        if (cancelled) return;
+
+        // Total students
+        const totalStudents = (studentsData.success && Array.isArray(studentsData.students))
+          ? studentsData.students.length
+          : 0;
+
+        // Assigned subjects: use the authenticated teacher's subjects from their profile
+        const teacherSubjects = Array.isArray(currentUser?.subjects) ? currentUser.subjects : [];
+        const subjects = teacherSubjects.length;
+
+        // Total submissions
+        const allSubs = (subsData.success && Array.isArray(subsData.submissions))
+          ? subsData.submissions
+          : [];
+        const totalSubmissions = allSubs.length;
+
+        // Active students: distinct students who submitted within the last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const activeStudentIds = new Set();
+        allSubs.forEach((sub) => {
+          if (sub.submitted_at && sub.student_id) {
+            const submittedAt = new Date(sub.submitted_at);
+            if (!isNaN(submittedAt.getTime()) && submittedAt >= sevenDaysAgo) {
+              activeStudentIds.add(sub.student_id);
+            }
+          }
+        });
+        const activeStudents = activeStudentIds.size;
+
+        setStats({
+          totalStudents,
+          subjects,
+          submissions: totalSubmissions,
+          activeStudents,
+        });
+        setStatsError(null);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Dashboard stats fetch error:", err);
+          setStatsError("Failed to load dashboard statistics.");
+        }
+      }
+    };
+
+    fetchStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []); // run once on mount
 
   // Update teacher profile
   const handleProfileUpdateInHeader = (updated) => {
@@ -105,27 +151,6 @@ function TeacherDashboard({ currentUser, onLogout }) {
     setActiveSection("submission-details");
   };
 
-  // =========================================================
-  // FILTER SUBMISSIONS
-  // =========================================================
-  const filteredSubmissions = allSubmissions.filter((sub) => {
-    const matchesSearch =
-      sub.studentName
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      sub.studentRoll
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      sub.practicalTitle
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-
-    const matchesPractical =
-      !practicalFilter ||
-      sub.practicalTitle === practicalFilter;
-
-    return matchesSearch && matchesPractical;
-  });
 
   // =========================================================
   // ANIMATION
@@ -240,6 +265,7 @@ function TeacherDashboard({ currentUser, onLogout }) {
                     padding: "36px 48px",
                     display: "flex",
                     alignItems: "center",
+                    marginBottom: "28px",
                   }}
                 >
                   <div
@@ -479,11 +505,28 @@ function TeacherDashboard({ currentUser, onLogout }) {
                 </div>
 
                 {/* Statistics */}
-                <div className="teacher-stats-grid">
+                <div className="teacher-stats-grid" style={{ marginTop: "28px" }}>
+
+                  {statsError && (
+                    <div
+                      style={{
+                        gridColumn: "1 / -1",
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        background: "rgba(239,68,68,0.1)",
+                        border: "1px solid rgba(239,68,68,0.25)",
+                        color: "#fca5a5",
+                        fontSize: "0.82rem",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      ⚠️ {statsError}
+                    </div>
+                  )}
 
                   <StatCard
                     label="Total Students"
-                    value={stats.totalStudents}
+                    value={stats.totalStudents !== null ? stats.totalStudents : "—"}
                     icon={Users}
                     color="#8b5cf6"
                     bg="rgba(139,92,246,0.08)"
@@ -496,7 +539,7 @@ function TeacherDashboard({ currentUser, onLogout }) {
 
                   <StatCard
                     label="Assigned Subjects"
-                    value={stats.subjects}
+                    value={stats.subjects !== null ? stats.subjects : "—"}
                     icon={BookOpen}
                     color="#3b82f6"
                     bg="rgba(59,130,246,0.08)"
@@ -506,7 +549,7 @@ function TeacherDashboard({ currentUser, onLogout }) {
 
                   <StatCard
                     label="Total Submissions"
-                    value={stats.submissions}
+                    value={stats.submissions !== null ? stats.submissions : "—"}
                     icon={Terminal}
                     color="#10b981"
                     bg="rgba(16,185,129,0.08)"
@@ -519,107 +562,16 @@ function TeacherDashboard({ currentUser, onLogout }) {
 
                   <StatCard
                     label="Active Students"
-                    value={stats.activeStudents}
+                    value={stats.activeStudents !== null ? stats.activeStudents : "—"}
                     icon={Activity}
                     color="#fbbf24"
                     bg="rgba(245,158,11,0.08)"
                     border="rgba(245,158,11,0.2)"
-                    subtext="View active →"
+                    subtext="Last 7 days"
                   />
                 </div>
 
-                {/* Trends */}
-                <div className="teacher-trends-grid">
 
-                  <ActivityCard activities={activities} />
-
-                  <ChartCard
-                    title="Submissions Overview"
-                    subtitle="Frequency of weekly code executions"
-                  >
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "220px",
-                      }}
-                    >
-                      {weeklyTrend &&
-                      weeklyTrend.length > 0 ? (
-                        <ResponsiveContainer
-                          width="100%"
-                          height="100%"
-                        >
-                          <AreaChart data={weeklyTrend}>
-                            <defs>
-                              <linearGradient
-                                id="gradOverview"
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="1"
-                              >
-                                <stop
-                                  offset="5%"
-                                  stopColor="var(--pur)"
-                                  stopOpacity={0.4}
-                                />
-                                <stop
-                                  offset="95%"
-                                  stopColor="var(--pur)"
-                                  stopOpacity={0}
-                                />
-                              </linearGradient>
-                            </defs>
-
-                            <XAxis
-                              dataKey="name"
-                              stroke="var(--tx3)"
-                              fontSize={10}
-                              tickLine={false}
-                            />
-
-                            <YAxis
-                              stroke="var(--tx3)"
-                              fontSize={10}
-                              tickLine={false}
-                            />
-
-                            <Tooltip
-                              contentStyle={{
-                                background: "var(--bg3)",
-                                border: "1px solid var(--bd)",
-                                borderRadius: "8px",
-                                color: "var(--tx)",
-                              }}
-                            />
-
-                            <Area
-                              type="monotone"
-                              dataKey="submissions"
-                              stroke="var(--pur)"
-                              strokeWidth={2.5}
-                              fillOpacity={1}
-                              fill="url(#gradOverview)"
-                            />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            height: "100%",
-                            color: "var(--tx3)",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          No trend data available
-                        </div>
-                      )}
-                    </div>
-                  </ChartCard>
-                </div>
               </TeacherLayout>
             )}
 
@@ -667,16 +619,11 @@ function TeacherDashboard({ currentUser, onLogout }) {
               <SubmissionDetails
                 submissionId={selectedSubmissionId}
                 onBack={() => {
-                  if (
-  selectedStudentId &&
-  allSubmissions.find(
-    (s) => s.id === selectedSubmissionId
-  )?.studentRoll === selectedStudentId
-) {
-  setActiveSection("student-profile");
-} else {
-  setActiveSection("submissions");
-}
+                  if (selectedStudentId) {
+                    setActiveSection("student-profile");
+                  } else {
+                    setActiveSection("submissions");
+                  }
                 }}
               />
             )}
