@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { FiMail, FiUser, FiBookOpen, FiHash, FiArrowRight, FiCalendar, FiLayers } from "react-icons/fi";
+import { FiMail, FiUser, FiBookOpen, FiHash, FiArrowRight, FiCalendar, FiLayers, FiHome } from "react-icons/fi";
 
 import InputField from "./InputField";
 import PasswordInput from "./PasswordInput";
@@ -37,17 +37,12 @@ const teacherDepartmentOptions = [
 ];
 
 const subjectOptions = [
-  "C Programming",
-  "C++ Programming",
-  "Java Programming",
+  "C",
+  "C++",
+  "Java",
   "Advanced Java",
-  "Python Programming",
-  "Data Structures",
-  "Operating System",
-  "Database Management System",
-  "Software Engineering",
-  "Computer Networks",
-  "Web Development",
+  "Data Structure Using C",
+  "Python",
 ];
 
 const SignupForm = ({ signupData, setSignupData, loading, handleSignup }) => {
@@ -97,6 +92,7 @@ const SignupForm = ({ signupData, setSignupData, loading, handleSignup }) => {
               <PasswordInput label="Password" value={signupData.password} onChange={(event) => updateField("password", event.target.value)} placeholder="Create a strong password" required />
               <PasswordInput label="Confirm Password" value={signupData.confirmPassword} onChange={(event) => updateField("confirmPassword", event.target.value)} placeholder="Confirm password" required />
               <SelectField label="Department" name="department" icon={<FiBookOpen />} value={signupData.department || ""} onChange={(event) => updateField("department", event.target.value)} options={teacherDepartmentOptions} placeholder="Select department" required />
+              <InputField label="College / Institute" icon={<FiHome />} value={signupData.teacherCollege || ""} onChange={(event) => updateField("teacherCollege", event.target.value)} placeholder="Enter college name" required />
               <div className="teacher-subjects full-width">
                 <label className="auth-label">
                   <span className="auth-label-icon"><FiBookOpen /></span>

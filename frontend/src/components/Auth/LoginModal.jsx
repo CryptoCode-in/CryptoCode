@@ -32,6 +32,7 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
 
   // Teacher fields
   department: "",
+  teacherCollege: "",
   subjects: [],
 
   role: "student",
@@ -185,10 +186,16 @@ console.log("SEMESTER VALUE:", signupData.semester);
 
     if (signupData.role === "teacher") {
       const department = signupData.department?.trim();
+      const teacherCollege = signupData.teacherCollege?.trim();
       const subjects = signupData.subjects || [];
 
       if (!department) {
         showSignupError("Department is required for teachers.");
+        return;
+      }
+
+      if (!teacherCollege) {
+        showSignupError("College / Institute is required for teachers.");
         return;
       }
 
@@ -212,14 +219,16 @@ console.log("SEMESTER VALUE:", signupData.semester);
   password,
   role: signupData.role,
 
-  roll_no: signupData.roll?.trim() || null,
-  year: signupData.year?.trim() || null,
-  semester: signupData.semester?.trim() || null,
-  branch: signupData.branch?.trim() || null,
-  college: signupData.college?.trim() || null,
+  roll_no: signupData.role === "student" ? (signupData.roll?.trim() || null) : null,
+  year: signupData.role === "student" ? (signupData.year?.trim() || null) : null,
+  semester: signupData.role === "student" ? (signupData.semester?.trim() || null) : null,
+  branch: signupData.role === "student" ? (signupData.branch?.trim() || null) : null,
+  college: signupData.role === "student"
+    ? (signupData.college?.trim() || null)
+    : (signupData.teacherCollege?.trim() || null),
 
-  department: signupData.department?.trim() || null,
-  subjects: signupData.subjects || [],
+  department: signupData.role === "teacher" ? (signupData.department?.trim() || null) : null,
+  subjects: signupData.role === "teacher" ? (signupData.subjects || []) : [],
 }),
       });
 
@@ -241,7 +250,9 @@ console.log("SEMESTER VALUE:", signupData.semester);
         year: createdProfile?.year || signupData.year?.trim() || "",
         semester: createdProfile?.semester || signupData.semester?.trim() || "",
         branch: createdProfile?.branch || signupData.branch?.trim() || "",
-        college: createdProfile?.college || signupData.college?.trim() || "",
+        college: createdProfile?.college ||
+          (signupData.role === "student" ? signupData.college?.trim() : signupData.teacherCollege?.trim()) ||
+          "",
         department: createdProfile?.department || signupData.department?.trim() || "",
         subjects: createdProfile?.subjects || signupData.subjects || [],
       };
