@@ -13,7 +13,12 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
   const terminalEndRef = useRef(null);
   const inputQueueRef = useRef([]);
   const sessionIdRef = useRef(null);
-
+  // Persistent session ID for the current run – set once on start and never overwritten on reconnection
+  const permanentSessionIdRef = useRef(null);
+  const sessionUuidRef = useRef(null);
+  if (!sessionUuidRef.current) {
+    sessionUuidRef.current = crypto.randomUUID();
+  }
   const [connected, setConnected] = useState(false);
 
   const [status, setStatus] = useState({
@@ -46,10 +51,16 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
 
     socketRef.current = socket;
 
+    if (socket.listenerAdded) {
+      return; // prevent duplicate listeners
+    }
+    socket.listenerAdded = true;
+
     socket.on("connect", () => {
       console.log("[Socket.IO] Connected:", socket.id);
 
-      sessionIdRef.current = socket.id;
+      // Use stable UUID as session identifier
+      sessionIdRef.current = sessionUuidRef.current;
       setConnected(true);
     });
 
@@ -87,13 +98,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
         );
       }
 
-      /*
-       * IMPORTANT:
-       * Send queued inputs only after process is actually running.
-       */
-      if (currentStatus === "running") {
-        flushInputQueue();
-      }
+      // No automatic input flushing; will flush when stdin is ready (status "waiting_input").
     });
 
     /*
@@ -210,7 +215,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
       return;
     }
 
-    const sessionId = sessionIdRef.current;
+    const sessionId = permanentSessionIdRef.current;
 
     if (!sessionId) {
       return;
@@ -277,9 +282,10 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
     /*
      * Current socket ID is the session ID.
      */
-    const sessionId = socket.id;
-
+    // Use stable UUID for session identifier
+    const sessionId = sessionUuidRef.current;
     sessionIdRef.current = sessionId;
+    permanentSessionIdRef.current = sessionId;
 
     console.log(
       "[CryptoCode] Starting execution",
@@ -330,7 +336,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
       return;
     }
 
-    const sessionId = sessionIdRef.current;
+    const sessionId = permanentSessionIdRef.current;
 
     console.log(
       "[CryptoCode] Stopping session:",
@@ -388,9 +394,8 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
      * fgets()
      * getchar()
      */
-    const formattedInput = inputText.endsWith("\n")
-      ? inputText
-      : inputText + "\n";
+    // Send raw input; backend will ensure newline if needed
+    const formattedInput = inputText;
 
     /*
      * Show input in terminal.
@@ -428,7 +433,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
      * Process is running.
      * Send directly to backend.
      */
-    const sessionId = sessionIdRef.current;
+    const sessionId = permanentSessionIdRef.current;
 
     console.log(
       "[CryptoCode] Sending stdin:",
@@ -471,6 +476,13 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
         terminalEndRef.current.scrollHeight;
     }
   }, [outputLogs]);
+
+  // Flush any queued inputs once the process is running
+  useEffect(() => {
+    if (status.status === "running") {
+      flushInputQueue();
+    }
+  }, [status.status]);
 
   /*
    * ---------------------------------------------------------

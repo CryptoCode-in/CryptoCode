@@ -37,10 +37,30 @@ class SessionManager {
         const child = spawn(command, args, {
             cwd,
             shell: false,
-
             // Important for interactive programs
             stdio: ["pipe", "pipe", "pipe"]
         });
+        // Ensure stdin is flowing so we can write to it later
+        if (child.stdin) {
+            child.stdin.resume();
+        }
+        console.log(`[Session ${sessionId}] stdin writable: ${child.stdin.writable}`);
+        // Emit running status now that child is created
+        if (onStatus) {
+            onStatus({
+                stage: "execution",
+                status: "running",
+                message: "Process is running."
+            });
+        }
+        // Notify that stdin is ready for live input
+        if (onStatus) {
+            onStatus({
+                stage: "execution",
+                status: "waiting_input",
+                message: "Ready for input."
+            });
+        }
 
         let finished = false;
         let timer = null;

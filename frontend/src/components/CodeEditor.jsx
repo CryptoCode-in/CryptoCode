@@ -77,8 +77,6 @@ function CodeEditor({
       type: "system"
     }
   ]);
-  const [stdinText, setStdinText] = useState("Alice\n30");
-  const [isStdinOpen, setIsStdinOpen] = useState(false);
   const [liveInputText, setLiveInputText] = useState("");
 
   // Toolbar & Menu States
@@ -259,14 +257,8 @@ function CodeEditor({
       return;
     }
 
-    // Pre-queue STDIN lines if provided
+    // No pre-queued stdin; inputs will be entered live.
     inputQueueRef.current = [];
-    if (stdinText && stdinText.trim()) {
-      const rawLines = stdinText.split("\n");
-      rawLines.forEach((line) => {
-        inputQueueRef.current.push(line.endsWith("\n") ? line : line + "\n");
-      });
-    }
 
     const sessionId = socket.id;
     sessionIdRef.current = sessionId;
@@ -578,9 +570,7 @@ function CodeEditor({
     }
   }, [outputLogs]);
 
-  // STDIN Line numbers
-  const stdinLineCount = stdinText ? stdinText.split("\n").length : 1;
-  const stdinLineNumbers = Array.from({ length: Math.max(stdinLineCount, 1) }, (_, i) => i + 1);
+
 
   const ext = extMap[lang] || "c";
   const previewFileName = modalFileName.trim() 
@@ -1347,14 +1337,7 @@ function CodeEditor({
         {/* Right: Action Buttons */}
         <div className="ide-toolbar-right">
           {/* STDIN Toggle Button */}
-          <button
-            onClick={() => setIsStdinOpen(!isStdinOpen)}
-            className={`ide-tool-btn ${isStdinOpen ? "active" : ""}`}
-            title="Toggle STDIN Input"
-          >
-            <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#818cf8" }}>&gt;_</span>
-            <span>STDIN</span>
-          </button>
+          
 
           {/* Copy Code */}
           <button
@@ -1432,48 +1415,7 @@ function CodeEditor({
         </div>
       </div>
 
-      {/* OPTIONAL STDIN / INPUT SECTION (Collapsible) */}
-      {isStdinOpen && (
-        <div className="ide-stdin-card">
-          <div className="ide-stdin-header">
-            <div className="d-flex align-items-center gap-2">
-              <span className="ide-stdin-symbol">&gt;_</span>
-              <span className="ide-stdin-title">STDIN</span>
-              <span className="ide-stdin-subtitle">
-                Optional input fed to the program on stdin - one line per line.
-              </span>
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <div className="ide-stdin-badge">
-                {stdinLineCount} {stdinLineCount === 1 ? "line" : "lines"}
-              </div>
-              <button
-                onClick={() => setIsStdinOpen(false)}
-                className="ide-tab-close"
-                style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer" }}
-                title="Close STDIN"
-              >
-                <X size={13} />
-              </button>
-            </div>
-          </div>
-          <div className="ide-stdin-body">
-            <div className="ide-stdin-gutter">
-              {stdinLineNumbers.map((num) => (
-                <div key={num} className="ide-stdin-line-no">{num}</div>
-              ))}
-            </div>
-            <textarea
-              className="ide-stdin-input"
-              rows={Math.max(2, Math.min(stdinLineCount, 5))}
-              value={stdinText}
-              onChange={(e) => setStdinText(e.target.value)}
-              placeholder="Alice&#10;30"
-              spellCheck={false}
-            />
-          </div>
-        </div>
-      )}
+      
 
       {/* 3. SIDE-BY-SIDE WORKSPACE: CODE EDITOR (68%) | INTERACTIVE CONSOLE (32%) */}
       <div className="ide-workspace-grid">
