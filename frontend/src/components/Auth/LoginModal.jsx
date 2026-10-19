@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiArrowRight, FiChrome, FiMail } from "react-icons/fi";
-import { API_URL } from "../utils/api";
+import { API_URL } from "../../utils/api";
 
 import "./Auth.css";
 
