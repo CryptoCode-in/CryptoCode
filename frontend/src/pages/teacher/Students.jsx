@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import StudentTable from "../../components/teacher/StudentTable";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
+import { API_URL } from "../../utils/api";
 
 // Semester options dependent on selected Year
 const semesterOptionsByYear = {
@@ -163,7 +164,7 @@ function Students({ onViewProfile, navbarSearchQuery = "" }) {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await fetch("http://localhost:5000/students");
+        const response = await fetch(`${API_URL}/students`);
         const result = await response.json();
 
         console.log("API RESULT:", result);

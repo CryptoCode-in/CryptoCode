@@ -6,6 +6,7 @@ import {
   Activity,
   Terminal,
 } from "lucide-react";
+import { API_URL } from "../../utils/api";
 
 // Components
 import Sidebar from "../../components/teacher/Sidebar";
@@ -63,11 +64,11 @@ function TeacherDashboard({ currentUser, onLogout }) {
     const fetchStats = async () => {
       try {
         // 1. Fetch total students (role=student) and active student count
-        const studentsRes = await fetch("http://localhost:5000/students");
+        const studentsRes = await fetch(`${API_URL}/students`);
         const studentsData = await studentsRes.json();
 
         // 2. Fetch all submissions for total count and active students
-        const subsRes = await fetch("http://localhost:5000/submissions");
+        const subsRes = await fetch(`${API_URL}/submissions`);
         const subsData = await subsRes.json();
 
         if (cancelled) return;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { io } from "socket.io-client";
+import { API_URL } from "../utils/api";
 import { 
   Play, Square, RotateCcw, Save,
   CheckCircle2, AlertCircle, Copy, Check,
@@ -114,7 +115,7 @@ function CodeEditor({
    * ---------------------------------------------------------
    */
   useEffect(() => {
-    const socket = io("http://localhost:5000", {
+    const socket = io(`${API_URL}`, {
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 10,
@@ -517,8 +518,8 @@ function CodeEditor({
 
     try {
       const url = submissionId
-        ? `http://localhost:5000/submissions/${submissionId}`
-        : "http://localhost:5000/submissions/save";
+        ? `${API_URL}/submissions/${submissionId}`
+        : `${API_URL}/submissions/save`;
 
       const method = submissionId ? "PUT" : "POST";
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AreaChart, Area, BarChart, Bar, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { API_URL } from "../../utils/api";
 import { BarChart3, LineChart as LineIcon, Grid } from "lucide-react";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
@@ -26,8 +26,8 @@ function Analytics({ currentUser }) {
         })();
 
         const url = teacherId
-          ? `http://localhost:5000/submissions/analytics?teacher_id=${encodeURIComponent(teacherId)}`
-          : "http://localhost:5000/submissions/analytics";
+          ? `${API_URL}/submissions/analytics?teacher_id=${encodeURIComponent(teacherId)}`
+          : `${API_URL}/submissions/analytics`;
 
         const response = await fetch(url);
         const data = await response.json();

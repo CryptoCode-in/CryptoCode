@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../../utils/api";
 import {
   Palette,
   Lock,
@@ -110,7 +111,7 @@ function Settings({ currentUser, onLogout }) {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/auth/change-password", {
+      const response = await fetch(`${API_URL}/auth/change-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../../utils/api";
 import {
   User,
   Mail,
@@ -65,7 +66,7 @@ function Profile({ currentUser, onProfileUpdate, onNavigateSettings }) {
         if (!activeEmail && !activeId) return;
 
         setLoading(true);
-        const response = await fetch("http://localhost:5000/profiles");
+        const response = await fetch(`${API_URL}/profiles`);
         if (!response.ok) return;
 
         const allProfiles = await response.json();
@@ -168,7 +169,7 @@ function Profile({ currentUser, onProfileUpdate, onNavigateSettings }) {
             .filter(Boolean)
         : [];
 
-      const response = await fetch("http://localhost:5000/auth/profile", {
+      const response = await fetch(`${API_URL}/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

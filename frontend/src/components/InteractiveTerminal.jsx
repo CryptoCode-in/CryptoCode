@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
+import { API_URL } from "../utils/api";
 import {
   Play,
   Square,
@@ -42,7 +43,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
    * ---------------------------------------------------------
    */
   useEffect(() => {
-    const socket = io("http://localhost:5000", {
+    const socket = io(API_URL, {
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 10,

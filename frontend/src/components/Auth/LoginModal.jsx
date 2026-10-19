@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiArrowRight, FiChrome, FiMail } from "react-icons/fi";
+import { API_URL } from "../utils/api";
 
 import "./Auth.css";
 
@@ -96,7 +97,7 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
     }
     setForgotLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/auth/forgot-password", {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -128,7 +129,7 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
     setLoading(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL;
+      // Use shared API_URL from utils
 
       const response = await fetch(`${API_URL}/auth/login`, { 
         method: "POST",
@@ -246,7 +247,7 @@ console.log("SEMESTER VALUE:", signupData.semester);
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/auth/signup", {
+      const response = await fetch(`${API_URL}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -37,7 +37,7 @@ function CodeHistory({ onOpenFile }) {
       }
 
       const response = await fetch(
-        `http://localhost:5000/submissions?user_id=${currentUser.id}`
+        `${API_URL}/submissions?user_id=${currentUser.id}`
       );
 
       const data = await response.json();

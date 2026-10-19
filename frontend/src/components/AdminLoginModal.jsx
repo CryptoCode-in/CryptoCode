@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { API_URL } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { Lock, User, RefreshCw, X, ShieldAlert } from "lucide-react";
 import logob from "../assets/images/logob.png";
@@ -68,7 +69,7 @@ function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
 
     try {
       // 3. Authenticate with backend API
-      const response = await fetch("http://localhost:5000/admin/login", {
+      const response = await fetch(`${API_URL}/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../utils/api";
 import { 
   User, Mail, Hash, Calendar, BookOpen, 
   School, Edit, ShieldCheck, UserCheck, 
@@ -44,7 +45,7 @@ function ProfileCard({ currentUser, onNavigateSettings }) {
         if (!activeEmail && !activeId) return;
 
         setLoading(true);
-        const response = await fetch("http://localhost:5000/profiles");
+        const response = await fetch(`${API_URL}/profiles`);
         if (!response.ok) return;
 
         const allProfiles = await response.json();
@@ -112,7 +113,7 @@ console.log("PROFILE UPDATE USER:", stored);
     }
 
     const response = await fetch(
-      "http://localhost:5000/auth/profile",
+      `${API_URL}/auth/profile`,
       {
         method: "PUT",
         headers: {

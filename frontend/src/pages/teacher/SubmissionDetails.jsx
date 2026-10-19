@@ -3,7 +3,7 @@ import { ArrowLeft, Copy, ClipboardCheck, Cpu, Clock, CheckCircle2, ShieldAlert 
 import Editor from "@monaco-editor/react";
 import { mockTeacherData } from "../../utils/mockTeacherData";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
-
+import { API_URL } from "../../utils/api";
 function SubmissionDetails({ submissionId, onBack }) {
   const [submission, setSubmission] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -21,7 +21,7 @@ function SubmissionDetails({ submissionId, onBack }) {
       }
 
       try {
-        const res = await fetch(`http://localhost:5000/submissions/${submissionId}`);
+        const res = await fetch(`${API_URL}/submissions/${submissionId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.submission && isMounted) {

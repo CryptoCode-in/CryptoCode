@@ -7,6 +7,7 @@ import {
   Award,
   FileCode,
 } from "lucide-react";
+import { API_URL } from "../../utils/api";
 
 import {
   AreaChart,
@@ -48,7 +49,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
         console.log("Fetching student profile for ID:", studentId);
 
         const response = await fetch(
-          `http://localhost:5000/students/${studentId}`
+          `${API_URL}/students/${studentId}`
         );
 
         const result = await response.json();

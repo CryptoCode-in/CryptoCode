@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FiLock, FiArrowRight, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
-import "../components/Auth/Auth.css";
+import { API_URL } from "../utils/api";
 
 /**
  * ResetPassword page — opened when Supabase sends the user a recovery link.
@@ -55,7 +55,7 @@ function ResetPassword() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/auth/reset-password", {
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token_hash: tokenHash, newPassword }),

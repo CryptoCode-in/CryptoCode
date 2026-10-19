@@ -18,6 +18,7 @@ import {
   Server,
   Key
 } from "lucide-react";
+import { API_URL } from "../utils/api";
 import logob from "../assets/images/logob.png";
 import logow from "../assets/images/logow.png";
 
@@ -55,7 +56,7 @@ function AdminDashboard({ currentUser, onLogout }) {
   const fetchRankings = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/admin/rankings", {
+      const res = await fetch(`${API_URL}/admin/rankings`, {
         headers: getAuthHeaders(),
       });
       if (res.status === 403) {
@@ -77,7 +78,7 @@ function AdminDashboard({ currentUser, onLogout }) {
   // Fetch real students from backend
   const fetchStudents = async () => {
     try {
-      const res = await fetch("http://localhost:5000/admin/students", {
+      const res = await fetch(`${API_URL}/admin/students`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
@@ -92,7 +93,7 @@ function AdminDashboard({ currentUser, onLogout }) {
   // Fetch real teachers from backend
   const fetchTeachers = async () => {
     try {
-      const res = await fetch("http://localhost:5000/admin/teachers", {
+      const res = await fetch(`${API_URL}/admin/teachers`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();
@@ -107,7 +108,7 @@ function AdminDashboard({ currentUser, onLogout }) {
   // Fetch subjects from backend
   const fetchSubjects = async () => {
     try {
-      const res = await fetch("http://localhost:5000/admin/subjects", {
+      const res = await fetch(`${API_URL}/admin/subjects`, {
         headers: getAuthHeaders(),
       });
       const data = await res.json();

@@ -7,11 +7,34 @@ import CodeEditor from "../components/CodeEditor";
 import CodeHistory from "../components/CodeHistory";
 import ProgressCards from "../components/ProgressCards";
 import ProfileCard from "../components/ProfileCard";
-import { 
-  Terminal, ShieldAlert, Play, Target, Sliders,
-  Moon, Palette, Type, Hash, Save, RotateCcw, 
-  Trash2, History, Layout, Bell, Calendar, Lock, LogOut, User,
-  KeyRound, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ShieldCheck
+import { API_URL } from "../utils/api";
+import {
+  Terminal,
+  ShieldAlert,
+  Play,
+  Target,
+  Sliders,
+  Moon,
+  Palette,
+  Type,
+  Hash,
+  Save,
+  RotateCcw,
+  Trash2,
+  History,
+  Layout,
+  Bell,
+  Calendar,
+  Lock,
+  LogOut,
+  User,
+  KeyRound,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ShieldCheck,
 } from "lucide-react";
 
 function StudentDashboard({ currentUser, onLogout }) {
@@ -188,7 +211,7 @@ function StudentDashboard({ currentUser, onLogout }) {
 
     setPwLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/auth/change-password", {
+      const response = await fetch(`${API_URL}/auth/change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -250,7 +273,7 @@ function StudentDashboard({ currentUser, onLogout }) {
     };
 
     // Attempt real database fetch
-    fetch("http://localhost:5000/practicals")
+    fetch(`${API_URL}/practicals`)
       .then((res) => {
         if (!res.ok) throw new Error("API Route not configured");
         return res.json();

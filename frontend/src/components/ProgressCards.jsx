@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { API_URL } from "../utils/api";
 
 function ProgressCards() {
   const [submissions, setSubmissions] = useState([]);
@@ -54,7 +55,7 @@ function ProgressCards() {
         }
 
         const response = await fetch(
-          `http://localhost:5000/submissions?user_id=${currentUser.id}`
+          `${API_URL}/submissions?user_id=${currentUser.id}`
         );
 
         const data = await response.json();

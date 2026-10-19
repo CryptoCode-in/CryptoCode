@@ -14,6 +14,7 @@ import {
   Loader2,
   Terminal,
 } from "lucide-react";
+import { API_URL } from "../../utils/api";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
 // Helper for formatting timestamps cleanly from database ISO strings
@@ -102,7 +103,7 @@ function Submissions({
       setLoading(true);
       setError("");
 
-      const res = await fetch("http://localhost:5000/submissions");
+      const res = await fetch(`${API_URL}/submissions`);
       if (!res.ok) {
         throw new Error("Unable to load submissions from database.");
       }
