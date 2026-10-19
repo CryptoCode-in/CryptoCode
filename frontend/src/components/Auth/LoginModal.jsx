@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiArrowRight, FiChrome } from "react-icons/fi";
+import { FiX, FiArrowRight, FiChrome, FiMail } from "react-icons/fi";
 
 import "./Auth.css";
 
@@ -40,6 +40,13 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
   const [loginError, setLoginError] = useState("");
   const [signupError, setSignupError] = useState("");
 
+  // ── Forgot Password state ──────────────────────────────────
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState({ type: "", text: "" });
+
+
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab || "login");
@@ -78,6 +85,35 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
     setSignupError(message);
     window.setTimeout(() => setSignupError(""), 3200);
   };
+
+  const handleForgotPassword = async (e) => {
+    if (e) e.preventDefault();
+    setForgotMessage({ type: "", text: "" });
+    const email = forgotEmail.trim();
+    if (!email) {
+      setForgotMessage({ type: "error", text: "Please enter your email address." });
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setForgotMessage({ type: "error", text: data.message || "Failed to send reset email." });
+      } else {
+        setForgotMessage({ type: "success", text: data.message || "Reset link sent! Check your inbox." });
+      }
+    } catch {
+      setForgotMessage({ type: "error", text: "Server error. Please try again." });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -371,13 +407,78 @@ console.log("SEMESTER VALUE:", signupData.semester);
                       exit={{ opacity: 0, x: -24 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {loginError ? <div className="auth-form-alert">{loginError}</div> : null}
-                      <LoginForm
-                        loginData={loginData}
-                        setLoginData={setLoginData}
-                        loading={loading}
-                        handleLogin={handleLogin}
-                      />
+                      {showForgotPassword ? (
+                        <form className="auth-form" onSubmit={handleForgotPassword}>
+                          <div style={{ marginBottom: "8px" }}>
+                            <p style={{ margin: "0 0 6px", color: "#94a3b8", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                              Enter your registered email address and we&#39;ll send you a link to reset your password.
+                            </p>
+                          </div>
+                          <div className="auth-group">
+                            <label className="auth-label">
+                              <span className="auth-label-icon"><FiMail /></span>
+                              Email Address
+                            </label>
+                            <input
+                              type="email"
+                              className="auth-input"
+                              placeholder="you@college.edu"
+                              value={forgotEmail}
+                              onChange={(e) => setForgotEmail(e.target.value)}
+                              required
+                              autoFocus
+                            />
+                          </div>
+                          {forgotMessage.text && (
+                            <div
+                              className="auth-form-alert"
+                              style={{
+                                background: forgotMessage.type === "success" ? "rgba(16,185,129,0.12)" : "rgba(244,63,94,0.16)",
+                                borderColor: forgotMessage.type === "success" ? "rgba(16,185,129,0.25)" : "rgba(244,63,94,0.2)",
+                                color: forgotMessage.type === "success" ? "#6ee7b7" : "#fecdd3",
+                              }}
+                            >
+                              {forgotMessage.text}
+                            </div>
+                          )}
+                          <motion.button
+                            type="submit"
+                            className="auth-btn"
+                            disabled={forgotLoading}
+                            whileHover={{ y: -2, scale: 1.01 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {forgotLoading ? <div className="auth-spinner" /> : <><span>Send Reset Link</span><FiArrowRight /></>}
+                          </motion.button>
+                          <button
+                            type="button"
+                            className="auth-text-btn"
+                            style={{ marginTop: "8px", justifyContent: "center" }}
+                            onClick={() => {
+                              setShowForgotPassword(false);
+                              setForgotEmail("");
+                              setForgotMessage({ type: "", text: "" });
+                            }}
+                          >
+                            ← Back to Login
+                          </button>
+                        </form>
+                      ) : (
+                        <>
+                          {loginError ? <div className="auth-form-alert">{loginError}</div> : null}
+                          <LoginForm
+                            loginData={loginData}
+                            setLoginData={setLoginData}
+                            loading={loading}
+                            handleLogin={handleLogin}
+                            onForgotPassword={() => {
+                              setShowForgotPassword(true);
+                              setForgotEmail(loginData.email || "");
+                              setForgotMessage({ type: "", text: "" });
+                            }}
+                          />
+                        </>
+                      )}
                     </motion.div>
                   ) : (
                     <motion.div

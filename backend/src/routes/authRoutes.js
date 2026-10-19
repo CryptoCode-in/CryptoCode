@@ -4,7 +4,9 @@ const {
     signup,
     login,
     updateProfile,
-    changePassword
+    changePassword,
+    forgotPassword,
+    resetPassword
 } = require("../controllers/authController");
 const { adminLogin } = require("../controllers/adminController");
 
@@ -14,4 +16,7 @@ router.post("/admin-login", adminLogin);
 router.put("/profile", updateProfile);
 router.post("/change-password", changePassword);
 router.put("/change-password", changePassword);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 module.exports = router;
+

@@ -7,6 +7,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -137,7 +138,9 @@ function App() {
           path="/contact"
           element={<Contact onLoginSuccess={handleLoginSuccess} />}
         />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </Router>
   );

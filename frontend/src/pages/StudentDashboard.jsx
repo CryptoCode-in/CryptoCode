@@ -10,7 +10,8 @@ import ProfileCard from "../components/ProfileCard";
 import { 
   Terminal, ShieldAlert, Play, Target, Sliders,
   Moon, Palette, Type, Hash, Save, RotateCcw, 
-  Trash2, History, Layout, Bell, Calendar, Lock, LogOut, User
+  Trash2, History, Layout, Bell, Calendar, Lock, LogOut, User,
+  KeyRound, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ShieldCheck
 } from "lucide-react";
 
 function StudentDashboard({ currentUser, onLogout }) {
@@ -129,6 +130,108 @@ function StudentDashboard({ currentUser, onLogout }) {
     const newSettings = { ...notificationSettings, [key]: value };
     setNotificationSettings(newSettings);
     localStorage.setItem("cryptocode_notification_settings", JSON.stringify(newSettings));
+  };
+
+  // ==========================================
+  // CHANGE PASSWORD STATE & HANDLERS
+  // ==========================================
+  const user = currentUser || (() => {
+    try {
+      return JSON.parse(localStorage.getItem("cryptocode_user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+  const userEmail = user?.email || "";
+  const userId = user?.id || user?.user_id || "";
+
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState("");
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPwError("");
+    setPwSuccess("");
+
+    if (!passwordForm.currentPassword) {
+      setPwError("Please enter your current password.");
+      return;
+    }
+    if (!passwordForm.newPassword) {
+      setPwError("Please enter your new password.");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      setPwError("New password must be at least 6 characters long.");
+      return;
+    }
+    if (passwordForm.newPassword === passwordForm.currentPassword) {
+      setPwError("New password cannot be the same as your current password.");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPwError("New password and confirm password do not match.");
+      return;
+    }
+
+    setPwLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          user_id: userId,
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to update password.");
+      }
+      setPwSuccess("Password updated successfully! Your new password is now active.");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setTimeout(() => setPwSuccess(""), 5000);
+    } catch (err) {
+      setPwError(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  const handleCancelPassword = () => {
+    setShowPasswordForm(false);
+    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    setPwError("");
+    setPwSuccess("");
+  };
+
+  // ==========================================
+  // LOGOUT ALL DEVICES STATE & HANDLER
+  // ==========================================
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogoutAll = () => {
+    localStorage.removeItem("cryptocode_user");
+    localStorage.removeItem("cryptocode_admin_token");
+    if (onLogout) {
+      onLogout();
+    } else {
+      window.location.href = "/";
+    }
   };
 
   // Today's Practical state (Attempts to fetch, falls back to clean placeholder state if no backend table/data)
@@ -522,6 +625,9 @@ function StudentDashboard({ currentUser, onLogout }) {
                     font-weight: 600;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
                   }
                   .setting-btn-primary {
                     background: var(--bg3);
@@ -531,6 +637,70 @@ function StudentDashboard({ currentUser, onLogout }) {
                   .setting-btn-primary:hover {
                     border-color: var(--pur);
                     color: var(--tx);
+                  }
+                  .setting-btn-submit {
+                    background: var(--grad);
+                    border: none;
+                    color: #fff;
+                    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
+                  }
+                  .setting-btn-submit:hover:not(:disabled) {
+                    opacity: 0.92;
+                    transform: translateY(-1px);
+                  }
+                  .setting-btn-submit:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                  }
+                  .pw-field-container {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                  }
+                  .pw-field-input {
+                    width: 100%;
+                    background: var(--sf);
+                    border: 1px solid var(--bd);
+                    border-radius: 10px;
+                    padding: 10px 42px 10px 38px;
+                    color: var(--tx);
+                    font-size: 0.86rem;
+                    outline: none;
+                    transition: border-color 0.2s, box-shadow 0.2s;
+                  }
+                  .pw-field-input:focus {
+                    border-color: var(--pur);
+                    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+                  }
+                  .pw-field-icon {
+                    position: absolute;
+                    left: 12px;
+                    color: var(--tx3);
+                    pointer-events: none;
+                    display: flex;
+                    align-items: center;
+                  }
+                  .pw-eye-btn {
+                    position: absolute;
+                    right: 12px;
+                    background: none;
+                    border: none;
+                    color: var(--tx3);
+                    cursor: pointer;
+                    padding: 4px;
+                    display: flex;
+                    align-items: center;
+                    transition: color 0.2s;
+                  }
+                  .pw-eye-btn:hover {
+                    color: var(--tx);
+                  }
+                  @keyframes spinAnimation {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                  }
+                  .spin-loader {
+                    animation: spinAnimation 1s linear infinite;
                   }
 
                   /* Responsive mobile formatting */
@@ -779,26 +949,205 @@ function StudentDashboard({ currentUser, onLogout }) {
                       <span>Account Settings</span>
                     </h5>
 
-                    <div className="setting-row-item">
+                    {/* Change Password Row */}
+                    <div className="setting-row-item" style={{ borderBottom: showPasswordForm ? "none" : undefined }}>
                       <div className="setting-left">
                         <div className="setting-icon-wrapper">
                           <Lock size={16} />
                         </div>
                         <div className="setting-info">
                           <span className="setting-label">Change Password</span>
-                          <span className="setting-desc">Update your login security credentials</span>
+                          <span className="setting-desc">Update your login security credentials with Supabase authentication</span>
                         </div>
                       </div>
                       <div className="setting-right">
-                        <button 
-                          onClick={() => alert("Change Password modal requested (UI only placeholder)")}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPasswordForm((prev) => !prev);
+                            setPwError("");
+                            setPwSuccess("");
+                          }}
                           className="setting-btn setting-btn-primary"
                         >
-                          Change Password
+                          <Lock size={14} />
+                          <span>{showPasswordForm ? "Close Form" : "Change Password"}</span>
                         </button>
                       </div>
                     </div>
 
+                    {/* Inline Change Password Form */}
+                    <AnimatePresence>
+                      {showPasswordForm && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.28, ease: "easeInOut" }}
+                          style={{ overflow: "hidden" }}
+                        >
+                          <div
+                            style={{
+                              background: "var(--bg3)",
+                              border: "1px solid var(--bd)",
+                              borderRadius: "16px",
+                              padding: "24px",
+                              marginTop: "8px",
+                              marginBottom: "20px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                marginBottom: "18px",
+                                paddingBottom: "12px",
+                                borderBottom: "1px solid var(--bd)",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <ShieldCheck size={18} style={{ color: "var(--pur)" }} />
+                                <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--tx)" }}>
+                                  Update Account Password
+                                </span>
+                              </div>
+                              {userEmail && (
+                                <span
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "var(--tx3)",
+                                    background: "var(--sf)",
+                                    padding: "4px 10px",
+                                    borderRadius: "6px",
+                                    border: "1px solid var(--bd)",
+                                  }}
+                                >
+                                  {userEmail}
+                                </span>
+                              )}
+                            </div>
+
+                            <form onSubmit={handlePasswordSubmit}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                {/* Current Password */}
+                                <div>
+                                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "var(--tx2)", marginBottom: "6px" }}>
+                                    Current Password
+                                  </label>
+                                  <div className="pw-field-container">
+                                    <span className="pw-field-icon"><Lock size={15} /></span>
+                                    <input
+                                      type={showPassword.current ? "text" : "password"}
+                                      value={passwordForm.currentPassword}
+                                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                                      placeholder="Enter current password"
+                                      className="pw-field-input"
+                                      autoComplete="current-password"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPassword((prev) => ({ ...prev, current: !prev.current }))}
+                                      className="pw-eye-btn"
+                                      title={showPassword.current ? "Hide password" : "Show password"}
+                                    >
+                                      {showPassword.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* New Password */}
+                                <div>
+                                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "var(--tx2)", marginBottom: "6px" }}>
+                                    New Password
+                                  </label>
+                                  <div className="pw-field-container">
+                                    <span className="pw-field-icon"><KeyRound size={15} /></span>
+                                    <input
+                                      type={showPassword.new ? "text" : "password"}
+                                      value={passwordForm.newPassword}
+                                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                                      placeholder="Enter new password (min. 6 characters)"
+                                      className="pw-field-input"
+                                      autoComplete="new-password"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPassword((prev) => ({ ...prev, new: !prev.new }))}
+                                      className="pw-eye-btn"
+                                      title={showPassword.new ? "Hide password" : "Show password"}
+                                    >
+                                      {showPassword.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                  </div>
+                                  <span style={{ display: "block", fontSize: "0.72rem", color: "var(--tx3)", marginTop: "4px" }}>
+                                    Must contain at least 6 characters.
+                                  </span>
+                                </div>
+
+                                {/* Confirm New Password */}
+                                <div>
+                                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "var(--tx2)", marginBottom: "6px" }}>
+                                    Confirm New Password
+                                  </label>
+                                  <div className="pw-field-container">
+                                    <span className="pw-field-icon"><KeyRound size={15} /></span>
+                                    <input
+                                      type={showPassword.confirm ? "text" : "password"}
+                                      value={passwordForm.confirmPassword}
+                                      onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                                      placeholder="Re-enter new password"
+                                      className="pw-field-input"
+                                      autoComplete="new-password"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPassword((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                                      className="pw-eye-btn"
+                                      title={showPassword.confirm ? "Hide password" : "Show password"}
+                                    >
+                                      {showPassword.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Error Banner */}
+                                {pwError && (
+                                  <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "10px", padding: "12px 16px", color: "#f87171", fontSize: "0.84rem", display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                                    <span>{pwError}</span>
+                                  </div>
+                                )}
+
+                                {/* Success Banner */}
+                                {pwSuccess && (
+                                  <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "10px", padding: "12px 16px", color: "#34d399", fontSize: "0.84rem", display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+                                    <span>{pwSuccess}</span>
+                                  </div>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "6px" }}>
+                                  <button type="submit" disabled={pwLoading} className="setting-btn setting-btn-submit">
+                                    {pwLoading ? (
+                                      <><Loader2 size={14} className="spin-loader" /><span>Updating Password...</span></>
+                                    ) : (
+                                      <><ShieldCheck size={14} /><span>Update Password</span></>
+                                    )}
+                                  </button>
+                                  <button type="button" onClick={handleCancelPassword} disabled={pwLoading} className="setting-btn setting-btn-primary">
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Logout All Devices Row */}
                     <div className="setting-row-item">
                       <div className="setting-left">
                         <div className="setting-icon-wrapper">
@@ -810,12 +1159,33 @@ function StudentDashboard({ currentUser, onLogout }) {
                         </div>
                       </div>
                       <div className="setting-right">
-                        <button 
-                          onClick={() => alert("Logged out of all other devices.")}
-                          className="setting-btn setting-btn-primary"
-                        >
-                          Logout All
-                        </button>
+                        {showLogoutConfirm ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <button
+                              type="button"
+                              onClick={handleLogoutAll}
+                              className="setting-btn setting-btn-submit"
+                              style={{ background: "#ef4444" }}
+                            >
+                              Confirm Logout
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowLogoutConfirm(false)}
+                              className="setting-btn setting-btn-primary"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setShowLogoutConfirm(true)}
+                            className="setting-btn setting-btn-primary"
+                          >
+                            Logout All
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

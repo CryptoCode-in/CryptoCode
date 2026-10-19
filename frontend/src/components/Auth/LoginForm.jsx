@@ -4,7 +4,7 @@ import { FiMail, FiLock, FiCheckCircle, FiArrowRight } from "react-icons/fi";
 import InputField from "./InputField";
 import PasswordInput from "./PasswordInput";
 
-const LoginForm = ({ loginData, setLoginData, loading, handleLogin }) => {
+const LoginForm = ({ loginData, setLoginData, loading, handleLogin, onForgotPassword }) => {
   const updateField = (field, value) => {
     setLoginData((prev) => ({ ...prev, [field]: value }));
   };
@@ -28,12 +28,8 @@ const LoginForm = ({ loginData, setLoginData, loading, handleLogin }) => {
         ))}
       </div>
 
-      <div className="auth-options">
-        <label className="remember-me">
-          <input type="checkbox" />
-          <span>Remember me</span>
-        </label>
-        <button type="button" className="forgot-password">Forgot password?</button>
+      <div className="auth-options auth-options-forgot">
+        <button type="button" className="forgot-password" onClick={onForgotPassword}>Forgot password?</button>
       </div>
 
       <motion.button type="submit" className="auth-btn" disabled={loading} whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}>
@@ -42,7 +38,11 @@ const LoginForm = ({ loginData, setLoginData, loading, handleLogin }) => {
 
       <div className="auth-note">
         <FiCheckCircle />
-        <span>Secure sign-in for students and instructors.</span>
+        <span>
+          {loginData.role === "teacher"
+            ? "Secure sign-in for Teachers"
+            : "Secure sign-in for students and instructors."}
+        </span>
       </div>
     </motion.form>
   );

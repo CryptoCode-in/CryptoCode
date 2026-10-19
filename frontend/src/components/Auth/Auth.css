@@ -530,6 +530,10 @@ body {
   flex-wrap: wrap;
 }
 
+.auth-options-forgot {
+  justify-content: flex-end;
+}
+
 .remember-me {
   display: inline-flex;
   align-items: center;

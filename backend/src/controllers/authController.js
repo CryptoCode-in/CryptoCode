@@ -210,6 +210,89 @@ const updateProfile = async (req, res) => {
     }
 };
 
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email || !email.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Email address is required."
+            });
+        }
+
+        const trimmedEmail = email.trim().toLowerCase();
+
+        // Use the anon Supabase client — resetPasswordForEmail does not require admin
+        const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+            redirectTo: "http://localhost:5173/reset-password"
+        });
+
+        if (error) {
+            console.error("Supabase forgot-password error:", error);
+            return res.status(400).json({
+                success: false,
+                message: error.message || "Failed to send reset email."
+            });
+        }
+
+        // Always respond with success to prevent email enumeration
+        return res.status(200).json({
+            success: true,
+            message: "If this email is registered, a password reset link has been sent."
+        });
+    } catch (err) {
+        console.error("Forgot password error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "An internal server error occurred."
+        });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    try {
+        const { token_hash, newPassword } = req.body;
+
+        if (!token_hash) {
+            return res.status(400).json({ success: false, message: "Reset token is missing." });
+        }
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "New password must be at least 6 characters." });
+        }
+
+        // Exchange the token_hash for a session (verifies the reset link is valid)
+        const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash,
+            type: "recovery"
+        });
+
+        if (verifyError || !verifyData?.user) {
+            console.error("Reset token verification error:", verifyError);
+            return res.status(400).json({
+                success: false,
+                message: verifyError?.message || "Invalid or expired reset link. Please request a new one."
+            });
+        }
+
+        // Update the password using the admin client
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+            verifyData.user.id,
+            { password: newPassword }
+        );
+
+        if (updateError) {
+            console.error("Reset password update error:", updateError);
+            return res.status(500).json({ success: false, message: updateError.message || "Failed to update password." });
+        }
+
+        return res.status(200).json({ success: true, message: "Password updated successfully. You can now log in." });
+    } catch (err) {
+        console.error("Reset password error:", err);
+        return res.status(500).json({ success: false, message: "An internal server error occurred." });
+    }
+};
+
 const changePassword = async (req, res) => {
     try {
         let { email, user_id, currentPassword, newPassword } = req.body;
@@ -301,5 +384,8 @@ module.exports = {
     signup,
     login,
     updateProfile,
-    changePassword
+    changePassword,
+    forgotPassword,
+    resetPassword
 };
+
