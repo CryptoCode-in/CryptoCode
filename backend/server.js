@@ -9,6 +9,7 @@ const authRoutes = require("./src/routes/authRoutes");
 const submissionRoutes = require("./src/routes/submissionRoutes");
 const studentRoutes = require("./src/routes/studentRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
+const notificationRoutes = require("./src/routes/notificationRoutes");
 const { getSubmissionAnalytics } = require("./src/controllers/submissionController");
 const executionManager = require("./execution/executionManager");
 const { initSocketServer } = require("./socket/socketHandler");
@@ -58,6 +59,7 @@ app.use("/auth", authRoutes);
 app.use("/submissions", submissionRoutes);
 app.use("/students", studentRoutes);
 app.use("/admin", adminRoutes);
+app.use("/notifications", notificationRoutes);
 app.get("/analytics", getSubmissionAnalytics);
 
 

@@ -1,6 +1,16 @@
-import { LayoutDashboard, Users, History, BarChart3, User, Settings, LogOut } from "lucide-react";
+import { useEffect } from "react";
+import { LayoutDashboard, Users, History, BarChart3, User, Settings, LogOut, X } from "lucide-react";
+import logob from "../../assets/images/logob.png";
 
-function Sidebar({ activeSection, setActiveSection, onLogout }) {
+function Sidebar({ activeSection, setActiveSection, onLogout, isOpen, onClose }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape" && onClose) onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "students", label: "Students", icon: Users },
@@ -11,8 +21,10 @@ function Sidebar({ activeSection, setActiveSection, onLogout }) {
   ];
 
   return (
-    <div
-      className="db-sidebar"
+    <>
+      {isOpen && <div className="db-sidebar-backdrop mob-open" onClick={onClose} />}
+      <div
+        className={`db-sidebar ${isOpen ? "mob-open" : ""}`}
       style={{
         position: "sticky",
         top: "66px",
@@ -27,6 +39,26 @@ function Sidebar({ activeSection, setActiveSection, onLogout }) {
         padding: "20px 10px",
       }}
     >
+      {/* Mobile Drawer Top Bar */}
+      <div className="d-lg-none d-flex align-items-center justify-content-between pb-3 mb-2" style={{ borderBottom: "1px solid var(--bd)", padding: "0 8px" }}>
+        <div className="d-flex align-items-center gap-2">
+          <img src={logob} style={{ height: "28px", width: "auto" }} alt="CryptoCode" />
+          <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--tx)" }}>Teacher Portal</span>
+        </div>
+        <button className="boc p-1" onClick={onClose} style={{ borderRadius: "8px" }} aria-label="Close menu">
+          <X size={18} />
+        </button>
+      </div>
+      {/* Mobile Drawer Top Bar */}
+      <div className="d-lg-none d-flex align-items-center justify-content-between pb-3 mb-2" style={{ borderBottom: "1px solid var(--bd)", padding: "0 8px" }}>
+        <div className="d-flex align-items-center gap-2">
+          <img src={logob} style={{ height: "28px", width: "auto" }} alt="CryptoCode" />
+          <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--tx)" }}>Teacher Portal</span>
+        </div>
+        <button className="boc p-1" onClick={onClose} style={{ borderRadius: "8px" }} aria-label="Close menu">
+          <X size={18} />
+        </button>
+      </div>
       <div style={{ fontSize: ".64rem", textTransform: "uppercase", letterSpacing: ".1em", color: "var(--tx3)", padding: "0 12px 12px", fontWeight: 700 }}>
         Teacher Menu
       </div>
@@ -40,7 +72,7 @@ function Sidebar({ activeSection, setActiveSection, onLogout }) {
           return (
             <button
               key={item.id}
-              onClick={() => setActiveSection(item.id)}
+              onClick={() => { setActiveSection(item.id); if (onClose) onClose(); }}
               className={`db-nl ${isActive ? 'active' : ''}`}
               style={{
                 display: "flex",
@@ -98,6 +130,7 @@ function Sidebar({ activeSection, setActiveSection, onLogout }) {
         CryptoCode Teacher Panel
       </div>
     </div>
+    </>
   );
 }
 

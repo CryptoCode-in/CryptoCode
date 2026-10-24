@@ -1,5 +1,6 @@
 const supabase = require("../config/supabase");
 const supabaseAdmin = require("../config/supabaseAdmin");
+const { createLoginNotification } = require("./notificationController");
 const signup = async(req, res) => {
 
     const {
@@ -122,6 +123,18 @@ const login = async(req, res) => {
             success: false,
             message: `You are registered as ${profile.role}. Please select ${profile.role} login.`
         });
+    }
+
+    // Capture and create successful login notification
+    try {
+        await createLoginNotification({
+            userId: data.user.id,
+            userName: profile.name,
+            role: profile.role,
+            timestamp: new Date()
+        });
+    } catch (notifErr) {
+        console.error("Failed to create login notification:", notifErr);
     }
 
     res.status(200).json({

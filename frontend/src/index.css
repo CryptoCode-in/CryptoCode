@@ -17,19 +17,29 @@
   --grad2: linear-gradient(135deg, #6d28d9, #1d4ed8);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root {
-  height: 100%;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  scroll-behavior: smooth;
+  width: 100%;
   overflow-x: hidden;
 }
-html { scroll-behavior: smooth; }
 body {
-  min-height: 100%;
+  min-height: 100vh;
+  width: 100%;
   background: var(--bg);
   color: var(--tx);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+#root {
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 a { text-decoration: none; color: inherit; }
 button { border: none; background: none; cursor: pointer; font-family: inherit; color: inherit; }
@@ -1165,6 +1175,301 @@ input, textarea { font-family: inherit; }
   flex-direction: column;
 }
 
+/* ========================================================
+   CODING COMMAND CENTER DASHBOARD STYLES
+   ======================================================== */
+
+.ccc-container {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+}
+
+.ccc-breadcrumb-wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.ccc-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--pur, #a78bfa);
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+  user-select: none;
+  max-width: 100%;
+  word-break: break-all;
+}
+
+.ccc-welcome-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ccc-welcome-heading {
+  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+  font-weight: 700;
+  color: var(--tx, #f8fafc);
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  word-break: break-word;
+}
+
+.ccc-welcome-name {
+  color: var(--pur, #a78bfa);
+}
+
+.ccc-welcome-subtitle {
+  font-size: 0.95rem;
+  color: var(--tx2, #94a3b8);
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Section D — Main Coding Action Panel */
+.ccc-action-panel {
+  background: linear-gradient(145deg, rgba(22, 22, 34, 0.88), rgba(15, 16, 26, 0.94));
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 18px;
+  padding: 26px 30px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ccc-action-panel:hover {
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 12px 36px -8px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.ccc-action-panel-topbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.ccc-panel-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+.ccc-panel-dot.red { background: #ef4444; }
+.ccc-panel-dot.yellow { background: #f59e0b; }
+.ccc-panel-dot.green { background: #10b981; }
+
+.ccc-action-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ccc-action-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ccc-code-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 600;
+  color: var(--tx, #f8fafc);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+  word-break: break-all;
+}
+
+.ccc-prompt-arrow {
+  color: #10b981;
+  font-weight: 700;
+  user-select: none;
+}
+
+.ccc-code-text {
+  color: #e2e8f0;
+}
+
+.ccc-action-subtitle {
+  font-size: 0.92rem;
+  color: var(--tx2, #94a3b8);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ccc-primary-btn {
+  background: var(--grad, linear-gradient(135deg, #7c3aed, #4f46e5));
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 13px 26px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.ccc-primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(124, 58, 237, 0.6);
+  background: var(--grad2, linear-gradient(135deg, #6d28d9, #4338ca));
+  color: #ffffff;
+}
+
+.ccc-primary-btn:active {
+  transform: translateY(0);
+}
+
+/* Section E — Workspace Cards */
+.ccc-workspace-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.ccc-workspace-card {
+  background: linear-gradient(145deg, rgba(20, 20, 32, 0.75), rgba(15, 16, 26, 0.82));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  min-height: 160px;
+}
+
+.ccc-workspace-card:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px -6px rgba(139, 92, 246, 0.18);
+}
+
+.ccc-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ccc-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--pur, #a78bfa);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ccc-card-desc {
+  font-size: 0.92rem;
+  color: var(--tx2, #94a3b8);
+  margin: 0;
+  line-height: 1.55;
+  flex: 1;
+}
+
+.ccc-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tx, #f8fafc);
+  transition: color 0.2s ease, gap 0.2s ease;
+  padding-top: 4px;
+}
+
+.ccc-workspace-card:hover .ccc-card-action {
+  color: var(--pur, #a78bfa);
+  gap: 12px;
+}
+
+/* Section F — Motivational Footer */
+.ccc-motivational-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 28px 16px 12px;
+  color: var(--tx3, #64748b);
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+  gap: 8px;
+}
+
+.ccc-motivational-quote {
+  font-style: italic;
+}
+
+.ccc-motivational-icon {
+  display: inline-flex;
+  align-items: center;
+  font-style: normal;
+}
+
+/* Mobile responsive queries for CCC */
+@media (max-width: 768px) {
+  .ccc-action-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+
+  .ccc-primary-btn {
+    width: 100%;
+  }
+
+  .ccc-workspace-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .ccc-action-panel {
+    padding: 20px 18px;
+  }
+
+  .ccc-workspace-card {
+    padding: 20px 18px;
+    min-height: auto;
+  }
+}
+
 /* Teacher Dashboard Grid Layouts */
 .teacher-stats-grid {
   display: grid;
@@ -2053,4 +2358,211 @@ input, textarea { font-family: inherit; }
 .terminal-line.info {
   color: #9ca3af;
   font-size: 0.78rem;
+}
+
+
+/* =========================================================
+   MOBILE RESPONSIVENESS & OVERFLOW CONTAINMENT (ADDITIONS)
+   ========================================================= */
+
+/* Contain sections so glowing auras and absolute elements never overflow viewport */
+#landing,
+#landing > section,
+.sp,
+#hero,
+#problem,
+#features,
+#how,
+#languages,
+#security,
+#testimonials,
+#foot,
+#cta,
+#contact {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+@media (max-width: 768px) {
+  .aur-a {
+    width: 280px !important;
+    height: 280px !important;
+    opacity: 0.18 !important;
+  }
+  .aur-b {
+    width: 220px !important;
+    height: 220px !important;
+    opacity: 0.15 !important;
+  }
+}
+
+/* Landing Floating Navbar Mobile Logo Dimensions */
+@media (max-width: 575.98px) {
+  #landing-nbar .logo-dark-img {
+    height: 36px !important;
+    width: auto !important;
+  }
+  #landing-nbar .logo-light-img {
+    height: 30px !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 380px) {
+  #landing-nbar .logo-dark-img {
+    height: 32px !important;
+    width: auto !important;
+  }
+  #landing-nbar .logo-light-img {
+    height: 26px !important;
+    width: auto !important;
+  }
+}
+
+/* Hero Section Mobile Adjustments */
+@media (max-width: 575px) {
+  .hero-title {
+    font-size: clamp(1.85rem, 5.5vw, 2.5rem) !important;
+    line-height: 1.15 !important;
+  }
+  .hero-actions {
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .hero-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 48px !important;
+    padding: 0 20px !important;
+  }
+}
+
+/* Hero IDE Mockup on Small Screens */
+@media (max-width: 520px) {
+  .hero-ide-sidebar {
+    display: none !important;
+  }
+  .hero-ide-header {
+    padding: 10px 14px !important;
+  }
+  .hero-ide-status {
+    display: none !important;
+  }
+  .hero-ide-editor {
+    padding: 12px 14px !important;
+  }
+  .hero-ide-terminal {
+    padding: 10px 14px !important;
+  }
+  .editor-code {
+    font-size: 0.78rem !important;
+  }
+}
+
+/* Languages Cards Responsive Padding */
+@media (max-width: 576px) {
+  .lang-card {
+    padding: 18px 10px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  #languages .col-6 {
+    width: 100% !important;
+  }
+}
+
+/* Dashboard Sidebar Mobile Drawer & Backdrop */
+@media (max-width: 991px) {
+  .db-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    width: 280px !important;
+    max-width: 85vw !important;
+    z-index: 1050 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: none !important;
+  }
+  .db-sidebar.mob-open {
+    transform: translateX(0) !important;
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.8) !important;
+  }
+  .dashboard-row-1,
+  .dashboard-row-3-refined {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+}
+
+.db-sidebar-backdrop {
+  display: none;
+}
+@media (max-width: 991px) {
+  .db-sidebar-backdrop.mob-open {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 1040 !important;
+  }
+}
+
+/* Dashboard Navbar Mobile Refinements */
+@media (max-width: 768px) {
+  #dashboard-nbar,
+  .dashboard-navbar {
+    padding: 10px 0 !important;
+  }
+  #dashboard-nbar .container,
+  .dashboard-navbar .container {
+    padding: 0 14px !important;
+  }
+}
+
+/* Dashboard Brand Wordmark Logo */
+.dashboard-brand-logo {
+  height: 34px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  display: block;
+}
+
+@media (max-width: 575.98px) {
+  .dashboard-brand-logo {
+    height: 28px;
+    max-width: 135px;
+  }
+}
+
+@media (max-width: 360px) {
+  .dashboard-brand-logo {
+    height: 24px;
+    max-width: 110px;
+  }
+}
+
+/* Dashboard Notification Flyout Mobile Adjustments */
+@media (max-width: 576px) {
+  .db-notifications-panel {
+    right: -45px !important;
+    width: min(320px, calc(100vw - 28px)) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .db-notifications-panel {
+    right: -60px !important;
+    width: min(290px, calc(100vw - 16px)) !important;
+  }
 }

@@ -35,9 +35,13 @@ import {
   AlertCircle,
   Loader2,
   ShieldCheck,
+  Code2,
+  Clock,
+  ArrowRight,
 } from "lucide-react";
 
 function StudentDashboard({ currentUser, onLogout }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("dashboard");
 
   // Lifted editor states for sharing file load/save across pages
@@ -316,12 +320,14 @@ function StudentDashboard({ currentUser, onLogout }) {
         activeSection={activeSection}
         setActiveSection={setActiveSection}
         onLogout={onLogout}
+        onToggleMobileMenu={() => setMobileMenuOpen(prev => !prev)}
+        mobileMenuOpen={mobileMenuOpen}
       />
 
       {/* Main content body */}
       <div style={{ display: "flex", flex: 1, position: "relative" }}>
         {/* Left Sidebar navigation */}
-        <DashboardSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <DashboardSidebar activeSection={activeSection} setActiveSection={setActiveSection} isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
         {/* Content canvas */}
         <main className="dashboard-main-canvas" style={{ flex: 1, overflowX: "hidden", position: "relative" }}>
@@ -333,137 +339,129 @@ function StudentDashboard({ currentUser, onLogout }) {
                 animate="visible"
                 exit="exit"
                 variants={sectionVariants}
-                className="dashboard-inner-container"
+                className="dashboard-inner-container ccc-container"
                 style={{ 
                   position: "relative", 
                   zIndex: 1
                 }}
               >
-                {/* Row 1 — WELCOME SECTION (75% / 25% or 100% depending on toggles) */}
-                {(dashboardSettingsState.showWelcome || dashboardSettingsState.showTarget) && (
-                  <div 
-                    className="dashboard-row-1" 
-                    style={{ 
-                      display: "grid", 
-                      gridTemplateColumns: dashboardSettingsState.showWelcome && dashboardSettingsState.showTarget ? "3fr 1fr" : "1fr", 
-                      gap: "20px", 
-                      marginBottom: "20px" 
+                {/* Section B – Terminal-Inspired Breadcrumb */}
+                <div className="ccc-breadcrumb-wrap">
+                  <span className="ccc-breadcrumb">
+                    ~/cryptocode/student
+                  </span>
+                </div>
+
+                {/* Section C – Welcome Message */}
+                <div className="ccc-welcome-section">
+                  <h1 className="ccc-welcome-heading">
+                    Hello, <span className="ccc-welcome-name">{currentUser?.name || "Student"}</span>!
+                  </h1>
+                  <p className="ccc-welcome-subtitle">
+                    Welcome to your coding workspace.
+                  </p>
+                </div>
+
+                {/* Section D – Main Coding Action Panel */}
+                <div className="ccc-action-panel">
+                  <div className="ccc-action-panel-topbar">
+                    <span className="ccc-panel-dot red" />
+                    <span className="ccc-panel-dot yellow" />
+                    <span className="ccc-panel-dot green" />
+                  </div>
+                  <div className="ccc-action-content">
+                    <div className="ccc-action-info">
+                      <div className="ccc-code-line">
+                        <span className="ccc-prompt-arrow">&gt;</span>
+                        <span className="ccc-code-text">initialize_coding_workspace()</span>
+                      </div>
+                      <p className="ccc-action-subtitle">
+                        Start building your next program.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="ccc-primary-btn"
+                      onClick={() => setActiveSection("editor")}
+                    >
+                      <span>RUN / START CODING</span>
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section E – Workspace Cards */}
+                <div className="ccc-workspace-grid">
+                  {/* Card 1 – Editor */}
+                  <div
+                    className="ccc-workspace-card"
+                    onClick={() => setActiveSection("editor")}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveSection("editor");
+                      }
                     }}
                   >
-                    {dashboardSettingsState.showWelcome && (
-                      <div className="dashboard-card-wrapper">
-                        <WelcomeCard 
-                          userName={currentUser?.name} 
-                          onStartCoding={() => setActiveSection("editor")}
-                          onViewSubmissions={() => setActiveSection("submissions")}
-                        />
-                      </div>
-                    )}
-                    {dashboardSettingsState.showTarget && (
-                      <div className="dashboard-card-wrapper">
-                        <div className="cyber-card d-flex flex-column align-items-center justify-content-center text-center p-4" style={{ height: "100%" }}>
-                          <div 
-                            className="mb-3 d-flex align-items-center justify-content-center"
-                            style={{
-                              width: "52px",
-                              height: "52px",
-                              borderRadius: "14px",
-                              background: "rgba(139, 92, 246, 0.08)",
-                              border: "1px solid rgba(139, 92, 246, 0.2)",
-                              color: "var(--pur)"
-                            }}
-                          >
-                            <Target size={24} />
-                          </div>
-                          <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--tx2)", fontWeight: 700 }}>
-                            Today's Target
-                          </span>
-                          <h3 style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--tx)", marginTop: "6px", marginBottom: 0 }}>
-                            1 New Topic
-                          </h3>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Row 2 — TODAY'S PRACTICAL */}
-                {dashboardSettingsState.showPractical && (
-                  <div style={{ marginBottom: "20px" }}>
-                    {isLoadingPractical ? (
-                      <div className="cyber-card today-practical-height text-center d-flex align-items-center justify-content-center" style={{ minHeight: "250px" }}>
-                        <span className="spinner-border text-primary" role="status">
-                          <span className="visually-hidden">Loading...</span>
+                    <div>
+                      <div className="ccc-card-header">
+                        <span className="ccc-card-title">
+                          <Code2 size={16} />
+                          &lt;/&gt; EDITOR
                         </span>
                       </div>
-                    ) : todayPractical ? (
-                      <div className="cyber-card today-practical-height p-4">
-                        <div className="d-flex align-items-center justify-content-between mb-3.5">
-                          <div className="d-flex align-items-center gap-2">
-                            <Terminal size={15} style={{ color: "var(--pur)" }} />
-                            <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--tx2)", fontWeight: 700 }}>
-                              Today's Practical
-                            </span>
-                          </div>
-                          <span 
-                            style={{ 
-                              fontSize: "0.72rem", 
-                              fontWeight: 700, 
-                              padding: "4px 10px", 
-                              borderRadius: "8px", 
-                              background: "rgba(139,92,246,0.08)", 
-                              color: "var(--pur)", 
-                              border: "1px solid rgba(139,92,246,0.2)" 
-                            }}
-                          >
-                            {todayPractical.language || "Programming"}
-                          </span>
-                        </div>
-                        
-                        <h4 style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--tx)", marginBottom: "8px" }}>
-                          {todayPractical.title}
-                        </h4>
-                        <p style={{ color: "var(--tx2)", fontSize: "0.9rem", lineHeight: "1.6", marginBottom: "24px" }}>
-                          {todayPractical.description}
-                        </p>
-
-                        <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                          <div className="d-flex align-items-center gap-4" style={{ fontSize: "0.75rem", color: "var(--tx3)" }}>
-                            <span>
-                              Assigned By: <strong style={{ color: "var(--tx2)" }}>{todayPractical.assigned_by}</strong>
-                            </span>
-                            <span>
-                              Assigned: {todayPractical.assigned_date}
-                            </span>
-                            <span style={{ color: "#f87171", fontWeight: 700 }}>
-                              Due: {todayPractical.due_date}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => setActiveSection("editor")}
-                            className="bgrd btn px-4 py-2"
-                            style={{ fontSize: "0.85rem", borderRadius: "10px", display: "flex", alignItems: "center", gap: "6px" }}
-                          >
-                            <Play size={14} fill="currentColor" />
-                            <span>Start Practical</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      // Clean Placeholder State (since no practical exists in Supabase table)
-                      <div className="cyber-card today-practical-height text-center d-flex flex-column align-items-center justify-content-center" style={{ minHeight: "220px", padding: "24px" }}>
-                        <ShieldAlert size={36} className="mb-3" style={{ color: "var(--pur)", opacity: 0.8 }} />
-                        <h4 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--tx)", marginBottom: "6px" }}>
-                          No Active Practical Assigned
-                        </h4>
-                        <p style={{ fontSize: "0.85rem", color: "var(--tx3)", maxWidth: "450px", margin: 0, lineHeight: "1.5" }}>
-                          Your course instructor has not posted a practical assignment for today. 
-                          Use the coding sandbox to practice or check back later.
-                        </p>
-                      </div>
-                    )}
+                      <p className="ccc-card-desc">
+                        Open your coding environment and write your next program.
+                      </p>
+                    </div>
+                    <div className="ccc-card-action">
+                      <span>Start Coding</span>
+                      <ArrowRight size={15} />
+                    </div>
                   </div>
-                )}
+
+                  {/* Card 2 – History */}
+                  <div
+                    className="ccc-workspace-card"
+                    onClick={() => setActiveSection("submissions")}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveSection("submissions");
+                      }
+                    }}
+                  >
+                    <div>
+                      <div className="ccc-card-header">
+                        <span className="ccc-card-title">
+                          <Clock size={16} />
+                          ◷ HISTORY
+                        </span>
+                      </div>
+                      <p className="ccc-card-desc">
+                        Return to your previously saved code.
+                      </p>
+                    </div>
+                    <div className="ccc-card-action">
+                      <span>Code History</span>
+                      <ArrowRight size={15} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section F – Motivational Footer Message */}
+                <div className="ccc-motivational-footer">
+                  <span className="ccc-motivational-quote">
+                    &ldquo;Every expert was once a beginner. Keep coding, keep growing.&rdquo;
+                  </span>
+                  <span className="ccc-motivational-icon" aria-label="rocket">
+                    🚀
+                  </span>
+                </div>
               </motion.div>
             )}
 

@@ -145,6 +145,8 @@ function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
         style={{
           width: "100%",
           maxWidth: "460px",
+          maxHeight: "92vh",
+          overflowY: "auto",
           background: "linear-gradient(145deg, #0d0f1c, #090a14)",
           border: "1px solid rgba(139, 92, 246, 0.35)",
           borderRadius: "20px",

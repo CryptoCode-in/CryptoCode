@@ -74,6 +74,15 @@ function Navbar({ onOpenPanel, onOpenAdminLogin }) {
     };
   }, [location.pathname, isSubPage]);
 
+    useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
@@ -94,8 +103,8 @@ function Navbar({ onOpenPanel, onOpenAdminLogin }) {
               className="d-flex align-items-center gap-2"
               style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--tx)", textDecoration: "none" }}
             >
-              <img src={logob} style={{ height: "46px", width: "auto" }} alt="Logo Dark" />
-              <img src={logow} style={{ height: "40px", width: "auto" }} alt="Logo Light" />
+              <img src={logob} className="logo-dark-img" style={{ height: "46px", width: "auto" }} alt="Logo Dark" />
+              <img src={logow} className="logo-light-img" style={{ height: "40px", width: "auto" }} alt="Logo Light" />
               <span></span>
             </a>
             <div className="d-none d-lg-flex align-items-center gap-1 ms-auto me-auto">

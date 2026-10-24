@@ -27,6 +27,7 @@ import Settings from "./Settings";
 import { mockTeacherData } from "../../utils/mockTeacherData";
 
 function TeacherDashboard({ currentUser, onLogout }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   console.log("TEACHER CURRENT USER:", currentUser);
 
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -205,6 +206,8 @@ function TeacherDashboard({ currentUser, onLogout }) {
             : null
         }
         searchValue={searchQuery}
+        onToggleMobileMenu={() => setMobileMenuOpen(prev => !prev)}
+        mobileMenuOpen={mobileMenuOpen}
       />
 
       {/* =====================================================
@@ -221,6 +224,8 @@ function TeacherDashboard({ currentUser, onLogout }) {
             SIDEBAR
         ====================================================== */}
         <Sidebar
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
           activeSection={activeSection}
           setActiveSection={(sec) => {
             setSearchQuery("");

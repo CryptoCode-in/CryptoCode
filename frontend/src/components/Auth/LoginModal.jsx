@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiArrowRight, FiChrome, FiMail } from "react-icons/fi";
+import { FiX, FiArrowRight, FiMail } from "react-icons/fi";
 import { API_URL } from "../../utils/api";
 
 import "./Auth.css";
@@ -161,28 +161,78 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
         })
       );
 
-      onLoginSuccess({
-  id: data.user.id,
-  name: data.user.name,
-  email: data.user.email,
-  role: data.user.role,
-  rollNo: data.user.roll_no,
-  year: data.user.year,
-  semester: data.user.semester,
-  branch: data.user.branch,
-  college: data.user.college,
-  department: data.user.department,
-  subjects: data.user.subjects,
-});
+      const authenticatedUser = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role || loginData.role,
+        rollNo: data.user.roll_no,
+        year: data.user.year,
+        semester: data.user.semester,
+        branch: data.user.branch,
+        college: data.user.college,
+        department: data.user.department,
+        subjects: data.user.subjects,
+      };
+
+      try {
+        await fetch(`${API_URL}/notifications/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: authenticatedUser.id,
+            user_name: authenticatedUser.name || email.split("@")[0],
+            role: authenticatedUser.role,
+            type: "login",
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        console.warn("Could not sync login notification to backend:", err);
+      }
+
+      onLoginSuccess(authenticatedUser);
     } catch (error) {
       console.error(error);
       if (import.meta.env.DEV) {
         console.warn("Backend server connection failed during development. Authenticating locally with mock credentials.", error);
         const mockUser = {
+          id: "mock_" + email.split("@")[0],
           name: email.split("@")[0],
           email: email,
           role: loginData.role,
         };
+        try {
+          const localNotifs = JSON.parse(localStorage.getItem("cryptocode_notifications") || "[]");
+          const formatter = new Intl.DateTimeFormat("en-GB", {
+            timeZone: "Asia/Kolkata",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true
+          });
+          const parts = formatter.formatToParts(new Date());
+          const m = {};
+          parts.forEach(p => { m[p.type] = p.value; });
+          const formattedTime = `${m.day} ${m.month} ${m.year}, ${m.hour}:${m.minute} ${(m.dayPeriod || "").toUpperCase()}`;
+          const isT = loginData.role === "teacher";
+          const newNotif = {
+            id: "notif_" + Date.now(),
+            user_id: mockUser.id,
+            user_name: mockUser.name,
+            role: loginData.role,
+            title: "Login Successful",
+            message: `${isT ? "Teacher" : "Student"} ${mockUser.name} logged in at ${formattedTime}`,
+            type: "login",
+            read: false,
+            created_at: new Date().toISOString()
+          };
+          localNotifs.unshift(newNotif);
+          localStorage.setItem("cryptocode_notifications", JSON.stringify(localNotifs));
+        } catch {}
+
         localStorage.setItem("cryptocode_user", JSON.stringify(mockUser));
         onLoginSuccess(mockUser);
       } else {
@@ -503,10 +553,6 @@ console.log("SEMESTER VALUE:", signupData.semester);
                 </AnimatePresence>
 
                 <div className="auth-footer">
-                  <button type="button" className="auth-ghost-btn">
-                    <FiChrome />
-                    Continue with Google
-                  </button>
                   <button type="button" className="auth-text-btn" onClick={() => setActiveTab(activeTab === "login" ? "signup" : "login")}>
                     {activeTab === "login" ? "Need an account?" : "Already have an account?"}
                     <FiArrowRight />

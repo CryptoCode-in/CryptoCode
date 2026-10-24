@@ -20,7 +20,7 @@ function Footer() {
             <p style={{ fontSize: ".875rem", color: "var(--tx3)", lineHeight: 1.65, maxWidth: "280px" }}>
               Secure Online Coding Platform for Students and Teachers.
             </p>
-            <div className="d-flex gap-2 mt-3">
+            <div className="d-flex gap-2 mt-3 flex-wrap">
               <input className="nli" type="email" placeholder="your@email.com" style={{ maxWidth: "200px" }} />
               <button className="bgrd btn px-3 py-2" style={{ fontSize: ".85rem", whiteSpace: "nowrap" }}>
                 Send
