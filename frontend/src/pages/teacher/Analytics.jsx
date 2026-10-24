@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AreaChart, Area, BarChart, Bar, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { API_URL } from "../../utils/api";
 import { BarChart3, LineChart as LineIcon, Grid } from "lucide-react";
 import TeacherLayout from "../../components/teacher/TeacherLayout";

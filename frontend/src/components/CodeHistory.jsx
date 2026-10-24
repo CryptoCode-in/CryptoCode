@@ -1,11 +1,30 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../utils/api";
 import { 
   Folder, FolderOpen, FileCode, Trash2, Edit, 
-  ExternalLink, Search, ChevronRight, ChevronDown, Calendar, Filter
+  ExternalLink, Search, ChevronRight, ChevronDown, Calendar, Filter, AlertCircle, Loader2
 } from "lucide-react";
 
-function CodeHistory({ onOpenFile }) {
+const normalizeLang = (lang) => {
+  if (!lang) return "c";
+  const l = String(lang).toLowerCase().trim();
+  if (l === "c++") return "cpp";
+  if (l === "py") return "python";
+  return l;
+};
+
+const getDefaultFileName = (filename, lang, id) => {
+  if (filename && filename.trim()) return filename.trim();
+  const extMap = { c: "c", cpp: "cpp", java: "java", python: "py" };
+  const ext = extMap[lang] || "c";
+  return `untitled_${id || "code"}.${ext}`;
+};
+
+function CodeHistory({ currentUser: propUser, onOpenFile }) {
   const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   
@@ -23,50 +42,89 @@ function CodeHistory({ onOpenFile }) {
   const [newName, setNewName] = useState("");
   const [renameError, setRenameError] = useState("");
 
-  // Load files from localStorage
- useEffect(() => {
-  const fetchSubmissions = async () => {
-    try {
-      const currentUser = JSON.parse(
-        localStorage.getItem("cryptocode_user")
-      );
+  // Load files from backend API
+  useEffect(() => {
+    let isMounted = true;
 
-      if (!currentUser?.id) {
-        setFiles([]);
-        return;
+    const loadSubmissions = async () => {
+      try {
+        setError(null);
+
+        const user = propUser || (() => {
+          try {
+            const saved = localStorage.getItem("cryptocode_user");
+            return saved ? JSON.parse(saved) : null;
+          } catch {
+            return null;
+          }
+        })();
+
+        let userId = user?.id || user?.user_id;
+        if (!userId) {
+          try {
+            const session = JSON.parse(localStorage.getItem("session") || "{}");
+            userId = session?.user?.id;
+          } catch {
+            // ignore
+          }
+        }
+
+        if (!userId) {
+          if (isMounted) {
+            setError("User session not found. Please log in again.");
+            setFiles([]);
+            setLoading(false);
+          }
+          return;
+        }
+
+        const response = await fetch(
+          `${API_URL}/submissions?user_id=${encodeURIComponent(userId)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "Failed to fetch submissions");
+        }
+
+        const rawSubmissions = Array.isArray(data.submissions) ? data.submissions : [];
+
+        const formattedFiles = rawSubmissions.map((submission) => {
+          const normLang = normalizeLang(submission.language);
+          return {
+            id: submission.id,
+            name: getDefaultFileName(submission.filename, normLang, submission.id),
+            lang: normLang,
+            code: submission.source_code || "",
+            savedAt: submission.submitted_at || new Date().toISOString(),
+          };
+        });
+
+        if (isMounted) {
+          setFiles(formattedFiles);
+        }
+      } catch (err) {
+        console.error("Fetch submissions error:", err);
+        if (isMounted) {
+          setError(err.message || "Failed to load saved files. Please try again.");
+          setFiles([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
+    };
 
-      const response = await fetch(
-        `${API_URL}/submissions?user_id=${currentUser.id}`
-      );
+    loadSubmissions();
 
-      const data = await response.json();
+    return () => {
+      isMounted = false;
+    };
+  }, [propUser, reloadKey]);
 
-      if (!response.ok) {
-        console.error("Failed to fetch submissions:", data);
-        setFiles([]);
-        return;
-      }
-
-const formattedFiles = data.submissions.map((submission) => ({
-  id: submission.id,
-name: submission.filename,
-  lang: submission.language,
-  code: submission.source_code,
-  savedAt: submission.submitted_at,
-}));
-
-      setFiles(formattedFiles);
-    } catch (error) {
-      console.error("Fetch submissions error:", error);
-      setFiles([]);
-    }
-  };
-
-  fetchSubmissions();
-}, []);
-
-  const saveFilesToStorage = (updatedFiles) => {
+    const saveFilesToStorage = (updatedFiles) => {
     setFiles(updatedFiles);
     localStorage.setItem("cryptocode_saved_files", JSON.stringify(updatedFiles));
   };
@@ -130,7 +188,7 @@ name: submission.filename,
     try {
       const d = new Date(dateStr);
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    } catch (e) {
+    } catch {
       return dateStr;
     }
   };
@@ -243,7 +301,59 @@ name: submission.filename,
       </div>
 
       {/* File Explorer Tree Structure */}
-      {files.length === 0 ? (
+      {loading ? (
+        <div 
+          className="text-center p-5"
+          style={{
+            background: "var(--sf)",
+            border: "1px solid var(--bd)",
+            borderRadius: "18px",
+            color: "var(--tx3)"
+          }}
+        >
+          <Loader2 size={36} className="mb-3 animate-spin" style={{ color: "var(--pur)", margin: "0 auto" }} />
+          <h5 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--tx)", margin: "0 0 6px 0" }}>
+            Loading saved files...
+          </h5>
+          <p style={{ fontSize: "0.82rem", color: "var(--tx3)", margin: 0 }}>
+            Fetching your saved programs from the server.
+          </p>
+        </div>
+      ) : error ? (
+        <div 
+          className="text-center p-5"
+          style={{
+            background: "var(--sf)",
+            border: "1px solid rgba(239, 68, 68, 0.25)",
+            borderRadius: "18px",
+            color: "var(--tx3)"
+          }}
+        >
+          <AlertCircle size={40} className="mb-3" style={{ color: "#f87171", margin: "0 auto" }} />
+          <h5 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#f87171", margin: "0 0 6px 0" }}>
+            Failed to load saved files
+          </h5>
+          <p style={{ fontSize: "0.82rem", color: "var(--tx3)", margin: "0 0 16px 0" }}>
+            {error}
+          </p>
+          <button
+            onClick={() => { setLoading(true); setReloadKey(k => k + 1); }}
+            className="btn btn-sm"
+            style={{
+              background: "rgba(139, 92, 246, 0.15)",
+              border: "1px solid var(--pur)",
+              color: "#fff",
+              borderRadius: "8px",
+              padding: "6px 16px",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              cursor: "pointer"
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      ) : files.length === 0 ? (
         <div 
           className="text-center p-5"
           style={{
@@ -261,8 +371,7 @@ name: submission.filename,
             Start coding and save your first program.
           </p>
         </div>
-      ) : (
-        <div 
+      ) : (        <div 
           style={{
             background: "var(--sf)",
             border: "1px solid var(--bd)",

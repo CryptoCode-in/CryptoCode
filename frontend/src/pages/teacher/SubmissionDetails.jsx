@@ -131,7 +131,6 @@ function SubmissionDetails({ submissionId, onBack }) {
           Status:{" "}
           <strong style={{ color: getStatusColor(submission.status) }}>{submission.status}</strong>
         </span>
-        <span>Score: <strong style={{ color: "var(--pur)" }}>{submission.score} / 100</strong></span>
       </div>
 
       {/* Main Panel Division */}

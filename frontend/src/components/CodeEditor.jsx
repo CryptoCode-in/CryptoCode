@@ -92,6 +92,10 @@ function CodeEditor({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Duplicate Filename Confirmation Modal State
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
+
   /*
    * ---------------------------------------------------------
    * CLOSE PLUS MENU ON CLICK OUTSIDE
@@ -399,6 +403,9 @@ function CodeEditor({
     if (setFileName) {
       setFileName(defaultFileMap[selected] || `main.${extMap[selected]}`);
     }
+    if (setSubmissionId) {
+      setSubmissionId(null);
+    }
   };
 
   /*
@@ -412,6 +419,7 @@ function CodeEditor({
     const defaultName = defaultFileMap[lang] || `main.${ext}`;
     if (setFileName) setFileName(defaultName);
     if (setCode) setCode("");
+    if (setSubmissionId) setSubmissionId(null);
   };
 
   const handleTriggerOpenLocalFile = () => {
@@ -431,6 +439,7 @@ function CodeEditor({
       if (typeof content === "string") {
         if (setCode) setCode(content);
         if (setFileName) setFileName(file.name);
+        if (setSubmissionId) setSubmissionId(null);
 
         // Detect language from extension
         const ext = file.name.split(".").pop().toLowerCase();
@@ -466,7 +475,8 @@ function CodeEditor({
     setIsSaveModalOpen(true);
   };
 
-  const handleSaveFile = async () => {
+  const handleSaveFile = async (options = {}) => {
+    const { forceOverwrite = false } = options;
     if (isSaving) return;
 
     const baseName = modalFileName.trim();
@@ -474,7 +484,6 @@ function CodeEditor({
       setSaveError("File name cannot be empty");
       return;
     }
-    setIsSaving(true);
 
     const ext = extMap[lang] || "c";
     let finalFileName = baseName;
@@ -482,89 +491,186 @@ function CodeEditor({
       finalFileName = `${finalFileName}.${ext}`;
     }
 
-    let savedFiles = [];
-    const saved = localStorage.getItem("cryptocode_saved_files");
-    if (saved) {
-      try {
-        savedFiles = JSON.parse(saved);
-      } catch (e) {
-        savedFiles = [];
-      }
-    }
-
-    const nameExists = savedFiles.some(
-      (f) => f.name.toLowerCase() === finalFileName.toLowerCase()
-    );
-
-    const newFileObj = {
-      name: finalFileName,
-      lang: lang,
-      code: code,
-      savedAt: new Date().toISOString(),
-    };
-
-    let updatedFiles = [];
-    if (nameExists) {
-      updatedFiles = savedFiles.map((f) =>
-        f.name.toLowerCase() === finalFileName.toLowerCase() ? newFileObj : f
-      );
-    } else {
-      updatedFiles = [newFileObj, ...savedFiles];
-    }
-
     const currentUser = JSON.parse(
       localStorage.getItem("cryptocode_user")
     );
+    const userId = currentUser?.id || currentUser?.user_id;
+
+    // Case C: Is this an intentional save of the already-open existing file?
+    const isSameFileUpdate = Boolean(
+      submissionId &&
+      fileName &&
+      finalFileName.toLowerCase() === fileName.toLowerCase()
+    );
+
+    // If it's NOT an intentional update of the same open file and NOT explicitly confirmed overwrite:
+    // Check for duplicate filename before saving to prevent accidental overwriting
+    if (!isSameFileUpdate && !forceOverwrite) {
+      setIsSaving(true);
+      try {
+        let existingFile = null;
+
+        // 1. Check live backend submissions for this student
+        if (userId) {
+          const res = await fetch(`${API_URL}/submissions?user_id=${encodeURIComponent(userId)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const list = Array.isArray(data.submissions) ? data.submissions : [];
+            existingFile = list.find(
+              (s) => s.filename && s.filename.toLowerCase() === finalFileName.toLowerCase()
+            );
+          }
+        }
+
+        // 2. Check localStorage as fallback
+        if (!existingFile) {
+          try {
+            const localSaved = JSON.parse(localStorage.getItem("cryptocode_saved_files") || "[]");
+            existingFile = localSaved.find(
+              (f) => f.name && f.name.toLowerCase() === finalFileName.toLowerCase()
+            );
+          } catch {
+            // ignore
+          }
+        }
+
+        // If duplicate file found belonging to this student (and not the same open file):
+        if (existingFile && (!submissionId || existingFile.id !== submissionId)) {
+          setIsSaving(false);
+          setIsSaveModalOpen(false);
+          setConflictData({
+            finalFileName,
+            existingId: existingFile.id,
+          });
+          setIsConflictModalOpen(true);
+          return;
+        }
+      } catch (err) {
+        console.warn("Pre-save duplicate check warning:", err);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+
+    setIsSaving(true);
+    setSaveError("");
 
     try {
-      const url = submissionId
-        ? `${API_URL}/submissions/${submissionId}`
+      // If forceOverwrite is true, target the conflicting submission ID if known
+      const targetSubmissionId = (forceOverwrite && conflictData?.existingId)
+        ? conflictData.existingId
+        : (isSameFileUpdate ? submissionId : null);
+
+      const url = targetSubmissionId
+        ? `${API_URL}/submissions/${targetSubmissionId}`
         : `${API_URL}/submissions/save`;
 
-      const method = submissionId ? "PUT" : "POST";
+      const method = targetSubmissionId ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-       body: JSON.stringify({
-    user_id: currentUser?.id,
-    source_code: code,
-    language: lang,
-    filename: finalFileName,
-    status: "saved",
-}),
+        body: JSON.stringify({
+          user_id: userId,
+          source_code: code,
+          language: lang,
+          filename: finalFileName,
+          status: "saved",
+          overwrite: forceOverwrite,
+        }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        console.error("Save submission failed:", data);
-        setSaveError(data.message || "Failed to save submission");
+      // Backend 409 Conflict detection
+      if (response.status === 409 || data.conflict) {
+        setIsSaving(false);
+        setIsSaveModalOpen(false);
+        setConflictData({
+          finalFileName,
+          existingId: data.existingId,
+        });
+        setIsConflictModalOpen(true);
         return;
       }
 
-      if (!submissionId && data.submission?.id && setSubmissionId) {
-        setSubmissionId(data.submission.id);
+      if (!response.ok) {
+        console.error("Save submission failed:", data);
+        setSaveError(data.message || "Failed to save submission");
+        setIsSaving(false);
+        return;
       }
+
+      const savedId = data.submission?.id || targetSubmissionId;
+      if (savedId && setSubmissionId) {
+        setSubmissionId(savedId);
+      }
+      if (setFileName) {
+        setFileName(finalFileName);
+      }
+
+      // Update localStorage cryptocode_saved_files accurately on success
+      try {
+        let savedFiles = JSON.parse(localStorage.getItem("cryptocode_saved_files") || "[]");
+        const newFileObj = {
+          id: savedId,
+          name: finalFileName,
+          lang: lang,
+          code: code,
+          savedAt: new Date().toISOString(),
+        };
+
+        const existingIdx = savedFiles.findIndex(
+          (f) => f.name.toLowerCase() === finalFileName.toLowerCase() || (savedId && f.id === savedId)
+        );
+
+        if (existingIdx >= 0) {
+          savedFiles[existingIdx] = newFileObj;
+        } else {
+          savedFiles = [newFileObj, ...savedFiles];
+        }
+        localStorage.setItem("cryptocode_saved_files", JSON.stringify(savedFiles));
+      } catch (e) {
+        console.error("LocalStorage save error:", e);
+      }
+
+      setSaveSuccess(true);
+      setIsConflictModalOpen(false);
+      setConflictData(null);
+
+      setTimeout(() => {
+        setIsSaveModalOpen(false);
+        setSaveSuccess(false);
+      }, 800);
     } catch (error) {
       console.error("Save submission error:", error);
+      setSaveError("Network error. Please try again.");
     } finally {
       setIsSaving(false);
     }
-
-    localStorage.setItem("cryptocode_saved_files", JSON.stringify(updatedFiles));
-    if (setFileName) setFileName(finalFileName);
-    setSaveSuccess(true);
-
-    setTimeout(() => {
-      setIsSaveModalOpen(false);
-      setSaveSuccess(false);
-    }, 800);
   };
 
-  // Auto-scroll terminal
+  const handleCancelConflict = () => {
+    setIsConflictModalOpen(false);
+    setConflictData(null);
+    setSaveError("");
+  };
+
+  const handleSaveAsNewFile = () => {
+    setIsConflictModalOpen(false);
+    setConflictData(null);
+    setSaveError("");
+    setIsSaveModalOpen(true);
+  };
+
+  const handleConfirmOverwrite = () => {
+    setIsConflictModalOpen(false);
+    handleSaveFile({ forceOverwrite: true });
+  };
+
+    // Auto-scroll terminal
   useEffect(() => {
     if (terminalEndRef.current) {
       terminalEndRef.current.scrollTop = terminalEndRef.current.scrollHeight;
@@ -1659,6 +1765,144 @@ function CodeEditor({
                 }}
               >
                 {isSaving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 5. DUPLICATE FILENAME CONFIRMATION MODAL */}
+      {isConflictModalOpen && (
+        <div 
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100060,
+            padding: "20px"
+          }}
+        >
+          <div
+            style={{
+              background: "var(--sf, #121826)",
+              border: "1px solid rgba(251, 191, 36, 0.3)",
+              borderRadius: "18px",
+              width: "100%",
+              maxWidth: "480px",
+              padding: "26px",
+              boxShadow: "0 20px 40px -5px rgba(0, 0, 0, 0.6)"
+            }}
+          >
+            <div className="d-flex align-items-center gap-2.5 mb-3">
+              <div 
+                style={{
+                  width: "38px",
+                  height: "38px",
+                  borderRadius: "10px",
+                  background: "rgba(251, 191, 36, 0.12)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fbbf24",
+                  flexShrink: 0
+                }}
+              >
+                <AlertCircle size={22} />
+              </div>
+              <div>
+                <h5 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--tx, #fff)", margin: 0 }}>
+                  File Already Exists
+                </h5>
+                <span style={{ fontSize: "0.75rem", color: "var(--tx3, #94a3b8)" }}>
+                  Duplicate filename detected
+                </span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: "0.875rem", color: "var(--tx2, #cbd5e1)", lineHeight: "1.5", margin: "0 0 16px 0" }}>
+              A file with this name already exists. What would you like to do?
+            </p>
+
+            <div 
+              style={{
+                background: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                borderRadius: "10px",
+                padding: "10px 14px",
+                fontSize: "0.78rem",
+                color: "var(--tx3, #94a3b8)",
+                marginBottom: "22px"
+              }}
+            >
+              Target file: <strong style={{ color: "var(--tx, #fff)", fontFamily: "monospace" }}>{conflictData?.finalFileName}</strong>
+              <div style={{ marginTop: "4px", fontSize: "0.74rem", color: "#fca5a5" }}>
+                Note: Overwriting will replace the existing file's contents with your current code.
+              </div>
+            </div>
+
+            <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-end gap-2">
+              <button
+                type="button"
+                onClick={handleCancelConflict}
+                disabled={isSaving}
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  color: "var(--tx2, #cbd5e1)",
+                  borderRadius: "10px",
+                  padding: "9px 16px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  cursor: isSaving ? "not-allowed" : "pointer",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveAsNewFile}
+                disabled={isSaving}
+                style={{
+                  background: "rgba(139, 92, 246, 0.15)",
+                  border: "1px solid var(--pur, #818cf8)",
+                  color: "#fff",
+                  borderRadius: "10px",
+                  padding: "9px 16px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  cursor: isSaving ? "not-allowed" : "pointer",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Save as New File
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmOverwrite}
+                disabled={isSaving}
+                style={{
+                  background: "#dc2626",
+                  border: "none",
+                  color: "#fff",
+                  borderRadius: "10px",
+                  padding: "9px 16px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  cursor: isSaving ? "not-allowed" : "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 2px 8px rgba(220, 38, 38, 0.35)"
+                }}
+              >
+                {isSaving ? "Overwriting..." : "Overwrite Existing File"}
               </button>
             </div>
           </div>

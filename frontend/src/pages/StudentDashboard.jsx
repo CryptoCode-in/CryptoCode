@@ -498,7 +498,7 @@ function StudentDashboard({ currentUser, onLogout }) {
                 variants={sectionVariants}
                 style={{ width: "100%" }}
               >
-                <CodeHistory 
+                <CodeHistory currentUser={currentUser} 
   onOpenFile={(file) => {
     setEditorLang(file.lang);
     setEditorCode(file.code);
