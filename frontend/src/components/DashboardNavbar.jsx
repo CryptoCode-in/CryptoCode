@@ -1,4 +1,6 @@
 import { Bell, LogOut, Search } from "lucide-react";
+import logob from "../assets/images/logob.png";
+import logow from "../assets/images/logow.png";
 
 function DashboardNavbar({ currentUser, activeSection, setActiveSection, onLogout, onSearch, searchValue }) {
   const userInitial = currentUser?.name ? currentUser.name[0].toUpperCase() : "U";
@@ -25,10 +27,10 @@ function DashboardNavbar({ currentUser, activeSection, setActiveSection, onLogou
           {/* Logo */}
           <div className="d-flex align-items-center gap-2" style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--tx)" }}>
             <div>
-              <img src="/src/assets/images/logob.png" width="55" height="55" alt="Logo Bullet" />
+              <img src={logob} style={{ height: "40px", width: "auto" }} alt="CryptoCode Logo" />
             </div>
             <span>
-              <img src="/src/assets/images/logow.png" width="200" height="200" style={{ objectFit: "contain" }} alt="Logo Text" />
+              <img src={logow} style={{ height: "34px", width: "auto", objectFit: "contain" }} alt="CryptoCode" />
             </span>
           </div>
 

@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import logob from "../assets/images/logob.png";
+import logow from "../assets/images/logow.png";
 
 function Footer() {
   return (
@@ -12,9 +13,9 @@ function Footer() {
               style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--tx)" }}
             >
               <div >
-                <img src="src/assets/images/logob.png" width="55" height="55" />
+                <img src={logob} style={{ height: "42px", width: "auto" }} alt="CryptoCode Logo" />
               </div>
-              <img src="src/assets/images/logow.png" width="200" height="200" />
+              <img src={logow} style={{ height: "36px", width: "auto" }} alt="CryptoCode" />
             </a>
             <p style={{ fontSize: ".875rem", color: "var(--tx3)", lineHeight: 1.65, maxWidth: "280px" }}>
               Secure Online Coding Platform for Students and Teachers.
