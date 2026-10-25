@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -32,6 +32,13 @@ function TeacherDashboard({ currentUser, onLogout }) {
 
   const [activeSection, setActiveSection] = useState("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
+  const mainContentRef = useRef(null);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [activeSection]);
 
   // Selected student
   const [selectedStudentId, setSelectedStudentId] = useState(null);
@@ -181,11 +188,13 @@ function TeacherDashboard({ currentUser, onLogout }) {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
+        maxHeight: "100vh",
         background: "var(--bg)",
         color: "var(--tx)",
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       {/* =====================================================
@@ -217,6 +226,8 @@ function TeacherDashboard({ currentUser, onLogout }) {
         style={{
           display: "flex",
           flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
           position: "relative",
         }}
       >
@@ -239,13 +250,15 @@ function TeacherDashboard({ currentUser, onLogout }) {
             CONTENT
         ====================================================== */}
         <main
+          ref={mainContentRef}
           className="dashboard-main-canvas"
           style={{
             flex: 1,
+            minWidth: 0,
+            overflowY: "auto",
             overflowX: "hidden",
             position: "relative",
             background: "var(--bg)",
-            minHeight: "calc(100vh - 66px)",
           }}
         >
           <AnimatePresence mode="wait">

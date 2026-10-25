@@ -148,6 +148,7 @@ function DashboardNavbar({
         borderBottom: "1px solid var(--bd)",
         padding: "14px 0",
         width: "100%",
+        flexShrink: 0,
       }}
     >
       <div className="container">
@@ -411,7 +412,7 @@ function DashboardNavbar({
                     position: "absolute",
                     top: "calc(100% + 10px)",
                     right: 0,
-                    width: "min(360px, calc(100vw - 32px))",
+                    width: "min(380px, calc(100vw - 28px))",
                     background: "rgba(18, 19, 32, 0.98)",
                     backdropFilter: "blur(20px)",
                     border: "1px solid rgba(139, 92, 246, 0.25)",
@@ -422,15 +423,16 @@ function DashboardNavbar({
                   }}
                 >
                   <div
-                    className="d-flex align-items-center justify-content-between px-3 py-2.5"
+                    className="d-flex align-items-center justify-content-between"
                     style={{
+                      padding: "16px 18px",
                       borderBottom: "1px solid var(--bd)",
                       background: "rgba(255, 255, 255, 0.02)"
                     }}
                   >
                     <div className="d-flex align-items-center gap-2">
                       <Bell size={16} style={{ color: "var(--pur)" }} />
-                      <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--tx)" }}>
+                      <span style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--tx)" }}>
                         Notifications
                       </span>
                       {unreadCount > 0 && (
@@ -470,18 +472,20 @@ function DashboardNavbar({
 
                   <div
                     style={{
-                      maxHeight: "340px",
+                      maxHeight: "360px",
                       overflowY: "auto",
                       display: "flex",
-                      flexDirection: "column"
+                      flexDirection: "column",
+                      padding: "14px 16px",
+                      gap: "10px"
                     }}
                   >
                     {loadingNotifs ? (
-                      <div className="p-4 text-center" style={{ color: "var(--tx3)", fontSize: "0.85rem" }}>
+                      <div className="py-4 px-3 text-center" style={{ color: "var(--tx3)", fontSize: "0.85rem" }}>
                         Loading notifications...
                       </div>
                     ) : notifications.length === 0 ? (
-                      <div className="p-4 text-center" style={{ color: "var(--tx3)", fontSize: "0.85rem" }}>
+                      <div className="py-4 px-3 text-center" style={{ color: "var(--tx3)", fontSize: "0.85rem" }}>
                         No notifications yet
                       </div>
                     ) : (
@@ -490,20 +494,21 @@ function DashboardNavbar({
                           key={notif.id}
                           onClick={() => !notif.read && markSingleAsRead(notif.id)}
                           style={{
-                            padding: "12px 14px",
-                            borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                            background: notif.read ? "transparent" : "rgba(139, 92, 246, 0.06)",
+                            padding: "14px 16px",
+                            borderRadius: "12px",
+                            border: notif.read ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(139, 92, 246, 0.22)",
+                            background: notif.read ? "rgba(255, 255, 255, 0.02)" : "rgba(139, 92, 246, 0.08)",
                             cursor: notif.read ? "default" : "pointer",
-                            transition: "background 0.2s ease",
+                            transition: "all 0.2s ease",
                             display: "flex",
                             alignItems: "flex-start",
-                            gap: "12px"
+                            gap: "14px"
                           }}
                         >
                           <div
                             style={{
-                              width: "32px",
-                              height: "32px",
+                              width: "36px",
+                              height: "36px",
                               borderRadius: "10px",
                               background: notif.role === "teacher" ? "rgba(59, 130, 246, 0.15)" : "rgba(139, 92, 246, 0.15)",
                               border: notif.role === "teacher" ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid rgba(139, 92, 246, 0.3)",
@@ -515,16 +520,16 @@ function DashboardNavbar({
                               marginTop: "2px"
                             }}
                           >
-                            <UserCheck size={16} />
+                            <UserCheck size={17} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p
                               style={{
                                 margin: 0,
-                                fontSize: "0.85rem",
+                                fontSize: "0.86rem",
                                 fontWeight: notif.read ? 500 : 600,
                                 color: notif.read ? "var(--tx2)" : "var(--tx)",
-                                lineHeight: 1.45,
+                                lineHeight: 1.55,
                                 wordBreak: "break-word"
                               }}
                             >
@@ -532,10 +537,11 @@ function DashboardNavbar({
                             </p>
                             <span
                               style={{
-                                fontSize: "0.72rem",
+                                fontSize: "0.74rem",
                                 color: "var(--tx3)",
                                 display: "inline-block",
-                                marginTop: "4px"
+                                marginTop: "8px",
+                                lineHeight: 1.3
                               }}
                             >
                               {notif.created_at ? formatLoginTimestamp(notif.created_at) : ""}
@@ -544,10 +550,11 @@ function DashboardNavbar({
                           {!notif.read && (
                             <span
                               style={{
-                                width: "7px",
-                                height: "7px",
+                                width: "8px",
+                                height: "8px",
                                 borderRadius: "50%",
                                 background: "var(--pur)",
+                                boxShadow: "0 0 8px var(--pur)",
                                 flexShrink: 0,
                                 marginTop: "6px"
                               }}

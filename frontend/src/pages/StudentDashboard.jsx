@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardNavbar from "../components/DashboardNavbar";
 import DashboardSidebar from "../components/DashboardSidebar";
@@ -38,11 +38,33 @@ import {
   Code2,
   Clock,
   ArrowRight,
+  Sparkles,
+  Compass,
+  LayoutDashboard,
 } from "lucide-react";
 
 function StudentDashboard({ currentUser, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cryptocode_dashboard_settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const validViews = ["dashboard", "editor", "submissions", "progress", "profile", "settings"];
+        if (parsed.defaultView && validViews.includes(parsed.defaultView)) {
+          return parsed.defaultView;
+        }
+      }
+    } catch {}
+    return "dashboard";
+  });
+  const mainContentRef = useRef(null);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [activeSection]);
 
   // Lifted editor states for sharing file load/save across pages
   // Initial values setup for editor
@@ -85,18 +107,28 @@ function StudentDashboard({ currentUser, onLogout }) {
   const [dashboardSettingsState, setDashboardSettingsState] = useState(() => {
     try {
       const saved = localStorage.getItem("cryptocode_dashboard_settings");
-      return saved ? JSON.parse(saved) : {
-        showWelcome: true,
-        showPractical: true,
-        showTarget: true
-      };
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          showWelcome: parsed.showWelcome !== undefined ? parsed.showWelcome : true,
+          showCodingWorkspace: parsed.showCodingWorkspace !== undefined ? parsed.showCodingWorkspace : true,
+          showEditorCard: parsed.showEditorCard !== undefined ? parsed.showEditorCard : true,
+          showHistoryCard: parsed.showHistoryCard !== undefined ? parsed.showHistoryCard : true,
+          showMotivationalQuote: parsed.showMotivationalQuote !== undefined ? parsed.showMotivationalQuote : true,
+          defaultView: parsed.defaultView || "dashboard",
+        };
+      }
     } catch {
-      return {
-        showWelcome: true,
-        showPractical: true,
-        showTarget: true
-      };
+      // fallback
     }
+    return {
+      showWelcome: true,
+      showCodingWorkspace: true,
+      showEditorCard: true,
+      showHistoryCard: true,
+      showMotivationalQuote: true,
+      defaultView: "dashboard",
+    };
   });
 
   const [notificationSettings, setNotificationSettings] = useState(() => {
@@ -307,11 +339,13 @@ function StudentDashboard({ currentUser, onLogout }) {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
+        maxHeight: "100vh",
         background: "var(--bg)",
         color: "var(--tx)",
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       {/* Top sticky Navbar */}
@@ -325,12 +359,16 @@ function StudentDashboard({ currentUser, onLogout }) {
       />
 
       {/* Main content body */}
-      <div style={{ display: "flex", flex: 1, position: "relative" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden", position: "relative" }}>
         {/* Left Sidebar navigation */}
         <DashboardSidebar activeSection={activeSection} setActiveSection={setActiveSection} isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
         {/* Content canvas */}
-        <main className="dashboard-main-canvas" style={{ flex: 1, overflowX: "hidden", position: "relative" }}>
+        <main
+          ref={mainContentRef}
+          className="dashboard-main-canvas"
+          style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden", position: "relative" }}
+        >
           <AnimatePresence mode="wait">
             {activeSection === "dashboard" && (
               <motion.div
@@ -345,123 +383,166 @@ function StudentDashboard({ currentUser, onLogout }) {
                   zIndex: 1
                 }}
               >
-                {/* Section B – Terminal-Inspired Breadcrumb */}
-                <div className="ccc-breadcrumb-wrap">
-                  <span className="ccc-breadcrumb">
-                    ~/cryptocode/student
-                  </span>
-                </div>
+                {/* Section B & C – Welcome Section (Breadcrumb & Greeting) */}
+                {dashboardSettingsState.showWelcome && (
+                  <>
+                    <div className="ccc-breadcrumb-wrap">
+                      <span className="ccc-breadcrumb">
+                        ~/cryptocode/student
+                      </span>
+                    </div>
 
-                {/* Section C – Welcome Message */}
-                <div className="ccc-welcome-section">
-                  <h1 className="ccc-welcome-heading">
-                    Hello, <span className="ccc-welcome-name">{currentUser?.name || "Student"}</span>!
-                  </h1>
-                  <p className="ccc-welcome-subtitle">
-                    Welcome to your coding workspace.
-                  </p>
-                </div>
+                    <div className="ccc-welcome-section">
+                      <h1 className="ccc-welcome-heading">
+                        Hello, <span className="ccc-welcome-name">{currentUser?.name || "Student"}</span>!
+                      </h1>
+                      <p className="ccc-welcome-subtitle">
+                        Welcome to your coding workspace.
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 {/* Section D – Main Coding Action Panel */}
-                <div className="ccc-action-panel">
-                  <div className="ccc-action-panel-topbar">
-                    <span className="ccc-panel-dot red" />
-                    <span className="ccc-panel-dot yellow" />
-                    <span className="ccc-panel-dot green" />
-                  </div>
-                  <div className="ccc-action-content">
-                    <div className="ccc-action-info">
-                      <div className="ccc-code-line">
-                        <span className="ccc-prompt-arrow">&gt;</span>
-                        <span className="ccc-code-text">initialize_coding_workspace()</span>
-                      </div>
-                      <p className="ccc-action-subtitle">
-                        Start building your next program.
-                      </p>
+                {dashboardSettingsState.showCodingWorkspace && (
+                  <div className="ccc-action-panel">
+                    <div className="ccc-action-panel-topbar">
+                      <span className="ccc-panel-dot red" />
+                      <span className="ccc-panel-dot yellow" />
+                      <span className="ccc-panel-dot green" />
                     </div>
-                    <button
-                      type="button"
-                      className="ccc-primary-btn"
-                      onClick={() => setActiveSection("editor")}
-                    >
-                      <span>RUN / START CODING</span>
-                      <ArrowRight size={16} />
-                    </button>
+                    <div className="ccc-action-content">
+                      <div className="ccc-action-info">
+                        <div className="ccc-code-line">
+                          <span className="ccc-prompt-arrow">&gt;</span>
+                          <span className="ccc-code-text">initialize_coding_workspace()</span>
+                        </div>
+                        <p className="ccc-action-subtitle">
+                          Start building your next program.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="ccc-primary-btn"
+                        onClick={() => setActiveSection("editor")}
+                      >
+                        <span>RUN / START CODING</span>
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Section E – Workspace Cards */}
-                <div className="ccc-workspace-grid">
-                  {/* Card 1 – Editor */}
+                {(dashboardSettingsState.showEditorCard || dashboardSettingsState.showHistoryCard) && (
                   <div
-                    className="ccc-workspace-card"
-                    onClick={() => setActiveSection("editor")}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setActiveSection("editor");
-                      }
+                    className="ccc-workspace-grid"
+                    style={{
+                      gridTemplateColumns: dashboardSettingsState.showEditorCard && dashboardSettingsState.showHistoryCard ? undefined : "1fr"
                     }}
                   >
-                    <div>
-                      <div className="ccc-card-header">
-                        <span className="ccc-card-title">
-                          <Code2 size={16} />
-                          &lt;/&gt; EDITOR
-                        </span>
+                    {/* Card 1 – Editor */}
+                    {dashboardSettingsState.showEditorCard && (
+                      <div
+                        className="ccc-workspace-card"
+                        onClick={() => setActiveSection("editor")}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setActiveSection("editor");
+                          }
+                        }}
+                      >
+                        <div>
+                          <div className="ccc-card-header">
+                            <span className="ccc-card-title">
+                              <Code2 size={16} />
+                              &lt;/&gt; EDITOR
+                            </span>
+                          </div>
+                          <p className="ccc-card-desc">
+                            Open your coding environment and write your next program.
+                          </p>
+                        </div>
+                        <div className="ccc-card-action">
+                          <span>Start Coding</span>
+                          <ArrowRight size={15} />
+                        </div>
                       </div>
-                      <p className="ccc-card-desc">
-                        Open your coding environment and write your next program.
-                      </p>
-                    </div>
-                    <div className="ccc-card-action">
-                      <span>Start Coding</span>
-                      <ArrowRight size={15} />
-                    </div>
-                  </div>
+                    )}
 
-                  {/* Card 2 – History */}
-                  <div
-                    className="ccc-workspace-card"
-                    onClick={() => setActiveSection("submissions")}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setActiveSection("submissions");
-                      }
-                    }}
-                  >
-                    <div>
-                      <div className="ccc-card-header">
-                        <span className="ccc-card-title">
-                          <Clock size={16} />
-                          ◷ HISTORY
-                        </span>
+                    {/* Card 2 – History */}
+                    {dashboardSettingsState.showHistoryCard && (
+                      <div
+                        className="ccc-workspace-card"
+                        onClick={() => setActiveSection("submissions")}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setActiveSection("submissions");
+                          }
+                        }}
+                      >
+                        <div>
+                          <div className="ccc-card-header">
+                            <span className="ccc-card-title">
+                              <Clock size={16} />
+                              ◷ HISTORY
+                            </span>
+                          </div>
+                          <p className="ccc-card-desc">
+                            Return to your previously saved code.
+                          </p>
+                        </div>
+                        <div className="ccc-card-action">
+                          <span>Code History</span>
+                          <ArrowRight size={15} />
+                        </div>
                       </div>
-                      <p className="ccc-card-desc">
-                        Return to your previously saved code.
-                      </p>
-                    </div>
-                    <div className="ccc-card-action">
-                      <span>Code History</span>
-                      <ArrowRight size={15} />
-                    </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 {/* Section F – Motivational Footer Message */}
-                <div className="ccc-motivational-footer">
-                  <span className="ccc-motivational-quote">
-                    &ldquo;Every expert was once a beginner. Keep coding, keep growing.&rdquo;
-                  </span>
-                  <span className="ccc-motivational-icon" aria-label="rocket">
-                    🚀
-                  </span>
-                </div>
+                {dashboardSettingsState.showMotivationalQuote && (
+                  <div className="ccc-motivational-footer">
+                    <span className="ccc-motivational-quote">
+                      &ldquo;Every expert was once a beginner. Keep coding, keep growing.&rdquo;
+                    </span>
+                    <span className="ccc-motivational-icon" aria-label="rocket">
+                      🚀
+                    </span>
+                  </div>
+                )}
+
+                {/* Fallback when all sections are disabled */}
+                {!dashboardSettingsState.showWelcome &&
+                 !dashboardSettingsState.showCodingWorkspace &&
+                 !dashboardSettingsState.showEditorCard &&
+                 !dashboardSettingsState.showHistoryCard &&
+                 !dashboardSettingsState.showMotivationalQuote && (
+                  <div style={{ textAlign: "center", padding: "64px 20px", color: "var(--tx3)" }}>
+                    <Layout size={36} style={{ margin: "0 auto 12px", opacity: 0.5, color: "var(--pur)" }} />
+                    <p style={{ fontSize: "1rem", fontWeight: 600, color: "var(--tx)", margin: "0 0 6px" }}>
+                      All dashboard sections are currently hidden
+                    </p>
+                    <p style={{ fontSize: "0.84rem", margin: "0 0 18px", color: "var(--tx3)" }}>
+                      You can customize which cards to display from your Dashboard Preferences.
+                    </p>
+                    <button
+                      type="button"
+                      className="setting-btn setting-btn-submit"
+                      onClick={() => setActiveSection("settings")}
+                    >
+                      <Sliders size={14} />
+                      <span>Open Settings</span>
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -859,21 +940,22 @@ function StudentDashboard({ currentUser, onLogout }) {
                     </div>
                   </div>
 
-                  {/* Section 4: Dashboard Preferences */}
+                  {/* Section 3: Dashboard Display */}
                   <div className="setting-section-card">
                     <h5 className="setting-section-title">
                       <Layout size={16} />
-                      <span>Dashboard Preferences</span>
+                      <span>Dashboard Display</span>
                     </h5>
 
+                    {/* Show Welcome Section */}
                     <div className="setting-row-item">
                       <div className="setting-left">
                         <div className="setting-icon-wrapper">
                           <Layout size={16} />
                         </div>
                         <div className="setting-info">
-                          <span className="setting-label">Show Welcome Card</span>
-                          <span className="setting-desc">Render welcome message banner on dashboard</span>
+                          <span className="setting-label">Show Welcome Section</span>
+                          <span className="setting-desc">Display greeting, student breadcrumb, and welcome subtitle</span>
                         </div>
                       </div>
                       <div className="setting-right">
@@ -888,47 +970,130 @@ function StudentDashboard({ currentUser, onLogout }) {
                       </div>
                     </div>
 
+                    {/* Show Coding Workspace Card */}
                     <div className="setting-row-item">
                       <div className="setting-left">
                         <div className="setting-icon-wrapper">
                           <Terminal size={16} />
                         </div>
                         <div className="setting-info">
-                          <span className="setting-label">Show Today's Practical</span>
-                          <span className="setting-desc">Render assignment instructions panel on dashboard</span>
+                          <span className="setting-label">Show Coding Workspace Card</span>
+                          <span className="setting-desc">Display initialize_coding_workspace() action panel and Start Coding button</span>
                         </div>
                       </div>
                       <div className="setting-right">
                         <label className="toggle-switch">
                           <input
                             type="checkbox"
-                            checked={dashboardSettingsState.showPractical}
-                            onChange={(e) => updateDashboardSetting("showPractical", e.target.checked)}
+                            checked={dashboardSettingsState.showCodingWorkspace}
+                            onChange={(e) => updateDashboardSetting("showCodingWorkspace", e.target.checked)}
                           />
                           <span className="toggle-thumb"></span>
                         </label>
                       </div>
                     </div>
 
+                    {/* Show Editor Quick Access */}
                     <div className="setting-row-item">
                       <div className="setting-left">
                         <div className="setting-icon-wrapper">
-                          <Target size={16} />
+                          <Code2 size={16} />
                         </div>
                         <div className="setting-info">
-                          <span className="setting-label">Show Today's Target</span>
-                          <span className="setting-desc">Render today's target topic indicator card on dashboard</span>
+                          <span className="setting-label">Show Editor Quick Access</span>
+                          <span className="setting-desc">Display quick-access card to launch code editor environment</span>
                         </div>
                       </div>
                       <div className="setting-right">
                         <label className="toggle-switch">
                           <input
                             type="checkbox"
-                            checked={dashboardSettingsState.showTarget}
-                            onChange={(e) => updateDashboardSetting("showTarget", e.target.checked)}
+                            checked={dashboardSettingsState.showEditorCard}
+                            onChange={(e) => updateDashboardSetting("showEditorCard", e.target.checked)}
                           />
                           <span className="toggle-thumb"></span>
                         </label>
+                      </div>
+                    </div>
+
+                    {/* Show Code History Quick Access */}
+                    <div className="setting-row-item">
+                      <div className="setting-left">
+                        <div className="setting-icon-wrapper">
+                          <Clock size={16} />
+                        </div>
+                        <div className="setting-info">
+                          <span className="setting-label">Show Code History Quick Access</span>
+                          <span className="setting-desc">Display quick-access card to review past code submissions</span>
+                        </div>
+                      </div>
+                      <div className="setting-right">
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={dashboardSettingsState.showHistoryCard}
+                            onChange={(e) => updateDashboardSetting("showHistoryCard", e.target.checked)}
+                          />
+                          <span className="toggle-thumb"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Show Motivational Quote */}
+                    <div className="setting-row-item">
+                      <div className="setting-left">
+                        <div className="setting-icon-wrapper">
+                          <Sparkles size={16} />
+                        </div>
+                        <div className="setting-info">
+                          <span className="setting-label">Show Motivational Quote</span>
+                          <span className="setting-desc">Display inspirational coding quote banner at bottom of dashboard</span>
+                        </div>
+                      </div>
+                      <div className="setting-right">
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={dashboardSettingsState.showMotivationalQuote}
+                            onChange={(e) => updateDashboardSetting("showMotivationalQuote", e.target.checked)}
+                          />
+                          <span className="toggle-thumb"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4: Dashboard Experience */}
+                  <div className="setting-section-card">
+                    <h5 className="setting-section-title">
+                      <Compass size={16} />
+                      <span>Dashboard Experience</span>
+                    </h5>
+
+                    {/* Default Dashboard View */}
+                    <div className="setting-row-item">
+                      <div className="setting-left">
+                        <div className="setting-icon-wrapper">
+                          <LayoutDashboard size={16} />
+                        </div>
+                        <div className="setting-info">
+                          <span className="setting-label">Default Dashboard View</span>
+                          <span className="setting-desc">Choose which screen opens automatically upon loading your student dashboard</span>
+                        </div>
+                      </div>
+                      <div className="setting-right">
+                        <select
+                          value={dashboardSettingsState.defaultView || "dashboard"}
+                          onChange={(e) => updateDashboardSetting("defaultView", e.target.value)}
+                          className="setting-select"
+                        >
+                          <option value="dashboard">Dashboard (Overview)</option>
+                          <option value="editor">Start Coding (Editor)</option>
+                          <option value="submissions">Code History</option>
+                          <option value="progress">Progress</option>
+                          <option value="profile">Profile</option>
+                          <option value="settings">Settings</option>
+                        </select>
                       </div>
                     </div>
                   </div>

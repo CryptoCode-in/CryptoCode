@@ -503,7 +503,7 @@ input, textarea { font-family: inherit; }
   background: var(--sf);
   border-right: 1px solid var(--bd);
   display: flex; flex-direction: column;
-  position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+  position: sticky; top: 0; z-index: 200;
   overflow-y: auto;
   transition: transform .3s;
 }
