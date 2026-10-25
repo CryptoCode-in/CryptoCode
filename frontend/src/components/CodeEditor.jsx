@@ -60,6 +60,9 @@ function CodeEditor({
   const sessionIdRef = useRef(null);
   const inputQueueRef = useRef([]);
   const terminalEndRef = useRef(null);
+  const consoleCardRef = useRef(null);
+  const consoleInputRef = useRef(null);
+  const consoleInputBarRef = useRef(null);
   const editorContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const plusMenuRef = useRef(null);
@@ -95,6 +98,53 @@ function CodeEditor({
   // Duplicate Filename Confirmation Modal State
   const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
   const [conflictData, setConflictData] = useState(null);
+
+  // Helper to scroll console input bar into view cleanly on mobile
+  const scrollInputIntoView = (smooth = true) => {
+    requestAnimationFrame(() => {
+      if (consoleInputBarRef.current) {
+        consoleInputBarRef.current.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          block: "nearest",
+          inline: "nearest"
+        });
+      }
+    });
+  };
+
+  // Keep input visible when mobile virtual keyboard opens
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      if (consoleInputBarRef.current) {
+        consoleInputBarRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    }, 300);
+  };
+
+  // Adjust scroll when mobile virtual keyboard resizes viewport
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleViewportChange = () => {
+      if (document.activeElement === consoleInputRef.current && consoleInputBarRef.current) {
+        consoleInputBarRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest"
+        });
+      }
+    };
+
+    vv.addEventListener("resize", handleViewportChange);
+    vv.addEventListener("scroll", handleViewportChange);
+    return () => {
+      vv.removeEventListener("resize", handleViewportChange);
+      vv.removeEventListener("scroll", handleViewportChange);
+    };
+  }, []);
 
   /*
    * ---------------------------------------------------------
@@ -150,11 +200,18 @@ function CodeEditor({
       setStatus(statusObj);
 
       const currentStatus = statusObj?.status;
-      const running = currentStatus === "running" || currentStatus === "compiling";
+      const running =
+        currentStatus === "running" ||
+        currentStatus === "compiling" ||
+        currentStatus === "waiting_input";
       setIsRunning(running);
 
-      if (currentStatus === "running") {
+      if (currentStatus === "running" || currentStatus === "waiting_input") {
         flushInputQueue();
+      }
+
+      if (currentStatus === "waiting_input") {
+        scrollInputIntoView(true);
       }
     });
 
@@ -165,6 +222,10 @@ function CodeEditor({
         ...prev,
         { text, type: "stdout" }
       ]);
+
+      if (/[:?]\s*$/.test(text)) {
+        scrollInputIntoView(true);
+      }
     });
 
     socket.on("execute:stderr", (payload) => {
@@ -223,7 +284,7 @@ function CodeEditor({
   const flushInputQueue = () => {
     const socket = socketRef.current;
     if (!socket || !socket.connected) return;
-    const sessionId = sessionIdRef.current;
+    const sessionId = sessionIdRef.current || socket.id;
     if (!sessionId) return;
     if (inputQueueRef.current.length === 0) return;
 
@@ -315,22 +376,28 @@ function CodeEditor({
     const socket = socketRef.current;
     if (!liveInputText && liveInputText !== "0") return;
 
-    const formattedInput = liveInputText.endsWith("\n")
-      ? liveInputText
-      : liveInputText + "\n";
+    const cleanInput = liveInputText.replace(/\r/g, "");
+    const formattedInput = cleanInput.endsWith("\n")
+      ? cleanInput
+      : cleanInput + "\n";
 
     setOutputLogs((prev) => [
       ...prev,
       { text: formattedInput, type: "stdin" }
     ]);
 
-    if (status.status !== "running" || !socket || !socket.connected) {
+    const canSendLive =
+      socket &&
+      socket.connected &&
+      (status.status === "running" || status.status === "waiting_input" || isRunning);
+
+    if (!canSendLive) {
       inputQueueRef.current.push(formattedInput);
       setLiveInputText("");
       return;
     }
 
-    const sessionId = sessionIdRef.current;
+    const sessionId = sessionIdRef.current || socket.id;
     socket.emit("execute:input", {
       sessionId,
       input: formattedInput
@@ -697,7 +764,7 @@ function CodeEditor({
               width: 100%;
               max-width: 100% !important;
               padding: 0 4px;
-              margin-bottom: 30px;
+              margin-bottom: max(36px, env(safe-area-inset-bottom, 24px));
               display: flex;
               flex-direction: column;
               gap: 16px;
@@ -1242,14 +1309,15 @@ function CodeEditor({
             }
 
             .ide-console-body {
-              flex: 1;
+              flex: 1 1 auto;
+              min-height: 0;
               overflow-y: auto;
               background: #07090e;
               padding: 12px 16px;
               font-family: 'JetBrains Mono', Consolas, monospace;
               font-size: 0.84rem;
               line-height: 1.55;
-              height: calc(100% - 42px - 50px);
+              -webkit-overflow-scrolling: touch;
             }
 
             .ide-console-input-bar {
@@ -1259,7 +1327,8 @@ function CodeEditor({
               display: flex;
               align-items: center;
               gap: 10px;
-              height: 50px;
+              min-height: 52px;
+              flex-shrink: 0;
               box-sizing: border-box;
             }
 
@@ -1333,10 +1402,11 @@ function CodeEditor({
                 grid-template-columns: 1fr;
               }
               .ide-editor-panel {
-                height: 460px;
+                height: 440px;
               }
               .ide-console-card {
-                height: 340px;
+                height: 380px;
+                min-height: 280px;
               }
               .ide-toolbar-card {
                 flex-wrap: wrap;
@@ -1355,6 +1425,22 @@ function CodeEditor({
               }
               .ide-toolbar-right {
                 justify-content: flex-start;
+              }
+            }
+
+            @media (max-width: 480px) {
+              .ide-console-input-bar {
+                padding: 8px 10px;
+                gap: 6px;
+                min-height: 50px;
+              }
+              .ide-console-input-field {
+                padding: 6px 10px;
+                font-size: 0.82rem;
+              }
+              .ide-console-send-btn {
+                padding: 6px 10px;
+                font-size: 0.72rem;
               }
             }
           `
@@ -1566,7 +1652,7 @@ function CodeEditor({
         </div>
 
         {/* RIGHT PANEL: Interactive Console */}
-        <div className="ide-console-card">
+        <div className="ide-console-card" ref={consoleCardRef}>
           <div className="ide-console-header">
             <div className="d-flex align-items-center gap-2">
               <Radio
@@ -1605,9 +1691,14 @@ function CodeEditor({
             })}
           </div>
 
-          <form onSubmit={handleSendInput} className="ide-console-input-bar">
+          <form
+            ref={consoleInputBarRef}
+            onSubmit={handleSendInput}
+            className="ide-console-input-bar"
+          >
             <span className="ide-console-prompt">&gt;</span>
             <input
+              ref={consoleInputRef}
               type="text"
               className="ide-console-input-field"
               placeholder={
@@ -1617,6 +1708,7 @@ function CodeEditor({
               }
               value={liveInputText}
               onChange={(e) => setLiveInputText(e.target.value)}
+              onFocus={handleInputFocus}
               disabled={!isRunning}
               autoComplete="off"
             />

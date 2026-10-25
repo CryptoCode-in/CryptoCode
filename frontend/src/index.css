@@ -1245,7 +1245,9 @@ input, textarea { font-family: inherit; }
   border-radius: 18px;
   padding: 26px 30px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  height: auto;
+  min-height: min-content;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -1288,24 +1290,30 @@ input, textarea { font-family: inherit; }
 
 .ccc-code-line {
   font-family: 'JetBrains Mono', monospace;
-  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-size: clamp(0.9rem, 2.5vw, 1.25rem);
   font-weight: 600;
   color: var(--tx, #f8fafc);
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
   letter-spacing: -0.01em;
-  word-break: break-all;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .ccc-prompt-arrow {
   color: #10b981;
   font-weight: 700;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .ccc-code-text {
   color: #e2e8f0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .ccc-action-subtitle {
@@ -1445,14 +1453,34 @@ input, textarea { font-family: inherit; }
 
 /* Mobile responsive queries for CCC */
 @media (max-width: 768px) {
+  .dashboard-inner-container {
+    padding: 20px 16px max(36px, env(safe-area-inset-bottom, 24px));
+    gap: 20px;
+  }
+
   .ccc-action-content {
     flex-direction: column;
     align-items: stretch;
     gap: 18px;
   }
 
+  .ccc-action-info {
+    width: 100%;
+  }
+
+  .ccc-code-line {
+    font-size: clamp(0.82rem, 3.8vw, 1.05rem);
+    flex-wrap: wrap;
+    line-height: 1.4;
+  }
+
   .ccc-primary-btn {
     width: 100%;
+    min-height: 48px;
+    padding: 13px 20px;
+    box-sizing: border-box;
+    white-space: normal;
+    text-align: center;
   }
 
   .ccc-workspace-grid {
@@ -1461,12 +1489,29 @@ input, textarea { font-family: inherit; }
   }
 
   .ccc-action-panel {
-    padding: 20px 18px;
+    padding: 20px 16px;
+    height: auto;
+    min-height: auto;
+    overflow: visible;
   }
 
   .ccc-workspace-card {
     padding: 20px 18px;
     min-height: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .ccc-action-panel {
+    padding: 16px 14px;
+  }
+  .ccc-code-line {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+  .ccc-primary-btn {
+    font-size: 0.82rem;
+    padding: 11px 16px;
   }
 }
 
