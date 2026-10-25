@@ -2529,26 +2529,60 @@ input, textarea { font-family: inherit; }
   }
 }
 
-/* Dashboard Brand Wordmark Logo */
+/* Dashboard Brand Complete Logo (Emblem + Wordmark) */
+.dashboard-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.dashboard-brand-link:hover {
+  opacity: 0.92;
+}
+
+.dashboard-brand-emblem {
+  height: 36px;
+  width: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
 .dashboard-brand-logo {
-  height: 34px;
+  height: 30px;
   width: auto;
-  max-width: 160px;
+  max-width: 145px;
   object-fit: contain;
   display: block;
 }
 
 @media (max-width: 575.98px) {
+  .dashboard-brand-link {
+    gap: 6px;
+  }
+  .dashboard-brand-emblem {
+    height: 30px;
+    width: 30px;
+  }
   .dashboard-brand-logo {
-    height: 28px;
-    max-width: 135px;
+    height: 24px;
+    max-width: 115px;
   }
 }
 
 @media (max-width: 360px) {
+  .dashboard-brand-link {
+    gap: 4px;
+  }
+  .dashboard-brand-emblem {
+    height: 26px;
+    width: 26px;
+  }
   .dashboard-brand-logo {
-    height: 24px;
-    max-width: 110px;
+    height: 20px;
+    max-width: 90px;
   }
 }
 

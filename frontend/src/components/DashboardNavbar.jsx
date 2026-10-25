@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Bell, LogOut, Search, Menu, X, UserCheck } from "lucide-react";
+import logob from "../assets/images/logob.png";
 import logow from "../assets/images/logow.png";
 import { API_URL } from "../utils/api";
 
@@ -167,20 +168,22 @@ function DashboardNavbar({
             )}
             <Link
               to={isTeacher ? "/teacher/dashboard" : "/dashboard"}
-              className="d-flex align-items-center"
+              onClick={() => {
+                if (setActiveSection) setActiveSection("dashboard");
+              }}
+              className="d-flex align-items-center gap-2 dashboard-brand-link"
               style={{ textDecoration: "none" }}
+              aria-label="CryptoCode Dashboard Home"
             >
+              <img
+                src={logob}
+                alt="CryptoCode Emblem"
+                className="dashboard-brand-emblem"
+              />
               <img
                 src={logow}
                 alt="CryptoCode"
                 className="dashboard-brand-logo"
-                style={{
-                  height: "34px",
-                  width: "auto",
-                  maxWidth: "160px",
-                  objectFit: "contain",
-                  display: "block"
-                }}
               />
             </Link>
           </div>
