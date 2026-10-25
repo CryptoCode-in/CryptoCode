@@ -3,7 +3,9 @@ FROM node:22-bookworm-slim
 
 # Set environment variables
 ENV NODE_ENV=production \
-    PORT=5000
+    PORT=5000 \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+    PATH="/usr/lib/jvm/java-17-openjdk-amd64/bin:${PATH}"
 
 # Install compilers and runtimes:
 # - GCC: C compiler
