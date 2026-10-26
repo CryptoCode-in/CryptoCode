@@ -12,6 +12,9 @@ import {
 function InteractiveTerminal({ language, code, onRunStateChange }) {
   const socketRef = useRef(null);
   const terminalEndRef = useRef(null);
+  const consoleInputRef = useRef(null);
+  const consoleInputBarRef = useRef(null);
+  const terminalBoxRef = useRef(null);
   const inputQueueRef = useRef([]);
   const sessionIdRef = useRef(null);
   // Persistent session ID for the current run – set once on start and never overwritten on reconnection
@@ -36,6 +39,53 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
   ]);
 
   const [inputText, setInputText] = useState("");
+
+  // Helper to scroll console input bar into view cleanly on mobile
+  const scrollInputIntoView = (smooth = true) => {
+    requestAnimationFrame(() => {
+      if (consoleInputBarRef.current) {
+        consoleInputBarRef.current.scrollIntoView({
+          behavior: smooth ? "smooth" : "auto",
+          block: "nearest",
+          inline: "nearest"
+        });
+      }
+    });
+  };
+
+  // Keep input visible when mobile virtual keyboard opens
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      if (consoleInputBarRef.current) {
+        consoleInputBarRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    }, 300);
+  };
+
+  // Adjust scroll when mobile virtual keyboard resizes viewport
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleViewportChange = () => {
+      if (document.activeElement === consoleInputRef.current && consoleInputBarRef.current) {
+        consoleInputBarRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest"
+        });
+      }
+    };
+
+    vv.addEventListener("resize", handleViewportChange);
+    vv.addEventListener("scroll", handleViewportChange);
+    return () => {
+      vv.removeEventListener("resize", handleViewportChange);
+      vv.removeEventListener("scroll", handleViewportChange);
+    };
+  }, []);
 
   /*
    * ---------------------------------------------------------
@@ -95,11 +145,18 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
       if (onRunStateChange) {
         onRunStateChange(
           currentStatus === "running" ||
-          currentStatus === "compiling"
+          currentStatus === "compiling" ||
+          currentStatus === "waiting_input"
         );
       }
 
-      // No automatic input flushing; will flush when stdin is ready (status "waiting_input").
+      if (currentStatus === "running" || currentStatus === "waiting_input") {
+        flushInputQueue();
+      }
+
+      if (currentStatus === "waiting_input") {
+        scrollInputIntoView(true);
+      }
     });
 
     /*
@@ -121,6 +178,10 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
           type: "stdout"
         }
       ]);
+
+      if (/[:?]\s*$/.test(text)) {
+        scrollInputIntoView(true);
+      }
     });
 
     /*
@@ -216,7 +277,10 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
       return;
     }
 
-    const sessionId = permanentSessionIdRef.current;
+    const sessionId =
+      permanentSessionIdRef.current ||
+      sessionIdRef.current ||
+      socket.id;
 
     if (!sessionId) {
       return;
@@ -337,7 +401,10 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
       return;
     }
 
-    const sessionId = permanentSessionIdRef.current;
+    const sessionId =
+      permanentSessionIdRef.current ||
+      sessionIdRef.current ||
+      socket.id;
 
     console.log(
       "[CryptoCode] Stopping session:",
@@ -395,8 +462,11 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
      * fgets()
      * getchar()
      */
-    // Send raw input; backend will ensure newline if needed
-    const formattedInput = inputText;
+    // Send raw input with clean newline
+    const cleanInput = inputText.replace(/\r/g, "");
+    const formattedInput = cleanInput.endsWith("\n")
+      ? cleanInput
+      : cleanInput + "\n";
 
     /*
      * Show input in terminal.
@@ -410,14 +480,14 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
     ]);
 
     /*
-     * If process is not yet running,
-     * keep input in queue.
+     * If process is running or waiting for input, send live; otherwise queue.
      */
-    if (
-      status.status !== "running" ||
-      !socket ||
-      !socket.connected
-    ) {
+    const canSendLive =
+      socket &&
+      socket.connected &&
+      (status.status === "running" || status.status === "waiting_input" || isRunning);
+
+    if (!canSendLive) {
       console.log(
         "[CryptoCode] Input queued:",
         JSON.stringify(formattedInput)
@@ -434,7 +504,10 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
      * Process is running.
      * Send directly to backend.
      */
-    const sessionId = permanentSessionIdRef.current;
+    const sessionId =
+      permanentSessionIdRef.current ||
+      sessionIdRef.current ||
+      socket.id;
 
     console.log(
       "[CryptoCode] Sending stdin:",
@@ -478,9 +551,9 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
     }
   }, [outputLogs]);
 
-  // Flush any queued inputs once the process is running
+  // Flush any queued inputs once the process is running or waiting for input
   useEffect(() => {
-    if (status.status === "running") {
+    if (status.status === "running" || status.status === "waiting_input") {
       flushInputQueue();
     }
   }, [status.status]);
@@ -492,7 +565,8 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
    */
   const isRunning =
     status.status === "running" ||
-    status.status === "compiling";
+    status.status === "compiling" ||
+    status.status === "waiting_input";
 
   /*
    * ---------------------------------------------------------
@@ -519,6 +593,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
               overflow: hidden;
               display: flex;
               flex-direction: column;
+              box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
             }
 
             .terminal-header {
@@ -528,17 +603,21 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
               display: flex;
               align-items: center;
               justify-content: space-between;
+              flex-shrink: 0;
             }
 
             .terminal-body {
               background: #0d1117;
               font-family: 'JetBrains Mono', Consolas, monospace;
               font-size: 0.85rem;
-              height: 220px;
+              min-height: 160px;
+              max-height: 340px;
+              flex: 1 1 auto;
               overflow-y: auto;
               padding: 14px 16px;
               color: #c9d1d9;
               line-height: 1.5;
+              -webkit-overflow-scrolling: touch;
             }
 
             .terminal-input-bar {
@@ -548,6 +627,9 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
               display: flex;
               align-items: center;
               gap: 10px;
+              min-height: 52px;
+              flex-shrink: 0;
+              box-sizing: border-box;
             }
 
             .terminal-input-field {
@@ -570,11 +652,23 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
               opacity: 0.55;
               cursor: not-allowed;
             }
+
+            @media (max-width: 480px) {
+              .terminal-input-bar {
+                padding: 8px 8px;
+                gap: 6px;
+                min-height: 50px;
+              }
+              .terminal-input-field {
+                padding: 6px 8px;
+                font-size: 0.82rem;
+              }
+            }
           `
         }}
       />
 
-      <div className="terminal-box">
+      <div className="terminal-box" ref={terminalBoxRef}>
 
         {/* HEADER */}
         <div className="terminal-header">
@@ -758,6 +852,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
 
         {/* INPUT */}
         <form
+          ref={consoleInputBarRef}
           onSubmit={handleSendInput}
           className="terminal-input-bar"
         >
@@ -774,6 +869,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
           </span>
 
           <input
+            ref={consoleInputRef}
             type="text"
             className="terminal-input-field"
             placeholder={
@@ -785,6 +881,7 @@ function InteractiveTerminal({ language, code, onRunStateChange }) {
             onChange={(e) =>
               setInputText(e.target.value)
             }
+            onFocus={handleInputFocus}
             disabled={!isRunning}
             autoComplete="off"
           />

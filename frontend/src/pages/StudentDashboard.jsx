@@ -339,8 +339,9 @@ function StudentDashboard({ currentUser, onLogout }) {
   return (
     <div
       style={{
-        height: "100vh",
-        maxHeight: "100vh",
+        height: "100dvh",
+        minHeight: "100vh",
+        maxHeight: "100dvh",
         background: "var(--bg)",
         color: "var(--tx)",
         display: "flex",
