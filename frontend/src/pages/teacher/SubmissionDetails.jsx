@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Copy, ClipboardCheck, Cpu, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Copy, ClipboardCheck, Code, Info } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { mockTeacherData } from "../../utils/mockTeacherData";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 import { API_URL } from "../../utils/api";
+import { formatSubmissionDate } from "../../utils/dateTime";
+
 function SubmissionDetails({ submissionId, onBack }) {
   const [submission, setSubmission] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -16,7 +18,25 @@ function SubmissionDetails({ submissionId, onBack }) {
 
       // If submissionId is an object already passed
       if (typeof submissionId === "object" && submissionId !== null) {
-        setSubmission(submissionId);
+        const sub = submissionId;
+        const formattedDate = sub.submitted_at
+          ? formatSubmissionDate(sub.submitted_at)
+          : "—";
+
+        setSubmission({
+          id: sub.id,
+          studentName: sub.profiles?.name || sub.studentName || "Student",
+          studentRoll: sub.profiles?.roll_no
+            ? (String(sub.profiles.roll_no).startsWith("CC-ST-") ? sub.profiles.roll_no : `CC-ST-${sub.profiles.roll_no}`)
+            : (sub.student_id ? `CC-ST-${sub.student_id}` : (sub.studentRoll || "—")),
+          practicalTitle: sub.filename || sub.practicalTitle || "Lab Practical Submission",
+          language: sub.language
+            ? (sub.language.charAt(0).toUpperCase() + sub.language.slice(1).toLowerCase())
+            : "Code",
+          status: sub.status || "Saved",
+          code: sub.source_code || sub.code || "",
+          submittedOn: formattedDate,
+        });
         return;
       }
 
@@ -27,29 +47,22 @@ function SubmissionDetails({ submissionId, onBack }) {
           if (data.success && data.submission && isMounted) {
             const sub = data.submission;
             const formattedDate = sub.submitted_at
-              ? new Date(sub.submitted_at).toLocaleString("en-US", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "Recently";
+              ? formatSubmissionDate(sub.submitted_at)
+              : "—";
 
             setSubmission({
               id: sub.id,
               studentName: sub.profiles?.name || "Student",
-              studentRoll: sub.profiles?.roll_no ? `CC-ST-${sub.profiles.roll_no}` : (sub.student_id ? `CC-ST-${sub.student_id}` : ""),
+              studentRoll: sub.profiles?.roll_no
+                ? (String(sub.profiles.roll_no).startsWith("CC-ST-") ? sub.profiles.roll_no : `CC-ST-${sub.profiles.roll_no}`)
+                : (sub.student_id ? `CC-ST-${sub.student_id}` : "—"),
               practicalTitle: sub.filename || "Lab Practical Submission",
-              language: sub.language ? sub.language.toUpperCase() : "CODE",
-              status: sub.status ? (sub.status.charAt(0).toUpperCase() + sub.status.slice(1)) : "Accepted",
-              score: sub.status === "accepted" ? 100 : (sub.score || 85),
+              language: sub.language
+                ? (sub.language.charAt(0).toUpperCase() + sub.language.slice(1).toLowerCase())
+                : "Code",
+              status: sub.status || "Saved",
               code: sub.source_code || "",
               submittedOn: formattedDate,
-              output: sub.output || "Execution completed successfully.\nReturn code: 0\n[Runtime verification passed]",
-              timeTaken: sub.time_taken || "0.042 s",
-              memoryUsed: sub.memory_used || "14.2 MB",
-              system: `CryptoCode ${(sub.language || "Native").toUpperCase()} Sandbox`,
             });
             return;
           }
@@ -60,7 +73,21 @@ function SubmissionDetails({ submissionId, onBack }) {
 
       // Fallback to mock data if not found in db
       if (isMounted) {
-        setSubmission(mockTeacherData.getSubmissionById(submissionId));
+        const mockSub = mockTeacherData.getSubmissionById(submissionId);
+        if (mockSub) {
+          setSubmission({
+            id: mockSub.id,
+            studentName: mockSub.studentName || "Student",
+            studentRoll: mockSub.studentRoll || "—",
+            practicalTitle: mockSub.practicalTitle || "Lab Practical Submission",
+            language: mockSub.language
+              ? (mockSub.language.charAt(0).toUpperCase() + mockSub.language.slice(1).toLowerCase())
+              : "Code",
+            status: mockSub.status || "Saved",
+            code: mockSub.code || "",
+            submittedOn: mockSub.submittedOn || "—",
+          });
+        }
       }
     };
 
@@ -79,138 +106,265 @@ function SubmissionDetails({ submissionId, onBack }) {
     );
   }
 
-  const handleCopy = () => {
+  const handleCopyCode = () => {
     navigator.clipboard.writeText(submission.code || "");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Accepted":
-        return "#34d399";
-      case "Wrong Answer":
-        return "#fbbf24";
-      case "Compilation Error":
-        return "#f87171";
-      default:
-        return "#f87171";
+  const getStatusInfo = (status) => {
+    const s = String(status || "").toLowerCase().trim();
+    if (s === "saved" || s === "draft") {
+      return {
+        label: "Saved",
+        color: "#10b981", // green
+        bg: "rgba(16, 185, 129, 0.12)",
+        border: "rgba(16, 185, 129, 0.25)",
+      };
     }
+    // "submitted" or "accepted" or other status
+    return {
+      label: s === "accepted" ? "Submitted" : (s.charAt(0).toUpperCase() + s.slice(1)),
+      color: "#3b82f6", // blue
+      bg: "rgba(59, 130, 246, 0.12)",
+      border: "rgba(59, 130, 246, 0.25)",
+    };
   };
+
+  const statusInfo = getStatusInfo(submission.status);
+
+  const infoFields = [
+    { label: "Student", value: submission.studentName },
+    { label: "Roll No", value: submission.studentRoll, isMono: true },
+    { label: "Practical", value: submission.practicalTitle },
+    { label: "Language", value: submission.language },
+    { label: "Status", isStatus: true },
+    { label: "Submitted On", value: submission.submittedOn },
+  ];
 
   return (
     <TeacherLayout
       title="Submission Details"
-      description="Detailed run time execution logs and compiler output."
+      description="Inspect student source code and submission details."
       actions={
         <button
           onClick={onBack}
           className="boc d-inline-flex align-items-center gap-2 px-3 py-2"
-          style={{ borderRadius: "8px", fontSize: "0.85rem", fontWeight: 600 }}
+          style={{ borderRadius: "8px", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}
         >
           <ArrowLeft size={14} />
           <span>Back to Submissions</span>
         </button>
       }
     >
-      {/* Quick summary strip */}
-      <div 
-        style={{
-          background: "var(--sf)",
-          border: "1px solid var(--bd)",
-          borderRadius: "10px",
-          padding: "12px 18px",
-          fontSize: "0.82rem",
-          color: "var(--tx2)",
-          marginBottom: "24px"
-        }}
-        className="d-flex align-items-center gap-4 flex-wrap"
-      >
-        <span>Language: <strong style={{ color: "#fff" }}>{submission.language}</strong></span>
-        <span>
-          Status:{" "}
-          <strong style={{ color: getStatusColor(submission.status) }}>{submission.status}</strong>
-        </span>
-      </div>
-
-      {/* Main Panel Division */}
-      <div className="row g-4">
-        {/* Left Side: Code Editor */}
-        <div className="col-12 col-lg-8">
-          <div className="cyber-card" style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
-            <div 
-              style={{
-                background: "#121214",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-                padding: "12px 18px",
-              }}
-              className="d-flex align-items-center justify-content-between"
-            >
-              <div className="d-flex align-items-center gap-2">
-                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#fff" }}>Source Code</span>
-                <span style={{ fontSize: "0.68rem", color: "var(--tx3)", background: "rgba(255,255,255,0.04)", padding: "2px 6px", borderRadius: "4px" }}>
-                  Read Only
-                </span>
-              </div>
-
-              <button
-                onClick={handleCopy}
-                className="boc d-flex align-items-center gap-1.5 px-3 py-1.5"
-                style={{ fontSize: "0.75rem", borderRadius: "6px" }}
-              >
-                {copied ? <ClipboardCheck size={12} style={{ color: "#34d399" }} /> : <Copy size={12} />}
-                <span>{copied ? "Copied" : "Copy Code"}</span>
-              </button>
-            </div>
-
-            <div style={{ height: "450px", width: "100%" }}>
-              <Editor
-                height="100%"
-                width="100%"
-                language={submission.language.toLowerCase()}
-                value={submission.code}
-                theme="vs-dark"
-                options={{
-                  fontSize: 13,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  minimap: { enabled: false },
-                  scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
-                  automaticLayout: true,
-                  readOnly: true,
-                  lineNumbers: "on",
-                  wordWrap: "on"
+      {/* 50-50 Equal Grid Container */}
+      <div className="submission-details-grid">
+        {/* Left Column: Source Code */}
+        <div
+          className="cyber-card"
+          style={{
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            width: "100%",
+            borderRadius: "14px",
+            border: "1px solid rgba(139, 92, 246, 0.25)",
+            background: "var(--sf)",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+          }}
+        >
+          {/* Card Header */}
+          <div 
+            style={{
+              background: "#121214",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+              padding: "14px 20px",
+              minHeight: "56px",
+            }}
+            className="d-flex align-items-center justify-content-between"
+          >
+            <div className="d-flex align-items-center gap-2">
+              <Code size={16} style={{ color: "var(--pur)", flexShrink: 0 }} />
+              <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#fff" }}>Source Code</span>
+              <span
+                style={{
+                  fontSize: "0.68rem",
+                  color: "var(--tx3)",
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  padding: "2px 8px",
+                  borderRadius: "4px",
+                  fontWeight: 500,
                 }}
-              />
+              >
+                Read Only
+              </span>
             </div>
+
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className="boc d-flex align-items-center gap-1.5 px-3 py-1.5"
+              style={{
+                fontSize: "0.78rem",
+                borderRadius: "6px",
+                cursor: "pointer",
+                color: copiedCode ? "#34d399" : "var(--tx)",
+                borderColor: copiedCode ? "rgba(52, 211, 153, 0.4)" : "var(--bd)",
+              }}
+            >
+              {copiedCode ? <ClipboardCheck size={13} style={{ color: "#34d399" }} /> : <Copy size={13} />}
+              <span>{copiedCode ? "Copied" : "Copy Code"}</span>
+            </button>
+          </div>
+
+          {/* Monaco Editor Container */}
+          <div style={{ flex: 1, minHeight: "500px", width: "100%", position: "relative" }}>
+            <Editor
+              height="100%"
+              width="100%"
+              language={submission.language ? submission.language.toLowerCase() : "c"}
+              value={submission.code}
+              theme="vs-dark"
+              options={{
+                fontSize: 13,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                minimap: { enabled: false },
+                scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+                automaticLayout: true,
+                readOnly: true,
+                lineNumbers: "on",
+                wordWrap: "on",
+                scrollBeyondLastLine: false,
+              }}
+            />
           </div>
         </div>
 
-        {/* Right Side: Execution Details */}
-        <div className="col-12 col-lg-4">
-          <div className="cyber-card" style={{ padding: "20px" }}>
-            <h5 className="mb-4 d-flex align-items-center gap-2" style={{ fontSize: "0.95rem", fontWeight: 700, color: "#fff", margin: 0 }}>
-              <Cpu size={14} style={{ color: "var(--pur)" }} />
-              <span>Execution Details</span>
-            </h5>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
-                <span style={{ color: "var(--tx3)" }}>Time Taken</span>
-                <strong style={{ color: "var(--tx)", fontFamily: "monospace" }}>{submission.timeTaken}</strong>
-              </div>
-              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
-                <span style={{ color: "var(--tx3)" }}>Memory Used</span>
-                <strong style={{ color: "var(--tx)", fontFamily: "monospace" }}>{submission.memoryUsed}</strong>
-              </div>
-              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "10px" }}>
-                <span style={{ color: "var(--tx3)" }}>Submitted On</span>
-                <strong style={{ color: "var(--tx)", fontSize: "0.78rem" }}>{submission.submittedOn}</strong>
-              </div>
-              <div className="d-flex align-items-center justify-content-between" style={{ fontSize: "0.82rem", paddingBottom: "2px" }}>
-                <span style={{ color: "var(--tx3)" }}>Compiler Sandbox</span>
-                <strong style={{ color: "var(--pur)" }}>{submission.system}</strong>
-              </div>
+        {/* Right Column: Submission Information */}
+        <div
+          className="cyber-card"
+          style={{
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            width: "100%",
+            borderRadius: "14px",
+            border: "1px solid rgba(139, 92, 246, 0.25)",
+            background: "var(--sf)",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+          }}
+        >
+          {/* Card Header */}
+          <div 
+            style={{
+              background: "#121214",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+              padding: "14px 20px",
+              minHeight: "56px",
+            }}
+            className="d-flex align-items-center justify-content-between"
+          >
+            <div className="d-flex align-items-center gap-2">
+              <Info size={16} style={{ color: "var(--pur)", flexShrink: 0 }} />
+              <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#fff" }}>
+                Submission Information
+              </span>
             </div>
+          </div>
+
+          {/* Card Body with Detailed Rows */}
+          <div 
+            style={{
+              flex: 1,
+              minHeight: "500px",
+              padding: "24px 22px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "14px",
+              overflowY: "auto",
+              width: "100%",
+            }}
+          >
+            {infoFields.map((field) => (
+              <div
+                key={field.label}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  padding: "14px 18px",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                  borderRadius: "10px",
+                  width: "100%",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "0.78rem",
+                    color: "var(--tx3)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                >
+                  {field.label}
+                </span>
+
+                <div
+                  style={{
+                    textAlign: "right",
+                    wordBreak: "break-word",
+                    overflowWrap: "anywhere",
+                    maxWidth: "70%",
+                  }}
+                >
+                  {field.isStatus ? (
+                    <span
+                      style={{
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        padding: "4px 14px",
+                        borderRadius: "6px",
+                        background: statusInfo.bg,
+                        color: statusInfo.color,
+                        border: `1px solid ${statusInfo.border}`,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: "6px",
+                          height: "6px",
+                          borderRadius: "50%",
+                          backgroundColor: statusInfo.color,
+                        }}
+                      />
+                      {statusInfo.label}
+                    </span>
+                  ) : (
+                    <strong
+                      style={{
+                        fontSize: "0.88rem",
+                        fontWeight: 700,
+                        color: "var(--tx)",
+                        fontFamily: field.isMono ? "'JetBrains Mono', monospace" : "inherit",
+                      }}
+                    >
+                      {field.value}
+                    </strong>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

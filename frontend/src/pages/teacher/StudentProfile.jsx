@@ -1,81 +1,99 @@
 import { useState, useEffect } from "react";
 import {
   ArrowLeft,
-  Mail,
-  Calendar,
   BookOpen,
   Award,
-  FileCode,
+  GraduationCap,
+  Mail,
 } from "lucide-react";
 import { API_URL } from "../../utils/api";
-
-import {
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
-
 import SubmissionCard from "../../components/teacher/SubmissionCard";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
+
+// Map a raw DB submission to the shape SubmissionCard expects (simplified)
+function mapSubmission(sub) {
+  const rawStatus = (sub.status || "Saved").trim();
+  const status = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase();
+
+  return {
+    id: sub.id,
+    studentName: sub.profiles?.name || "Student",
+    studentRoll: sub.profiles?.roll_no || "",
+    practicalTitle: sub.filename || "Lab Submission",
+    language: sub.language ? sub.language.toUpperCase() : "CODE",
+    status,
+  };
+}
 
 function StudentProfile({ studentId, onBack, onViewSubmission }) {
   const [student, setStudent] = useState(null);
   const [submissions, setSubmissions] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchStudentProfile = async () => {
-      console.log("STUDENT ID RECEIVED:", studentId);
+    if (!studentId) {
+      setLoading(false);
+      setError("Student ID was not received.");
+      return;
+    }
 
-      if (!studentId) {
-        console.log("No student ID received");
-        setLoading(false);
-        setError("Student ID was not received.");
-        return;
-      }
+    let isMounted = true;
 
+    const fetchStudentData = async () => {
       try {
         setLoading(true);
         setError("");
 
-        console.log("Fetching student profile for ID:", studentId);
+        // Fetch student profile and submissions in parallel
+        const [profileRes, subsRes] = await Promise.all([
+          fetch(`${API_URL}/students/${studentId}`),
+          fetch(`${API_URL}/submissions?student_id=${studentId}`),
+        ]);
 
-        const response = await fetch(
-          `${API_URL}/students/${studentId}`
-        );
+        if (!isMounted) return;
 
-        const result = await response.json();
-
-        console.log("STUDENT PROFILE RESULT:", result);
-
-        if (!response.ok || !result.success) {
-          throw new Error(
-            result.message || "Failed to fetch student profile"
-          );
+        // Profile data
+        const profileData = await profileRes.json();
+        if (!profileRes.ok || !profileData.success) {
+          throw new Error(profileData.message || "Failed to fetch student profile");
         }
 
-        setStudent(result.student);
+        // Submissions data - only take latest 5
+        let latestSubs = [];
+        if (subsRes.ok) {
+          const subsData = await subsRes.json();
+          if (subsData.success && Array.isArray(subsData.submissions)) {
+            // Already sorted descending by backend (or sort by submitted_at desc just in case)
+            latestSubs = subsData.submissions
+              .slice()
+              .sort((a, b) => new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0))
+              .slice(0, 5)
+              .map(mapSubmission);
+          }
+        }
 
-        // These will be connected to backend later
-        setSubmissions([]);
-        setAnalytics(null);
-      } catch (error) {
-        console.error("Failed to fetch student profile:", error);
-        setError(error.message || "Failed to load student profile.");
+        if (isMounted) {
+          setStudent(profileData.student);
+          setSubmissions(latestSubs);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error("Failed to fetch student profile:", err);
+          setError(err.message || "Failed to load student profile.");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchStudentProfile();
+    fetchStudentData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [studentId]);
 
   // Loading state
@@ -87,12 +105,13 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
       >
         <div
           style={{
-            padding: "60px 20px",
+            padding: "80px 20px",
             textAlign: "center",
             color: "var(--tx2)",
+            fontSize: "0.95rem",
           }}
         >
-          Loading student profile...
+          Loading student profile…
         </div>
       </TeacherLayout>
     );
@@ -108,11 +127,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
           <button
             onClick={onBack}
             className="boc d-inline-flex align-items-center gap-2 px-3 py-2"
-            style={{
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-            }}
+            style={{ borderRadius: "8px", fontSize: "0.85rem", fontWeight: 600 }}
           >
             <ArrowLeft size={14} />
             <span>Back to Students</span>
@@ -122,22 +137,25 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
         <div
           className="cyber-card"
           style={{
-            padding: "40px",
+            padding: "48px 24px",
             textAlign: "center",
             color: "var(--tx2)",
+            borderRadius: "16px",
+            background: "var(--sf)",
+            border: "1px solid var(--bd)",
           }}
         >
-          <p style={{ marginBottom: "20px" }}>
+          <p style={{ marginBottom: "20px", fontSize: "0.95rem" }}>
             {error || "Student profile not found."}
           </p>
-
           <button
             onClick={onBack}
             className="boc"
             style={{
-              padding: "8px 16px",
+              padding: "9px 20px",
               borderRadius: "8px",
               fontWeight: 600,
+              fontSize: "0.85rem",
             }}
           >
             Back to Students
@@ -147,19 +165,21 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
     );
   }
 
-  // Analytics fallbacks
-  const trendData = analytics?.weeklyTrend || [];
-  const langData = analytics?.languageUsage || [];
-  const statusData = analytics?.submissionStatus || [];
+  const userInitial = student.name ? student.name.trim()[0].toUpperCase() : "S";
 
-  const userInitial = student.name
-    ? student.name[0].toUpperCase()
-    : "S";
+  // Academic Details: Branch, Year, Semester, College, Email
+  const studentDetails = [
+    { icon: BookOpen, label: "Branch", value: student.branch },
+    { icon: Award, label: "Year", value: student.year },
+    { icon: Award, label: "Semester", value: student.semester },
+    { icon: GraduationCap, label: "College", value: student.college },
+    { icon: Mail, label: "Email", value: student.email },
+  ];
 
   return (
     <TeacherLayout
       title="Student Profile"
-      description="Detailed performance summary and submission logs."
+      description="Student information and recent submission history."
       actions={
         <button
           onClick={onBack}
@@ -168,6 +188,8 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
             borderRadius: "8px",
             fontSize: "0.85rem",
             fontWeight: 600,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
           }}
         >
           <ArrowLeft size={14} />
@@ -175,780 +197,211 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
         </button>
       }
     >
-      <div className="row g-4">
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "28px",
+          width: "100%",
+          maxWidth: "100%",
+        }}
+      >
+        {/* =========================================================
+            1. STUDENT PROFILE CARD (Full Width, Centered)
+        ========================================================== */}
+        <div
+          className="cyber-card"
+          style={{
+            padding: "28px 32px",
+            borderRadius: "16px",
+            background: "var(--sf)",
+            border: "1px solid var(--bd)",
+            width: "100%",
+          }}
+        >
+          {/* Card Header: Avatar, Name, Roll No */}
+          <div
+            className="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-4"
+            style={{ borderBottom: "1px solid var(--bd)" }}
+          >
+            <div className="d-flex align-items-center gap-3">
+              <div
+                style={{
+                  width: "64px",
+                  height: "64px",
+                  borderRadius: "16px",
+                  background: "var(--grad)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.75rem",
+                  fontWeight: 700,
+                  color: "#fff",
+                  boxShadow: "0 0 20px rgba(139, 92, 246, 0.35)",
+                  flexShrink: 0,
+                }}
+              >
+                {userInitial}
+              </div>
 
-        {/* LEFT SIDE */}
-        <div className="col-12 col-lg-5">
-          <div className="d-flex flex-column gap-4">
-
-            {/* PROFILE CARD */}
-            <div className="cyber-card" style={{ padding: "28px" }}>
-
-              <div className="d-flex align-items-center gap-3 mb-4">
-                <div
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "14px",
-                    background: "var(--grad)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.8rem",
-                    fontWeight: 700,
-                    color: "#fff",
-                    boxShadow: "0 0 15px rgba(139, 92, 246, 0.3)",
-                  }}
-                >
-                  {userInitial}
-                </div>
-
-                <div>
-                  <h4
+              <div>
+                <div className="d-flex align-items-center gap-2 flex-wrap">
+                  <h3
                     style={{
-                      fontSize: "1.35rem",
+                      fontSize: "1.45rem",
                       fontWeight: 700,
                       color: "#fff",
                       margin: 0,
+                      letterSpacing: "-0.01em",
                     }}
                   >
                     {student.name || "N/A"}
-                  </h4>
+                  </h3>
 
                   <span
                     style={{
                       fontFamily: "'JetBrains Mono', monospace",
                       fontSize: "0.78rem",
-                      background: "rgba(139,92,246,0.12)",
-                      border: "1px solid rgba(139,92,246,0.2)",
+                      background: "rgba(139, 92, 246, 0.12)",
+                      border: "1px solid rgba(139, 92, 246, 0.25)",
                       color: "var(--pur)",
-                      padding: "2px 8px",
+                      padding: "2px 10px",
                       borderRadius: "6px",
-                      marginTop: "4px",
-                      display: "inline-block",
+                      fontWeight: 600,
                     }}
                   >
                     {student.rollNo || "N/A"}
                   </span>
                 </div>
-              </div>
 
+                <p
+                  style={{
+                    color: "var(--tx3)",
+                    fontSize: "0.85rem",
+                    margin: "4px 0 0",
+                  }}
+                >
+                  Student Profile &amp; Academic Information
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Body: Academic Details in a Balanced Responsive Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "20px 24px",
+              paddingTop: "24px",
+            }}
+          >
+            {studentDetails.map(({ icon: Icon, label, value }) => (
               <div
+                key={label}
                 style={{
                   display: "flex",
-                  flexDirection: "column",
-                  gap: "16px",
-                  borderTop: "1px solid var(--bd)",
-                  paddingTop: "20px",
+                  alignItems: "flex-start",
+                  gap: "12px",
                 }}
               >
-
-                {/* Branch */}
-                <div className="d-flex align-items-center gap-2">
-                  <BookOpen
-                    size={16}
-                    style={{ color: "var(--tx3)", flexShrink: 0 }}
-                  />
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx2)",
-                      width: "100px",
-                    }}
-                  >
-                    Branch
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {student.branch || "N/A"}
-                  </span>
+                <div
+                  style={{
+                    width: "38px",
+                    height: "38px",
+                    borderRadius: "10px",
+                    background: "rgba(139, 92, 246, 0.08)",
+                    border: "1px solid rgba(139, 92, 246, 0.18)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={16} style={{ color: "var(--pur)" }} />
                 </div>
-
-                {/* Year */}
-                <div className="d-flex align-items-center gap-2">
-                  <Award
-                    size={16}
-                    style={{ color: "var(--tx3)", flexShrink: 0 }}
-                  />
-
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                   <span
                     style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx2)",
-                      width: "100px",
+                      fontSize: "0.72rem",
+                      color: "var(--tx3)",
+                      textTransform: "uppercase",
+                      fontWeight: 700,
+                      letterSpacing: "0.05em",
+                      marginBottom: "3px",
                     }}
                   >
-                    Year
+                    {label}
                   </span>
-
                   <span
                     style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {student.year || "N/A"}
-                  </span>
-                </div>
-
-                {/* Semester */}
-                <div className="d-flex align-items-center gap-2">
-                  <Award
-                    size={16}
-                    style={{ color: "var(--tx3)", flexShrink: 0 }}
-                  />
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx2)",
-                      width: "100px",
-                    }}
-                  >
-                    Semester
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {student.semester || "N/A"}
-                  </span>
-                </div>
-
-                {/* Subject */}
-                <div className="d-flex align-items-center gap-2">
-                  <FileCode
-                    size={16}
-                    style={{ color: "var(--tx3)", flexShrink: 0 }}
-                  />
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx2)",
-                      width: "100px",
-                    }}
-                  >
-                    Subject
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {student.subject || "N/A"}
-                  </span>
-                </div>
-
-                {/* College */}
-                <div className="d-flex align-items-center gap-2">
-                  <BookOpen
-                    size={16}
-                    style={{ color: "var(--tx3)", flexShrink: 0 }}
-                  />
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx2)",
-                      width: "100px",
-                    }}
-                  >
-                    College
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {student.college || "N/A"}
-                  </span>
-                </div>
-
-                {/* Email */}
-                <div className="d-flex align-items-center gap-2">
-                  <Mail
-                    size={16}
-                    style={{ color: "var(--tx3)", flexShrink: 0 }}
-                  />
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx2)",
-                      width: "100px",
-                    }}
-                  >
-                    Email
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
+                      fontSize: "0.88rem",
                       color: "var(--tx)",
                       fontWeight: 600,
                       wordBreak: "break-all",
                     }}
                   >
-                    {student.email || "N/A"}
-                  </span>
-                </div>
-
-                {/* Joined On */}
-                <div className="d-flex align-items-center gap-2">
-                  <Calendar
-                    size={16}
-                    style={{ color: "var(--tx3)", flexShrink: 0 }}
-                  />
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx2)",
-                      width: "100px",
-                    }}
-                  >
-                    Joined On
-                  </span>
-
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--tx)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {student.joinedOn || "N/A"}
+                    {value || "N/A"}
                   </span>
                 </div>
               </div>
-            </div>
-
-            {/* SUBMISSION HISTORY */}
-            <div>
-              <div className="mb-2">
-                <h5
-                  style={{
-                    fontSize: "1.05rem",
-                    fontWeight: 700,
-                    color: "#fff",
-                    margin: 0,
-                  }}
-                >
-                  Submission History
-                </h5>
-              </div>
-
-              <SubmissionCard
-                submissions={submissions}
-                onViewDetails={onViewSubmission}
-                showStudentInfo={false}
-              />
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="col-12 col-lg-7">
-          <div className="d-flex flex-column gap-4">
-
-            {/* PERFORMANCE SUMMARY */}
-            <div className="cyber-card" style={{ padding: "28px" }}>
-              <h5
+        {/* =========================================================
+            2. SUBMISSION HISTORY (Full Width, Centered)
+        ========================================================== */}
+        <div style={{ width: "100%" }}>
+          <div
+            className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2"
+          >
+            <div>
+              <h4
                 style={{
-                  fontSize: "1.05rem",
+                  fontSize: "1.15rem",
                   fontWeight: 700,
                   color: "#fff",
-                  marginBottom: "20px",
+                  margin: 0,
                 }}
               >
-                Performance Summary
-              </h5>
-
-              <div className="row g-3 mb-4">
-
-                <div className="col-6 col-sm-3">
-                  <div
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid var(--bd)",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "1.6rem",
-                        fontWeight: 800,
-                        color: "#fff",
-                      }}
-                    >
-                      {student.problemsSolved || 0}
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--tx3)",
-                        fontWeight: 600,
-                        marginTop: "2px",
-                      }}
-                    >
-                      Problems Solved
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-6 col-sm-3">
-                  <div
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid var(--bd)",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "1.6rem",
-                        fontWeight: 800,
-                        color: "#fff",
-                      }}
-                    >
-                      {student.assignmentsCompleted || 0}
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--tx3)",
-                        fontWeight: 600,
-                        marginTop: "2px",
-                      }}
-                    >
-                      Assignments
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-6 col-sm-3">
-                  <div
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid var(--bd)",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "1.6rem",
-                        fontWeight: 800,
-                        color: "var(--pur)",
-                      }}
-                    >
-                      {student.avgScore || 0}%
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--tx3)",
-                        fontWeight: 600,
-                        marginTop: "2px",
-                      }}
-                    >
-                      Average Score
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-6 col-sm-3">
-                  <div
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid var(--bd)",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "1.6rem",
-                        fontWeight: 800,
-                        color: "#10b981",
-                      }}
-                    >
-                      {student.acceptanceRate || 0}%
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--tx3)",
-                        fontWeight: 600,
-                        marginTop: "2px",
-                      }}
-                    >
-                      Acceptance Rate
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="d-flex align-items-center gap-2"
+                Submission History
+              </h4>
+              <p
                 style={{
                   fontSize: "0.8rem",
-                  color: "var(--tx2)",
+                  color: "var(--tx3)",
+                  margin: "2px 0 0",
                 }}
               >
-                <span
-                  style={{
-                    width: "10px",
-                    height: "10px",
-                    borderRadius: "50%",
-                    background: "#10b981",
-                    boxShadow: "0 0 8px #10b981",
-                  }}
-                />
-
-                <span>
-                  Last Active:{" "}
-                  <strong>{student.lastActive || "N/A"}</strong>
-                </span>
-              </div>
+                Displaying only the latest 5 submissions
+              </p>
             </div>
 
-            {/* ANALYTICS */}
-            <div className="cyber-card" style={{ padding: "28px" }}>
-              <h5
+            {submissions.length > 0 && (
+              <span
                 style={{
-                  fontSize: "1.05rem",
-                  fontWeight: 700,
-                  color: "#fff",
-                  marginBottom: "20px",
+                  fontSize: "0.75rem",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  background: "rgba(139, 92, 246, 0.1)",
+                  border: "1px solid rgba(139, 92, 246, 0.2)",
+                  color: "var(--pur)",
+                  padding: "4px 10px",
+                  borderRadius: "6px",
+                  fontWeight: 600,
                 }}
               >
-                Analytics Overview
-              </h5>
-
-              <div className="row g-3">
-
-                {/* Submission Trend */}
-                <div className="col-12 mb-4">
-                  <label
-                    style={{
-                      fontSize: "0.82rem",
-                      color: "var(--tx2)",
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    Submission Trend (This Week)
-                  </label>
-
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "180px",
-                    }}
-                  >
-                    {trendData.length > 0 ? (
-                      <ResponsiveContainer
-                        width="100%"
-                        height="100%"
-                      >
-                        <AreaChart data={trendData}>
-                          <defs>
-                            <linearGradient
-                              id="gradTrend"
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="5%"
-                                stopColor="var(--pur)"
-                                stopOpacity={0.4}
-                              />
-
-                              <stop
-                                offset="95%"
-                                stopColor="var(--pur)"
-                                stopOpacity={0}
-                              />
-                            </linearGradient>
-                          </defs>
-
-                          <XAxis
-                            dataKey="name"
-                            stroke="var(--tx3)"
-                            fontSize={10}
-                            tickLine={false}
-                          />
-
-                          <YAxis
-                            stroke="var(--tx3)"
-                            fontSize={10}
-                            tickLine={false}
-                          />
-
-                          <Tooltip
-                            contentStyle={{
-                              background: "var(--bg3)",
-                              border: "1px solid var(--bd)",
-                              borderRadius: "8px",
-                              color: "var(--tx)",
-                            }}
-                          />
-
-                          <Area
-                            type="monotone"
-                            dataKey="submissions"
-                            stroke="var(--pur)"
-                            strokeWidth={2}
-                            fillOpacity={1}
-                            fill="url(#gradTrend)"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          height: "100%",
-                          color: "var(--tx3)",
-                          fontSize: "0.85rem",
-                        }}
-                      >
-                        No trend data available
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Language Usage */}
-                <div className="col-12 col-sm-6">
-                  <label
-                    style={{
-                      fontSize: "0.82rem",
-                      color: "var(--tx2)",
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    Language Usage
-                  </label>
-
-                  <div className="d-flex align-items-center gap-3">
-                    <div
-                      style={{
-                        width: "120px",
-                        height: "120px",
-                      }}
-                    >
-                      {langData.length > 0 ? (
-                        <ResponsiveContainer
-                          width="100%"
-                          height="100%"
-                        >
-                          <PieChart>
-                            <Pie
-                              data={langData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={35}
-                              outerRadius={50}
-                              paddingAngle={3}
-                              dataKey="value"
-                            >
-                              {langData.map((entry, index) => (
-                                <Cell
-                                  key={`lang-${index}`}
-                                  fill={entry.color}
-                                />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            height: "100%",
-                            color: "var(--tx3)",
-                            fontSize: "0.8rem",
-                          }}
-                        >
-                          Empty
-                        </div>
-                      )}
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "6px",
-                      }}
-                    >
-                      {langData.map((entry, idx) => (
-                        <div
-                          key={idx}
-                          className="d-flex align-items-center gap-2"
-                          style={{ fontSize: "0.75rem" }}
-                        >
-                          <span
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              background: entry.color,
-                            }}
-                          />
-
-                          <span style={{ color: "var(--tx2)" }}>
-                            {entry.name}:
-                          </span>
-
-                          <strong style={{ color: "var(--tx)" }}>
-                            {entry.value}%
-                          </strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submission Status */}
-                <div className="col-12 col-sm-6">
-                  <label
-                    style={{
-                      fontSize: "0.82rem",
-                      color: "var(--tx2)",
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    Submission Status
-                  </label>
-
-                  <div className="d-flex align-items-center gap-3">
-                    <div
-                      style={{
-                        width: "120px",
-                        height: "120px",
-                      }}
-                    >
-                      {statusData.length > 0 ? (
-                        <ResponsiveContainer
-                          width="100%"
-                          height="100%"
-                        >
-                          <PieChart>
-                            <Pie
-                              data={statusData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={35}
-                              outerRadius={50}
-                              paddingAngle={3}
-                              dataKey="value"
-                            >
-                              {statusData.map((entry, index) => (
-                                <Cell
-                                  key={`status-${index}`}
-                                  fill={entry.color}
-                                />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            height: "100%",
-                            color: "var(--tx3)",
-                            fontSize: "0.8rem",
-                          }}
-                        >
-                          Empty
-                        </div>
-                      )}
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "6px",
-                      }}
-                    >
-                      {statusData.slice(0, 3).map((entry, idx) => (
-                        <div
-                          key={idx}
-                          className="d-flex align-items-center gap-2"
-                          style={{ fontSize: "0.75rem" }}
-                        >
-                          <span
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              background: entry.color,
-                            }}
-                          />
-
-                          <span style={{ color: "var(--tx2)" }}>
-                            {entry.name}:
-                          </span>
-
-                          <strong style={{ color: "var(--tx)" }}>
-                            {entry.value}%
-                          </strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+                {submissions.length} submission{submissions.length !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
+
+          <SubmissionCard
+            submissions={submissions}
+            onViewDetails={onViewSubmission}
+            showStudentInfo={false}
+            simplified={true}
+          />
         </div>
       </div>
     </TeacherLayout>

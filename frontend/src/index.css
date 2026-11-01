@@ -1523,12 +1523,27 @@ input, textarea { font-family: inherit; }
   align-items: stretch;
   margin-top: 32px;
 }
-.teacher-stats-grid { margin-top: 32px; }
 .teacher-trends-grid {
   display: grid;
   grid-template-columns: 5fr 7fr;
   gap: 24px;
   align-items: stretch;
+}
+
+/* Teacher Submission Details 50-50 Equal Grid */
+.submission-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  align-items: stretch;
+}
+
+@media (max-width: 991px) {
+  .submission-details-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 }
 @media (max-width: 1200px) {
   .teacher-stats-grid {
@@ -2644,4 +2659,42 @@ input, textarea { font-family: inherit; }
     right: -60px !important;
     width: min(290px, calc(100vw - 16px)) !important;
   }
+}
+
+/* ======= STUDENTS PAGE — HIERARCHICAL GRID LAYOUTS ======= */
+/* Year cards: 3 equal columns on desktop */
+.students-year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+/* Branch cards: 2 equal columns on desktop */
+.students-branch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+/* Tablet: year → 2 cols, branch stays 2 cols */
+@media (max-width: 991px) {
+  .students-year-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile: everything stacks to 1 col */
+@media (max-width: 576px) {
+  .students-year-grid,
+  .students-branch-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ======= SUBMISSIONS PAGE — FILTER TOOLBAR SPACING ======= */
+.submissions-filter-toolbar {
+  margin-bottom: 24px !important;
 }

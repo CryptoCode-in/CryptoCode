@@ -1,25 +1,44 @@
 const supabase = require("../config/supabase");
+const supabaseAdmin = require("../config/supabaseAdmin");
 
 const getStudents = async (req, res) => {
     try {
-        const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("role", "student");
+        // Use supabaseAdmin (service role) so Row Level Security never filters out
+        // any registered student records regardless of RLS policy configuration.
+        let allStudents = [];
+        let from = 0;
+        const PAGE_SIZE = 1000;
 
-        console.log("STUDENTS DATA:", data);
-        console.log("STUDENTS ERROR:", error);
+        // Paginate in case there are ever more than 1 000 students (Supabase default limit)
+        while (true) {
+            const { data, error } = await supabaseAdmin
+                .from("profiles")
+                .select("*")
+                .eq("role", "student")
+                .range(from, from + PAGE_SIZE - 1);
 
-        if (error) {
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            if (error) {
+                console.error("STUDENTS FETCH ERROR:", error);
+                return res.status(500).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+
+            if (!data || data.length === 0) break;
+
+            allStudents = allStudents.concat(data);
+
+            if (data.length < PAGE_SIZE) break; // last page
+            from += PAGE_SIZE;
         }
+
+        console.log(`STUDENTS FETCHED: ${allStudents.length} total`);
 
         return res.status(200).json({
             success: true,
-            students: data
+            students: allStudents,
+            total: allStudents.length
         });
 
     } catch (error) {
@@ -39,41 +58,109 @@ const getStudentById = async (req, res) => {
 
         console.log("GET STUDENT BY ID:", id);
 
-        const { data, error } = await supabase
+        // Fetch student profile
+        const { data: studentData, error: profileError } = await supabaseAdmin
             .from("profiles")
-            .select(
-                "id, name, email, roll_no, year, semester, branch, college"
-            )
+            .select("id, name, email, roll_no, year, semester, branch, college, created_at")
             .eq("id", id)
             .eq("role", "student")
             .single();
 
-        console.log("STUDENT PROFILE DATA:", data);
-        console.log("STUDENT PROFILE ERROR:", error);
+        console.log("STUDENT PROFILE DATA:", studentData);
+        console.log("STUDENT PROFILE ERROR:", profileError);
 
-        if (error || !data) {
+        if (profileError || !studentData) {
             return res.status(404).json({
                 success: false,
-                message: error?.message || "Student not found"
+                message: profileError?.message || "Student not found"
             });
         }
+
+        // Fetch all submissions for this student to compute real metrics
+        const { data: submissions, error: submissionsError } = await supabaseAdmin
+            .from("submissions")
+            .select("id, status, score, submitted_at, language")
+            .eq("student_id", id)
+            .order("submitted_at", { ascending: false });
+
+        if (submissionsError) {
+            console.error("Error fetching submissions for student metrics:", submissionsError);
+        }
+
+        const allSubs = submissions || [];
+        const totalSubmissions = allSubs.length;
+
+        // Problems Solved: submissions with accepted/saved/submitted/passed/success status
+        const acceptedStatuses = ["accepted", "saved", "submitted", "passed", "success"];
+        const problemsSolved = allSubs.filter(s => {
+            const st = String(s.status || "").toLowerCase().trim();
+            return acceptedStatuses.includes(st);
+        }).length;
+
+        // Assignments: total number of submissions (each submission = one assignment attempt)
+        const assignmentsCompleted = totalSubmissions;
+
+        // Average Score: mean of score field where it exists and is numeric, else treat accepted=100, others=0
+        let totalScore = 0;
+        let scoredCount = 0;
+        allSubs.forEach(s => {
+            if (s.score !== null && s.score !== undefined && !isNaN(Number(s.score))) {
+                totalScore += Number(s.score);
+                scoredCount++;
+            } else {
+                // Derive score from status: accepted=100, else 0
+                const st = String(s.status || "").toLowerCase().trim();
+                totalScore += acceptedStatuses.includes(st) ? 100 : 0;
+                scoredCount++;
+            }
+        });
+        const avgScore = scoredCount > 0 ? Math.round(totalScore / scoredCount) : 0;
+
+        // Acceptance Rate: percentage of accepted submissions out of total
+        const acceptanceRate = totalSubmissions > 0
+            ? Math.round((problemsSolved / totalSubmissions) * 100)
+            : 0;
+
+        // Last Active: date of the most recent submission
+        const lastActive = allSubs.length > 0 && allSubs[0].submitted_at
+            ? new Date(allSubs[0].submitted_at).toLocaleString("en-US", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            })
+            : "N/A";
+
+        // Joined On: from profile created_at
+        const joinedOn = studentData.created_at
+            ? new Date(studentData.created_at).toLocaleDateString("en-US", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            })
+            : "N/A";
 
         return res.status(200).json({
             success: true,
             student: {
-                ...data,
-                rollNo: data.roll_no || "N/A",
-                year: data.year || "N/A",
-                semester: data.semester || "N/A",
-                branch: data.branch || "N/A",
-                college: data.college || "N/A",
+                id: studentData.id,
+                name: studentData.name,
+                email: studentData.email,
+                rollNo: studentData.roll_no || "N/A",
+                year: studentData.year || "N/A",
+                semester: studentData.semester || "N/A",
+                branch: studentData.branch || "N/A",
+                college: studentData.college || "N/A",
                 subject: "N/A",
-                joinedOn: "N/A",
-                problemsSolved: 0,
-                assignmentsCompleted: 0,
-                avgScore: 0,
-                acceptanceRate: 0,
-                lastActive: "N/A"
+                joinedOn,
+                // Real computed metrics
+                problemsSolved,
+                assignmentsCompleted,
+                avgScore,
+                acceptanceRate,
+                lastActive,
+                totalSubmissions
             }
         });
 
@@ -84,6 +171,146 @@ const getStudentById = async (req, res) => {
             success: false,
             message: error.message
         });
+    }
+};
+
+
+const getStudentAnalytics = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Student ID is required" });
+        }
+
+        // Verify the student exists
+        const { data: student, error: studentError } = await supabaseAdmin
+            .from("profiles")
+            .select("id")
+            .eq("id", id)
+            .eq("role", "student")
+            .single();
+
+        if (studentError || !student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        // Fetch all submissions for this student
+        const { data: submissions, error: subError } = await supabaseAdmin
+            .from("submissions")
+            .select("id, status, score, submitted_at, language")
+            .eq("student_id", id)
+            .order("submitted_at", { ascending: true });
+
+        if (subError) {
+            console.error("Error fetching submissions for student analytics:", subError);
+            return res.status(500).json({ success: false, message: "Failed to fetch student submissions" });
+        }
+
+        const allSubs = submissions || [];
+
+        // ── 1. Submission Trend (current calendar week Mon-Sun) ──────────────
+        const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+        // Compute the Monday of the current week (local time)
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+        const diffToMonday = (dayOfWeek + 6) % 7; // days since Monday
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - diffToMonday);
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 7);
+
+        const weeklyTrendMap = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+
+        allSubs.forEach(sub => {
+            const dt = new Date(sub.submitted_at);
+            if (isNaN(dt.getTime())) return;
+            if (dt >= weekStart && dt < weekEnd) {
+                const dayIdx = (dt.getDay() + 6) % 7; // Mon=0 … Sun=6
+                weeklyTrendMap[dayNames[dayIdx]]++;
+            }
+        });
+
+        const weeklyTrend = dayNames.map(d => ({
+            name: d,
+            submissions: weeklyTrendMap[d]
+        }));
+
+        // ── 2. Language Usage ────────────────────────────────────────────────
+        const langCounts = { C: 0, "C++": 0, Java: 0, Python: 0 };
+        allSubs.forEach(sub => {
+            const l = String(sub.language || "").toLowerCase().trim();
+            if (l === "c") langCounts["C"]++;
+            else if (l === "cpp" || l === "c++") langCounts["C++"]++;
+            else if (l === "java") langCounts["Java"]++;
+            else if (l === "python") langCounts["Python"]++;
+        });
+
+        const langColors = { "C": "#06b6d4", "C++": "#8b5cf6", "Java": "#f59e0b", "Python": "#3b82f6" };
+        const totalLang = Object.values(langCounts).reduce((a, b) => a + b, 0);
+
+        const languageUsage = Object.entries(langCounts)
+            .filter(([, count]) => count > 0)
+            .map(([name, count]) => ({
+                name,
+                value: count,
+                percentage: totalLang > 0 ? Math.round((count / totalLang) * 100) : 0,
+                color: langColors[name]
+            }));
+
+        // Include all 4 languages even if zero (for consistent chart display)
+        if (languageUsage.length === 0) {
+            Object.entries(langColors).forEach(([name, color]) => {
+                languageUsage.push({ name, value: 0, percentage: 0, color });
+            });
+        }
+
+        // ── 3. Submission Status Distribution ───────────────────────────────
+        const statusCounts = {};
+        allSubs.forEach(sub => {
+            const st = sub.status
+                ? sub.status.charAt(0).toUpperCase() + sub.status.slice(1).toLowerCase()
+                : "Unknown";
+            statusCounts[st] = (statusCounts[st] || 0) + 1;
+        });
+
+        const statusColorMap = {
+            Accepted:  "#34d399",
+            Saved:     "#8b5cf6",
+            Submitted: "#3b82f6",
+            Passed:    "#34d399",
+            Success:   "#34d399",
+            Rejected:  "#f87171",
+            Pending:   "#fbbf24",
+            Failed:    "#f87171",
+            Error:     "#f87171",
+            Unknown:   "#6b7280"
+        };
+
+        const totalStatus = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+        const submissionStatus = Object.entries(statusCounts).map(([name, count]) => ({
+            name,
+            value: count,
+            percentage: totalStatus > 0 ? Math.round((count / totalStatus) * 100) : 0,
+            color: statusColorMap[name] || "#6b7280"
+        }));
+
+        return res.status(200).json({
+            success: true,
+            analytics: {
+                weeklyTrend,
+                languageUsage,
+                submissionStatus,
+                totalSubmissions: allSubs.length
+            }
+        });
+
+    } catch (error) {
+        console.error("Get Student Analytics Exception:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -178,5 +405,6 @@ const registerStudent = async (req, res) => {
 module.exports = {
     getStudents,
     getStudentById,
+    getStudentAnalytics,
     registerStudent
 };

@@ -59,6 +59,29 @@ function CodeEditor({
   const socketRef = useRef(null);
   const sessionIdRef = useRef(null);
   const inputQueueRef = useRef([]);
+  const lastExecutionSuccessRef = useRef(false);
+  const codeRef = useRef(code);
+  const langRef = useRef(lang);
+  const fileNameRef = useRef(fileName);
+  const submissionIdRef = useRef(submissionId);
+
+  useEffect(() => {
+    codeRef.current = code;
+    // When code changes, require re-running to verify success
+    lastExecutionSuccessRef.current = false;
+  }, [code]);
+
+  useEffect(() => {
+    langRef.current = lang;
+  }, [lang]);
+
+  useEffect(() => {
+    fileNameRef.current = fileName;
+  }, [fileName]);
+
+  useEffect(() => {
+    submissionIdRef.current = submissionId;
+  }, [submissionId]);
   const terminalEndRef = useRef(null);
   const consoleCardRef = useRef(null);
   const consoleInputRef = useRef(null);
@@ -241,6 +264,22 @@ function CodeEditor({
       console.log("[Socket.IO] EXIT:", exitInfo);
       const exitCode = exitInfo && exitInfo.code !== undefined ? exitInfo.code : 0;
       const success = exitCode === 0;
+      lastExecutionSuccessRef.current = success;
+
+      // When code executes successfully and is linked to an existing submission ID, update status in DB
+      if (success && submissionIdRef.current) {
+        fetch(`${API_URL}/submissions/${submissionIdRef.current}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "accepted",
+            source_code: codeRef.current,
+            language: langRef.current,
+            filename: fileNameRef.current
+          })
+        }).catch((err) => console.warn("Background status update warning:", err));
+      }
+
       const statusText = success
         ? "✓ Process finished successfully"
         : `✗ Process exited with code ${exitCode}`;
@@ -634,6 +673,17 @@ function CodeEditor({
 
       const method = targetSubmissionId ? "PUT" : "POST";
 
+      // Capture actual execution output if the code was run
+      let executionOutput = null;
+      if (outputLogs && outputLogs.length > 0) {
+        const meaningfulLogs = outputLogs.filter(
+          (log) => !log.text.includes("Interactive Terminal ready")
+        );
+        if (meaningfulLogs.length > 0) {
+          executionOutput = meaningfulLogs.map((log) => log.text).join("");
+        }
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -644,8 +694,9 @@ function CodeEditor({
           source_code: code,
           language: lang,
           filename: finalFileName,
-          status: "saved",
+          status: lastExecutionSuccessRef.current ? "accepted" : "saved",
           overwrite: forceOverwrite,
+          output: executionOutput,
         }),
       });
 

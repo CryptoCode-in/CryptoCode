@@ -10,10 +10,13 @@ const {
     getSubmissionAnalytics
 } = require("../controllers/submissionController");
 
+// Specific named routes first (before /:id wildcard)
 router.post("/save", saveSubmission);
 router.get("/analytics", getSubmissionAnalytics);
+router.get("/", getSubmissions);
+
+// Wildcard param routes last
 router.get("/:id", getSubmissionById);
 router.put("/:id", updateSubmission);
-router.get("/", getSubmissions);
 
 module.exports = router;
