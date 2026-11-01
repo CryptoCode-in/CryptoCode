@@ -1,4 +1,4 @@
-const supabaseAdmin = require("../config/supabaseAdmin");
+﻿const supabaseAdmin = require("../config/supabaseAdmin");
 const { generateAdminToken } = require("../middleware/authMiddleware");
 
 // Admin Login
@@ -213,10 +213,109 @@ const getAdminSubjects = async (req, res) => {
   }
 };
 
+// Admin -> Delete Student (with password re-verification)
+const deleteStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const body = req.body || {};
+    const { adminPassword } = body;
+
+    console.log("[deleteStudent] studentId:", studentId);
+    console.log("[deleteStudent] req.body keys:", Object.keys(body));
+    console.log("[deleteStudent] adminPassword received:", adminPassword !== undefined ? `received (len=${String(adminPassword).length})` : "UNDEFINED");
+
+    if (!studentId || !adminPassword) {
+      return res.status(400).json({ success: false, message: "studentId and adminPassword are required" });
+    }
+
+    // Verify admin password using the same logic as adminLogin
+    const expectedPassword = process.env.ADMIN_PASSWORD || "ccAdmin@123";
+    const passwordMatch = String(adminPassword).trim() === String(expectedPassword).trim();
+    console.log("[deleteStudent] passwordMatch:", passwordMatch);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: "Incorrect admin password. Student deletion failed." });
+    }
+
+    // Step 1: Delete associated submissions first (FK constraint)
+    const { error: subError } = await supabaseAdmin
+      .from("submissions")
+      .delete()
+      .eq("student_id", studentId);
+
+    if (subError) {
+      console.error("Error deleting student submissions:", subError);
+      return res.status(500).json({ success: false, message: "Failed to delete student submissions: " + subError.message });
+    }
+
+    // Step 2: Delete the student profile record
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .delete()
+      .eq("id", studentId)
+      .eq("role", "student");
+
+    if (profileError) {
+      console.error("Error deleting student profile:", profileError);
+      return res.status(500).json({ success: false, message: "Failed to delete student profile: " + profileError.message });
+    }
+
+    return res.status(200).json({ success: true, message: "Student deleted successfully." });
+  } catch (error) {
+    console.error("Delete student error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Admin -> Delete Teacher (with password re-verification)
+const deleteTeacher = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const body = req.body || {};
+    const { adminPassword } = body;
+
+    console.log("[deleteTeacher] teacherId:", teacherId);
+    console.log("[deleteTeacher] req.body keys:", Object.keys(body));
+    console.log("[deleteTeacher] adminPassword received:", adminPassword !== undefined ? `received (len=${String(adminPassword).length})` : "UNDEFINED");
+
+    if (!teacherId || !adminPassword) {
+      return res.status(400).json({ success: false, message: "teacherId and adminPassword are required" });
+    }
+
+    // Verify admin password using the same logic as adminLogin
+    const expectedPassword = process.env.ADMIN_PASSWORD || "ccAdmin@123";
+    const passwordMatch = String(adminPassword).trim() === String(expectedPassword).trim();
+    console.log("[deleteTeacher] passwordMatch:", passwordMatch);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: "Incorrect admin password. Teacher deletion failed." });
+    }
+
+    // Delete the teacher profile record
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .delete()
+      .eq("id", teacherId)
+      .eq("role", "teacher");
+
+    if (profileError) {
+      console.error("Error deleting teacher profile:", profileError);
+      return res.status(500).json({ success: false, message: "Failed to delete teacher profile: " + profileError.message });
+    }
+
+    return res.status(200).json({ success: true, message: "Teacher deleted successfully." });
+  } catch (error) {
+    console.error("Delete teacher error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   adminLogin,
   getRankings,
   getAdminStudents,
   getAdminTeachers,
-  getAdminSubjects
+  getAdminSubjects,
+  deleteStudent,
+  deleteTeacher
 };

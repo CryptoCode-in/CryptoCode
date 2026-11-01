@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -39,6 +39,13 @@ function AdminDashboard({ currentUser, onLogout }) {
   const [studentSearch, setStudentSearch] = useState("");
   const [teacherSearch, setTeacherSearch] = useState("");
   const [subjectSearch, setSubjectSearch] = useState("");
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState(null); // { type: 'student'|'teacher', id, name }
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deletePasswordVisible, setDeletePasswordVisible] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState(""); // success/error feedback
 
   const getAdminToken = () => {
     return localStorage.getItem("cryptocode_admin_token") || "";
@@ -137,6 +144,68 @@ function AdminDashboard({ currentUser, onLogout }) {
     }
   };
 
+  // Open delete modal
+  const openDeleteModal = (type, id, name) => {
+    setDeleteModal({ type, id, name });
+    setDeletePassword("");
+    setDeletePasswordVisible(false);
+    setDeleteMsg("");
+  };
+
+  // Close delete modal
+  const closeDeleteModal = () => {
+    setDeleteModal(null);
+    setDeletePassword("");
+    setDeletePasswordVisible(false);
+    setDeleteMsg("");
+    setDeleteLoading(false);
+  };
+
+  // Perform deletion after password verification
+  const confirmDelete = async () => {
+    if (!deleteModal || !deletePassword) return;
+    setDeleteLoading(true);
+    setDeleteMsg("");
+    try {
+      // Correct route: DELETE /admin/students/:id  or  DELETE /admin/teachers/:id
+      const endpoint = `${API_URL}/admin/${deleteModal.type}s/${deleteModal.id}`;
+
+      const res = await fetch(endpoint, {
+        method: "DELETE",
+        headers: { ...getAuthHeaders() },
+        body: JSON.stringify({ adminPassword: deletePassword }),
+      });
+
+      // Guard against non-JSON responses (e.g. 404 HTML from server)
+      let data;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        data = { success: false, message: `Server error (HTTP ${res.status}). The backend may need to be redeployed.` };
+      }
+
+      if (data.success) {
+        setDeleteMsg("success:" + data.message);
+        // Remove from local state immediately
+        if (deleteModal.type === "student") {
+          setStudents((prev) => prev.filter((s) => s.id !== deleteModal.id));
+        } else {
+          setTeachers((prev) => prev.filter((t) => t.id !== deleteModal.id));
+        }
+        // Auto-close after short delay
+        setTimeout(() => closeDeleteModal(), 1500);
+      } else {
+        setDeleteMsg("error:" + (data.message || "Incorrect admin password. Please try again."));
+      }
+    } catch (err) {
+      console.error("Delete request failed:", err);
+      setDeleteMsg("error:Network error. Check your connection and try again.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "students", label: "Students", icon: GraduationCap },
@@ -185,7 +254,8 @@ function AdminDashboard({ currentUser, onLogout }) {
       style={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        height: "100vh",
+        overflow: "hidden",
         background: "var(--bg)",
         color: "var(--tx)",
         fontFamily: "'Space Grotesk', sans-serif",
@@ -194,8 +264,10 @@ function AdminDashboard({ currentUser, onLogout }) {
       {/* TOPBAR */}
       <header
         style={{
-          position: "sticky",
+          position: "fixed",
           top: 0,
+          left: 0,
+          right: 0,
           zIndex: 50,
           background: "rgba(13, 13, 20, 0.85)",
           backdropFilter: "blur(16px)",
@@ -294,7 +366,7 @@ function AdminDashboard({ currentUser, onLogout }) {
       </header>
 
       {/* MAIN CONTAINER */}
-      <div style={{ display: "flex", flex: 1, position: "relative" }}>
+      <div style={{ display: "flex", flex: 1, position: "relative", marginTop: "64px", height: "calc(100vh - 64px)", overflow: "hidden" }}>
         {/* SIDEBAR */}
         <aside
           style={{
@@ -413,6 +485,8 @@ function AdminDashboard({ currentUser, onLogout }) {
             maxWidth: "1350px",
             margin: "0 auto",
             width: "100%",
+            overflowY: "auto",
+            height: "100%",
           }}
         >
           {/* ================= SECTION 1: DASHBOARD HOME ================= */}
@@ -813,7 +887,7 @@ function AdminDashboard({ currentUser, onLogout }) {
                         <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Email</th>
                         <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Branch / Dept</th>
                         <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Submissions</th>
-                        <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Status</th>
+                        <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700, textAlign: "center" }}>Delete</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -841,25 +915,30 @@ function AdminDashboard({ currentUser, onLogout }) {
                             <td style={{ padding: "14px 18px", fontWeight: 700, color: "var(--pur)", fontFamily: "'JetBrains Mono', monospace" }}>
                               {st.submissionCount || 0}
                             </td>
-                            <td style={{ padding: "14px 18px" }}>
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  padding: "3px 8px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.74rem",
-                                  fontWeight: 600,
-                                  background: "rgba(34, 197, 94, 0.12)",
-                                  color: "#4ade80",
-                                  border: "1px solid rgba(34, 197, 94, 0.25)",
-                                }}
-                              >
-                                <CheckCircle2 size={12} />
-                                Active
-                              </span>
-                            </td>
+                             <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                               <button
+                                 onClick={() => openDeleteModal("student", st.id, st.name || st.email)}
+                                 title="Delete student"
+                                 style={{
+                                   display: "inline-flex",
+                                   alignItems: "center",
+                                   gap: "5px",
+                                   padding: "5px 12px",
+                                   borderRadius: "8px",
+                                   fontSize: "0.78rem",
+                                   fontWeight: 600,
+                                   background: "rgba(239, 68, 68, 0.12)",
+                                   color: "#f87171",
+                                   border: "1px solid rgba(239, 68, 68, 0.3)",
+                                   cursor: "pointer",
+                                   transition: "background 0.2s",
+                                 }}
+                                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239, 68, 68, 0.22)")}
+                                 onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(239, 68, 68, 0.12)")}
+                               >
+                                 🗑 Delete
+                               </button>
+                             </td>
                           </tr>
                         ))
                       )}
@@ -940,7 +1019,7 @@ function AdminDashboard({ currentUser, onLogout }) {
                         <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Email / Username</th>
                         <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Department</th>
                         <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Assigned Subjects</th>
-                        <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700 }}>Status</th>
+                        <th style={{ padding: "14px 18px", fontSize: "0.75rem", color: "var(--tx3)", textTransform: "uppercase", fontWeight: 700, textAlign: "center" }}>Delete</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -981,25 +1060,30 @@ function AdminDashboard({ currentUser, onLogout }) {
                                 ))}
                               </div>
                             </td>
-                            <td style={{ padding: "14px 18px" }}>
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  padding: "3px 8px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.74rem",
-                                  fontWeight: 600,
-                                  background: "rgba(34, 197, 94, 0.12)",
-                                  color: "#4ade80",
-                                  border: "1px solid rgba(34, 197, 94, 0.25)",
-                                }}
-                              >
-                                <CheckCircle2 size={12} />
-                                {tc.status || "Active"}
-                              </span>
-                            </td>
+                             <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                               <button
+                                 onClick={() => openDeleteModal("teacher", tc.id, tc.name || tc.email)}
+                                 title="Delete teacher"
+                                 style={{
+                                   display: "inline-flex",
+                                   alignItems: "center",
+                                   gap: "5px",
+                                   padding: "5px 12px",
+                                   borderRadius: "8px",
+                                   fontSize: "0.78rem",
+                                   fontWeight: 600,
+                                   background: "rgba(239, 68, 68, 0.12)",
+                                   color: "#f87171",
+                                   border: "1px solid rgba(239, 68, 68, 0.3)",
+                                   cursor: "pointer",
+                                   transition: "background 0.2s",
+                                 }}
+                                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239, 68, 68, 0.22)")}
+                                 onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(239, 68, 68, 0.12)")}
+                               >
+                                 🗑 Delete
+                               </button>
+                             </td>
                           </tr>
                         ))
                       )}
@@ -1143,8 +1227,8 @@ function AdminDashboard({ currentUser, onLogout }) {
 
           {/* ================= SECTION 5: SETTINGS ================= */}
           {activeSection === "settings" && (
-            <div style={{ maxWidth: "700px" }}>
-              <div style={{ marginBottom: "24px" }}>
+            <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+              <div style={{ marginBottom: "24px", textAlign: "center" }}>
                 <h1 style={{ fontSize: "1.65rem", fontWeight: 700, margin: "0 0 4px" }}>
                   Admin Settings
                 </h1>
@@ -1285,6 +1369,159 @@ function AdminDashboard({ currentUser, onLogout }) {
           }
         }
       `}</style>
+
+      {/* ====== DELETE CONFIRMATION MODAL ====== */}
+      {deleteModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 999,
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeDeleteModal(); }}
+        >
+          <div
+            style={{
+              background: "var(--sf)",
+              border: "1px solid var(--bd)",
+              borderRadius: "20px",
+              padding: "32px",
+              width: "100%",
+              maxWidth: "420px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "8px" }}>⚠️</div>
+              <h2 style={{ fontSize: "1.15rem", fontWeight: 700, margin: "0 0 6px", color: "var(--tx)" }}>
+                Delete {deleteModal.type === "student" ? "Student" : "Teacher"}?
+              </h2>
+              <p style={{ fontSize: "0.84rem", color: "var(--tx2)", margin: 0 }}>
+                Are you sure you want to delete{" "}
+                <strong style={{ color: "#f87171" }}>{deleteModal.name}</strong>?
+                {deleteModal.type === "student" && (
+                  <span style={{ display: "block", marginTop: "4px", fontSize: "0.78rem", color: "var(--tx3)" }}>
+                    All their submissions will also be permanently deleted.
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label style={{ fontSize: "0.78rem", color: "var(--tx3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "8px" }}>
+                Enter Admin Password to confirm
+              </label>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "rgba(10, 10, 18, 0.6)",
+                  border: "1px solid var(--bd)",
+                  borderRadius: "10px",
+                  padding: "10px 14px",
+                }}
+              >
+                <input
+                  type={deletePasswordVisible ? "text" : "password"}
+                  placeholder="Admin password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !deleteLoading) confirmDelete(); }}
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    background: "none",
+                    border: "none",
+                    outline: "none",
+                    color: "var(--tx)",
+                    fontSize: "0.9rem",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                />
+                <button
+                  onClick={() => setDeletePasswordVisible((v) => !v)}
+                  style={{ background: "none", border: "none", color: "var(--tx3)", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600 }}
+                  title={deletePasswordVisible ? "Hide password" : "Show password"}
+                >
+                  {deletePasswordVisible ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            {/* Feedback message */}
+            {deleteMsg && (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  background: deleteMsg.startsWith("success")
+                    ? "rgba(34, 197, 94, 0.12)"
+                    : "rgba(239, 68, 68, 0.12)",
+                  color: deleteMsg.startsWith("success") ? "#4ade80" : "#f87171",
+                  border: `1px solid ${deleteMsg.startsWith("success") ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+                }}
+              >
+                {deleteMsg.replace(/^(success|error):/, "")}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={closeDeleteModal}
+                disabled={deleteLoading}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: "10px",
+                  fontSize: "0.86rem",
+                  fontWeight: 600,
+                  background: "rgba(255,255,255,0.05)",
+                  color: "var(--tx2)",
+                  border: "1px solid var(--bd)",
+                  cursor: deleteLoading ? "not-allowed" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteLoading || !deletePassword}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: "10px",
+                  fontSize: "0.86rem",
+                  fontWeight: 700,
+                  background: deleteLoading || !deletePassword
+                    ? "rgba(239, 68, 68, 0.3)"
+                    : "rgba(239, 68, 68, 0.85)",
+                  color: "#fff",
+                  border: "1px solid rgba(239,68,68,0.5)",
+                  cursor: deleteLoading || !deletePassword ? "not-allowed" : "pointer",
+                  transition: "background 0.2s",
+                }}
+              >
+                {deleteLoading ? "Deleting…" : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

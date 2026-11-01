@@ -6,7 +6,9 @@ const {
   getRankings,
   getAdminStudents,
   getAdminTeachers,
-  getAdminSubjects
+  getAdminSubjects,
+  deleteStudent,
+  deleteTeacher
 } = require("../controllers/adminController");
 const { verifyAdmin } = require("../middleware/authMiddleware");
 
@@ -18,5 +20,9 @@ router.get("/rankings", verifyAdmin, getRankings);
 router.get("/students", verifyAdmin, getAdminStudents);
 router.get("/teachers", verifyAdmin, getAdminTeachers);
 router.get("/subjects", verifyAdmin, getAdminSubjects);
+
+// Protected delete endpoints (Requires valid Admin Bearer token + password re-verification)
+router.delete("/students/:studentId", verifyAdmin, deleteStudent);
+router.delete("/teachers/:teacherId", verifyAdmin, deleteTeacher);
 
 module.exports = router;
