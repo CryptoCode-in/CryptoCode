@@ -1,20 +1,28 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Copy, ClipboardCheck, Code, Info } from "lucide-react";
+import { ArrowLeft, Copy, ClipboardCheck, Code, Info, ShieldAlert, Loader2 } from "lucide-react";
 import Editor from "@monaco-editor/react";
-import { mockTeacherData } from "../../utils/mockTeacherData";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
-import { API_URL } from "../../utils/api";
+import { API_URL, getAuthHeaders } from "../../utils/api";
 import { formatSubmissionDate } from "../../utils/dateTime";
 
 function SubmissionDetails({ submissionId, onBack }) {
   const [submission, setSubmission] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchSubmission = async () => {
-      if (!submissionId) return;
+      if (!submissionId) {
+        setLoading(false);
+        setError("No submission specified.");
+        return;
+      }
+
+      setLoading(true);
+      setError("");
 
       // If submissionId is an object already passed
       if (typeof submissionId === "object" && submissionId !== null) {
@@ -37,56 +45,57 @@ function SubmissionDetails({ submissionId, onBack }) {
           code: sub.source_code || sub.code || "",
           submittedOn: formattedDate,
         });
+        setLoading(false);
         return;
       }
 
       try {
-        const res = await fetch(`${API_URL}/submissions/${submissionId}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.submission && isMounted) {
-            const sub = data.submission;
-            const formattedDate = sub.submitted_at
-              ? formatSubmissionDate(sub.submitted_at)
-              : "—";
+        const res = await fetch(`${API_URL}/submissions/${submissionId}`, { headers: getAuthHeaders() });
+        const data = await res.json().catch(() => ({}));
 
-            setSubmission({
-              id: sub.id,
-              studentName: sub.profiles?.name || "Student",
-              studentRoll: sub.profiles?.roll_no
-                ? (String(sub.profiles.roll_no).startsWith("CC-ST-") ? sub.profiles.roll_no : `CC-ST-${sub.profiles.roll_no}`)
-                : (sub.student_id ? `CC-ST-${sub.student_id}` : "—"),
-              practicalTitle: sub.filename || "Lab Practical Submission",
-              language: sub.language
-                ? (sub.language.charAt(0).toUpperCase() + sub.language.slice(1).toLowerCase())
-                : "Code",
-              status: sub.status || "Saved",
-              code: sub.source_code || "",
-              submittedOn: formattedDate,
-            });
-            return;
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("Session expired or authentication required. Please log in again.");
+          } else if (res.status === 403) {
+            throw new Error(data.message || "Access denied. Submission belongs to another college.");
+          } else if (res.status === 404) {
+            throw new Error("Submission not found.");
+          } else {
+            throw new Error(data.message || "Failed to load submission details.");
           }
+        }
+
+        if (data.success && data.submission && isMounted) {
+          const sub = data.submission;
+          const formattedDate = sub.submitted_at
+            ? formatSubmissionDate(sub.submitted_at)
+            : "—";
+
+          setSubmission({
+            id: sub.id,
+            studentName: sub.profiles?.name || "Student",
+            studentRoll: sub.profiles?.roll_no
+              ? (String(sub.profiles.roll_no).startsWith("CC-ST-") ? sub.profiles.roll_no : `CC-ST-${sub.profiles.roll_no}`)
+              : (sub.student_id ? `CC-ST-${sub.student_id}` : "—"),
+            practicalTitle: sub.filename || "Lab Practical Submission",
+            language: sub.language
+              ? (sub.language.charAt(0).toUpperCase() + sub.language.slice(1).toLowerCase())
+              : "Code",
+            status: sub.status || "Saved",
+            code: sub.source_code || "",
+            submittedOn: formattedDate,
+          });
+        } else {
+          throw new Error(data.message || "Submission not found.");
         }
       } catch (err) {
         console.error("Failed to fetch submission from backend:", err);
-      }
-
-      // Fallback to mock data if not found in db
-      if (isMounted) {
-        const mockSub = mockTeacherData.getSubmissionById(submissionId);
-        if (mockSub) {
-          setSubmission({
-            id: mockSub.id,
-            studentName: mockSub.studentName || "Student",
-            studentRoll: mockSub.studentRoll || "—",
-            practicalTitle: mockSub.practicalTitle || "Lab Practical Submission",
-            language: mockSub.language
-              ? (mockSub.language.charAt(0).toUpperCase() + mockSub.language.slice(1).toLowerCase())
-              : "Code",
-            status: mockSub.status || "Saved",
-            code: mockSub.code || "",
-            submittedOn: mockSub.submittedOn || "—",
-          });
+        if (isMounted) {
+          setError(err.message || "Failed to load submission details.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
     };
@@ -98,11 +107,67 @@ function SubmissionDetails({ submissionId, onBack }) {
     };
   }, [submissionId]);
 
-  if (!submission) {
+  if (loading) {
     return (
-      <div style={{ padding: "40px", textAlign: "center", color: "var(--tx2)" }}>
-        Loading submission details...
-      </div>
+      <TeacherLayout title="Submission Details" description="Loading submission...">
+        <div style={{ padding: "80px 20px", textAlign: "center", color: "var(--tx3)" }}>
+          <Loader2 size={24} style={{ animation: "spin 1s linear infinite", margin: "0 auto 12px" }} />
+          <div>Loading submission details from database…</div>
+        </div>
+      </TeacherLayout>
+    );
+  }
+
+  if (error || !submission) {
+    return (
+      <TeacherLayout
+        title="Submission Details"
+        description="Unable to load submission"
+        actions={
+          <button
+            onClick={onBack}
+            className="boc d-inline-flex align-items-center gap-2 px-3 py-2"
+            style={{ borderRadius: "8px", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}
+          >
+            <ArrowLeft size={14} />
+            <span>Back</span>
+          </button>
+        }
+      >
+        <div
+          className="cyber-card"
+          style={{
+            padding: "48px 24px",
+            textAlign: "center",
+            color: "var(--tx2)",
+            borderRadius: "16px",
+            background: "var(--sf)",
+            border: "1px solid var(--bd)",
+            maxWidth: "600px",
+            margin: "40px auto",
+          }}
+        >
+          <ShieldAlert size={36} style={{ color: "#ef4444", margin: "0 auto 16px" }} />
+          <p style={{ marginBottom: "20px", fontSize: "0.95rem", color: "var(--tx)" }}>
+            {error || "Submission record not found."}
+          </p>
+          <button
+            onClick={onBack}
+            className="boc px-3 py-2"
+            style={{
+              borderRadius: "8px",
+              fontWeight: 600,
+              fontSize: "0.85rem",
+              background: "var(--pur)",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Back to Submissions
+          </button>
+        </div>
+      </TeacherLayout>
     );
   }
 

@@ -11,7 +11,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { API_URL } from "../../utils/api";
+import { API_URL, getAuthHeaders } from "../../utils/api";
 import {
   BarChart3,
   LineChart as LineIcon,
@@ -101,7 +101,7 @@ function Analytics({ currentUser }) {
           params.toString() ? `?${params.toString()}` : ""
         }`;
 
-        const response = await fetch(url, { signal: controller.signal });
+        const response = await fetch(url, { signal: controller.signal, headers: getAuthHeaders() });
         const data = await response.json();
 
         if (!response.ok || !data.success || !data.analytics) {

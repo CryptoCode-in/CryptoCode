@@ -1,10 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { FiMail, FiUser, FiBookOpen, FiHash, FiArrowRight, FiCalendar, FiLayers, FiHome } from "react-icons/fi";
+import { FiMail, FiUser, FiBookOpen, FiHash, FiArrowRight, FiCalendar, FiLayers, FiHome, FiLock } from "react-icons/fi";
 
 import InputField from "./InputField";
 import PasswordInput from "./PasswordInput";
 import SelectField from "./SelectField";
 import { validatePassword } from "../../utils/passwordValidator";
+
+const collegeOptions = [
+  { value: "GPN", label: "Government Polytechnic, Nashik (GPN)" },
+  { value: "OTHER", label: "Other" },
+];
 
 const studentBranchOptions = [
   { value: "Computer Technology", label: "Computer Technology" },
@@ -55,6 +60,11 @@ const SignupForm = ({ signupData, setSignupData, loading, handleSignup }) => {
   const activeSemesterOptions = signupData.year ? semesterOptions[signupData.year] || [] : [];
   const selectedSubjects = signupData.subjects || [];
 
+  const handleCollegeChange = (value) => {
+    updateField("college", value);
+    updateField("secretKey", "");
+  };
+
   const handleYearChange = (value) => {
     updateField("year", value);
     updateField("semester", "");
@@ -81,7 +91,19 @@ const SignupForm = ({ signupData, setSignupData, loading, handleSignup }) => {
       ? "Passwords do not match."
       : "";
 
-  const canSubmit = isPasswordValid && signupData.password === signupData.confirmPassword;
+  const isCollegeSelected = Boolean(signupData.college);
+
+  let isSecretKeyValid = true;
+  if (isStudent) {
+    if (signupData.college === "GPN") {
+      isSecretKeyValid = Boolean(signupData.secretKey?.trim());
+    }
+  } else {
+    // For teachers, secret key is mandatory for both GPN and OTHER
+    isSecretKeyValid = isCollegeSelected && Boolean(signupData.secretKey?.trim());
+  }
+
+  const canSubmit = isPasswordValid && isConfirmPasswordMatch && isCollegeSelected && isSecretKeyValid;
 
   return (
     <motion.form
@@ -135,13 +157,26 @@ const SignupForm = ({ signupData, setSignupData, loading, handleSignup }) => {
                 error={confirmPasswordError}
                 required
               />
-              <InputField
+              <SelectField
                 label="College"
+                name="college"
                 icon={<FiBookOpen />}
-                value={signupData.college}
-                onChange={(event) => updateField("college", event.target.value)}
-                placeholder="Your college"
+                value={signupData.college || ""}
+                onChange={(event) => handleCollegeChange(event.target.value)}
+                options={collegeOptions}
+                placeholder="Select college"
+                required
               />
+              {signupData.college === "GPN" && (
+                <PasswordInput
+                  label="GPN Student Secret Key"
+                  name="secretKey"
+                  value={signupData.secretKey || ""}
+                  onChange={(event) => updateField("secretKey", event.target.value)}
+                  placeholder="Enter GPN student secret key"
+                  required
+                />
+              )}
               <InputField
                 label="Roll Number"
                 icon={<FiHash />}
@@ -236,14 +271,36 @@ const SignupForm = ({ signupData, setSignupData, loading, handleSignup }) => {
                 placeholder="Select department"
                 required
               />
-              <InputField
+              <SelectField
                 label="College / Institute"
+                name="college"
                 icon={<FiHome />}
-                value={signupData.teacherCollege || ""}
-                onChange={(event) => updateField("teacherCollege", event.target.value)}
-                placeholder="Enter college name"
+                value={signupData.college || ""}
+                onChange={(event) => handleCollegeChange(event.target.value)}
+                options={collegeOptions}
+                placeholder="Select college"
                 required
               />
+              {signupData.college === "GPN" && (
+                <PasswordInput
+                  label="GPN Teacher Secret Key"
+                  name="secretKey"
+                  value={signupData.secretKey || ""}
+                  onChange={(event) => updateField("secretKey", event.target.value)}
+                  placeholder="Enter GPN teacher secret key"
+                  required
+                />
+              )}
+              {signupData.college === "OTHER" && (
+                <PasswordInput
+                  label="Other College Teacher Secret Key"
+                  name="secretKey"
+                  value={signupData.secretKey || ""}
+                  onChange={(event) => updateField("secretKey", event.target.value)}
+                  placeholder="Enter other college teacher secret key"
+                  required
+                />
+              )}
               <div className="teacher-subjects full-width">
                 <label className="auth-label">
                   <span className="auth-label-icon">

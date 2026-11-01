@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Search, X, ChevronRight, ArrowLeft, BookOpen, Users, AlertCircle } from "lucide-react";
 import StudentTable from "../../components/teacher/StudentTable";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
-import { API_URL } from "../../utils/api";
+import { API_URL, getAuthHeaders } from "../../utils/api";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -272,7 +272,7 @@ function Students({ onViewProfile, navbarSearchQuery = "" }) {
       setLoading(true);
       setFetchError(null);
       try {
-        const response = await fetch(`${API_URL}/students`);
+        const response = await fetch(`${API_URL}/students`, { headers: getAuthHeaders() });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
 

@@ -152,7 +152,12 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
         return;
       }
 
-      localStorage.setItem("session", JSON.stringify(data.session));
+      if (data.session) {
+        localStorage.setItem("session", JSON.stringify(data.session));
+      }
+      if (data.token) {
+        localStorage.setItem("cryptocode_token", data.token);
+      }
       localStorage.setItem(
         "cryptocode_user",
         JSON.stringify({
@@ -195,50 +200,7 @@ const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) =
       onLoginSuccess(authenticatedUser);
     } catch (error) {
       console.error(error);
-      if (import.meta.env.DEV) {
-        console.warn("Backend server connection failed during development. Authenticating locally with mock credentials.", error);
-        const mockUser = {
-          id: "mock_" + email.split("@")[0],
-          name: email.split("@")[0],
-          email: email,
-          role: loginData.role,
-        };
-        try {
-          const localNotifs = JSON.parse(localStorage.getItem("cryptocode_notifications") || "[]");
-          const formatter = new Intl.DateTimeFormat("en-GB", {
-            timeZone: "Asia/Kolkata",
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true
-          });
-          const parts = formatter.formatToParts(new Date());
-          const m = {};
-          parts.forEach(p => { m[p.type] = p.value; });
-          const formattedTime = `${m.day} ${m.month} ${m.year}, ${m.hour}:${m.minute} ${(m.dayPeriod || "").toUpperCase()}`;
-          const isT = loginData.role === "teacher";
-          const newNotif = {
-            id: "notif_" + Date.now(),
-            user_id: mockUser.id,
-            user_name: mockUser.name,
-            role: loginData.role,
-            title: "Login Successful",
-            message: `${isT ? "Teacher" : "Student"} ${mockUser.name} logged in at ${formattedTime}`,
-            type: "login",
-            read: false,
-            created_at: new Date().toISOString()
-          };
-          localNotifs.unshift(newNotif);
-          localStorage.setItem("cryptocode_notifications", JSON.stringify(localNotifs));
-        } catch {}
-
-        localStorage.setItem("cryptocode_user", JSON.stringify(mockUser));
-        onLoginSuccess(mockUser);
-      } else {
-        showLoginError("Server error. Please try again.");
-      }
+      showLoginError("Server error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -250,10 +212,16 @@ const handleSignup = async (event) => {
   const email = signupData.email.trim();
   const password = signupData.password.trim();
   const confirmPassword = signupData.confirmPassword.trim();
+  const college = signupData.college?.trim();
+  const secretKey = signupData.secretKey?.trim();
 
-console.log("SEMESTER VALUE:", signupData.semester);
   if (!name || !email || !password || !confirmPassword) {
     showSignupError("Please fill in every required field.");
+    return;
+  }
+
+  if (!college) {
+    showSignupError("Please select your college.");
     return;
   }
 
@@ -267,114 +235,116 @@ console.log("SEMESTER VALUE:", signupData.semester);
     showSignupError("Passwords do not match.");
     return;
   }
-    if (signupData.role === "student") {
-      const roll = signupData.roll?.trim();
-      const branch = signupData.branch?.trim();
-      const year = signupData.year?.trim();
-      const semester = signupData.semester?.trim();
 
-      if (!roll || !branch || !year || !semester) {
-        showSignupError("Roll number, branch, year, and semester are required for students.");
-        return;
-      }
+  if (signupData.role === "student") {
+    if (college === "GPN" && !secretKey) {
+      showSignupError("GPN Student Secret Key is required.");
+      return;
     }
-    
+    const roll = signupData.roll?.trim();
+    const branch = signupData.branch?.trim();
+    const year = signupData.year?.trim();
+    const semester = signupData.semester?.trim();
 
-    if (signupData.role === "teacher") {
-      const department = signupData.department?.trim();
-      const teacherCollege = signupData.teacherCollege?.trim();
-      const subjects = signupData.subjects || [];
+    if (!roll || !branch || !year || !semester) {
+      showSignupError("Roll number, branch, year, and semester are required for students.");
+      return;
+    }
+  }
 
-      if (!department) {
-        showSignupError("Department is required for teachers.");
-        return;
-      }
-
-      if (!teacherCollege) {
-        showSignupError("College / Institute is required for teachers.");
-        return;
-      }
-
-      if (subjects.length === 0) {
-        showSignupError("Select at least one subject handled by the teacher.");
-        return;
-      }
+  if (signupData.role === "teacher") {
+    if (!secretKey) {
+      showSignupError(
+        college === "GPN"
+          ? "GPN Teacher Secret Key is required."
+          : "Other College Teacher Secret Key is required."
+      );
+      return;
     }
 
-    setLoading(true);
+    const department = signupData.department?.trim();
+    const subjects = signupData.subjects || [];
 
-    try {
-      const response = await fetch(`${API_URL}/auth/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+    if (!department) {
+      showSignupError("Department is required for teachers.");
+      return;
+    }
+
+    if (subjects.length === 0) {
+      showSignupError("Select at least one subject handled by the teacher.");
+      return;
+    }
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch(`${API_URL}/auth/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-  name,
-  email,
-  password,
-  role: signupData.role,
+        name,
+        email,
+        password,
+        role: signupData.role,
+        college,
+        secretKey: secretKey || undefined,
+        roll_no: signupData.role === "student" ? (signupData.roll?.trim() || null) : null,
+        year: signupData.role === "student" ? (signupData.year?.trim() || null) : null,
+        semester: signupData.role === "student" ? (signupData.semester?.trim() || null) : null,
+        branch: signupData.role === "student" ? (signupData.branch?.trim() || null) : null,
+        department: signupData.role === "teacher" ? (signupData.department?.trim() || null) : null,
+        subjects: signupData.role === "teacher" ? (signupData.subjects || []) : [],
+      }),
+    });
 
-  roll_no: signupData.role === "student" ? (signupData.roll?.trim() || null) : null,
-  year: signupData.role === "student" ? (signupData.year?.trim() || null) : null,
-  semester: signupData.role === "student" ? (signupData.semester?.trim() || null) : null,
-  branch: signupData.role === "student" ? (signupData.branch?.trim() || null) : null,
-  college: signupData.role === "student"
-    ? (signupData.college?.trim() || null)
-    : (signupData.teacherCollege?.trim() || null),
+    const data = await response.json();
 
-  department: signupData.role === "teacher" ? (signupData.department?.trim() || null) : null,
-  subjects: signupData.role === "teacher" ? (signupData.subjects || []) : [],
-}),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        showSignupError(data.message || "Signup failed");
-        setLoading(false);
-        return;
-      }
-
-      const createdProfile = Array.isArray(data.user) ? data.user[0] : data.user;
-      const userObj = {
-        id: createdProfile?.user_id || createdProfile?.id,
-        name: createdProfile?.name || name,
-        email: createdProfile?.email || email,
-        role: createdProfile?.role || signupData.role,
-        rollNo: createdProfile?.roll_no || signupData.roll?.trim() || "",
-        year: createdProfile?.year || signupData.year?.trim() || "",
-        semester: createdProfile?.semester || signupData.semester?.trim() || "",
-        branch: createdProfile?.branch || signupData.branch?.trim() || "",
-        college: createdProfile?.college ||
-          (signupData.role === "student" ? signupData.college?.trim() : signupData.teacherCollege?.trim()) ||
-          "",
-        department: createdProfile?.department || signupData.department?.trim() || "",
-        subjects: createdProfile?.subjects || signupData.subjects || [],
-      };
-
-      localStorage.setItem("cryptocode_user", JSON.stringify(userObj));
-      onLoginSuccess(userObj);
-      onClose();
-    } catch (error) {
-      console.error(error);
-      if (import.meta.env.DEV) {
-        console.warn("Backend server connection failed during development. Signing up locally with mock credentials.", error);
-        const mockUser = {
-          name,
-          email,
-          role: signupData.role,
-        };
-        localStorage.setItem("cryptocode_user", JSON.stringify(mockUser));
-        onLoginSuccess(mockUser);
-        onClose();
-      } else {
-        showSignupError("Server error. Please try again.");
-      }
-    } finally {
+    if (!response.ok) {
+      showSignupError(data.message || "Signup failed");
       setLoading(false);
+      return;
     }
-  };
+
+    if (data.session) {
+      if (data.session) {
+        localStorage.setItem("session", JSON.stringify(data.session));
+      }
+      if (data.token) {
+        localStorage.setItem("cryptocode_token", data.token);
+      }
+    }
+    if (data.token) {
+      localStorage.setItem("cryptocode_token", data.token);
+    }
+
+    const createdProfile = Array.isArray(data.user) ? data.user[0] : data.user;
+    const userObj = {
+      id: createdProfile?.user_id || createdProfile?.id,
+      name: createdProfile?.name || name,
+      email: createdProfile?.email || email,
+      role: createdProfile?.role || signupData.role,
+      rollNo: createdProfile?.roll_no || signupData.roll?.trim() || "",
+      year: createdProfile?.year || signupData.year?.trim() || "",
+      semester: createdProfile?.semester || signupData.semester?.trim() || "",
+      branch: createdProfile?.branch || signupData.branch?.trim() || "",
+      college: createdProfile?.college || college || "OTHER",
+      department: createdProfile?.department || signupData.department?.trim() || "",
+      subjects: createdProfile?.subjects || signupData.subjects || [],
+    };
+
+    localStorage.setItem("cryptocode_user", JSON.stringify(userObj));
+    onLoginSuccess(userObj);
+    onClose();
+  } catch (error) {
+    console.error(error);
+    showSignupError("Server error. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const tabs = useMemo(
     () => [
@@ -385,7 +355,7 @@ console.log("SEMESTER VALUE:", signupData.semester);
   );
 
   const setSignupRole = (role) => {
-    setSignupData((prev) => ({ ...prev, role }));
+    setSignupData((prev) => ({ ...prev, role, secretKey: "" }));
   };
 
   if (!isOpen) return null;

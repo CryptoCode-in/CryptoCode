@@ -38,6 +38,7 @@ import {
   ShieldCheck,
   Code2,
   Clock,
+  LineChart,
   ArrowRight,
   Sparkles,
   Compass,
@@ -110,10 +111,12 @@ function StudentDashboard({ currentUser, onLogout }) {
       const saved = localStorage.getItem("cryptocode_dashboard_settings");
       if (saved) {
         const parsed = JSON.parse(saved);
+        const showProg = parsed.showProgressCard !== undefined ? parsed.showProgressCard : (parsed.showEditorCard !== undefined ? parsed.showEditorCard : true);
         return {
           showWelcome: parsed.showWelcome !== undefined ? parsed.showWelcome : true,
           showCodingWorkspace: parsed.showCodingWorkspace !== undefined ? parsed.showCodingWorkspace : true,
-          showEditorCard: parsed.showEditorCard !== undefined ? parsed.showEditorCard : true,
+          showProgressCard: showProg,
+          showEditorCard: showProg,
           showHistoryCard: parsed.showHistoryCard !== undefined ? parsed.showHistoryCard : true,
           showMotivationalQuote: parsed.showMotivationalQuote !== undefined ? parsed.showMotivationalQuote : true,
           defaultView: parsed.defaultView || "dashboard",
@@ -125,6 +128,7 @@ function StudentDashboard({ currentUser, onLogout }) {
     return {
       showWelcome: true,
       showCodingWorkspace: true,
+      showProgressCard: true,
       showEditorCard: true,
       showHistoryCard: true,
       showMotivationalQuote: true,
@@ -417,40 +421,40 @@ function StudentDashboard({ currentUser, onLogout }) {
                 )}
 
                 {/* Section E – Workspace Cards */}
-                {(dashboardSettingsState.showEditorCard || dashboardSettingsState.showHistoryCard) && (
+                {(dashboardSettingsState.showProgressCard || dashboardSettingsState.showHistoryCard) && (
                   <div
                     className="ccc-workspace-grid"
                     style={{
-                      gridTemplateColumns: dashboardSettingsState.showEditorCard && dashboardSettingsState.showHistoryCard ? undefined : "1fr"
+                      gridTemplateColumns: dashboardSettingsState.showProgressCard && dashboardSettingsState.showHistoryCard ? undefined : "1fr"
                     }}
                   >
-                    {/* Card 1 – Editor */}
-                    {dashboardSettingsState.showEditorCard && (
+                    {/* Card 1 – Progress */}
+                    {dashboardSettingsState.showProgressCard && (
                       <div
                         className="ccc-workspace-card"
-                        onClick={() => setActiveSection("editor")}
+                        onClick={() => setActiveSection("progress")}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            setActiveSection("editor");
+                            setActiveSection("progress");
                           }
                         }}
                       >
                         <div>
                           <div className="ccc-card-header">
                             <span className="ccc-card-title">
-                              <Code2 size={16} />
-                              &lt;/&gt; EDITOR
+                              <LineChart size={16} />
+                              PROGRESS
                             </span>
                           </div>
                           <p className="ccc-card-desc">
-                            Open your coding environment and write your next program.
+                            Track your coding activity and learning progress.
                           </p>
                         </div>
                         <div className="ccc-card-action">
-                          <span>Start Coding</span>
+                          <span>View Progress</span>
                           <ArrowRight size={15} />
                         </div>
                       </div>
@@ -505,7 +509,7 @@ function StudentDashboard({ currentUser, onLogout }) {
                 {/* Fallback when all sections are disabled */}
                 {!dashboardSettingsState.showWelcome &&
                  !dashboardSettingsState.showCodingWorkspace &&
-                 !dashboardSettingsState.showEditorCard &&
+                 !dashboardSettingsState.showProgressCard &&
                  !dashboardSettingsState.showHistoryCard &&
                  !dashboardSettingsState.showMotivationalQuote && (
                   <div style={{ textAlign: "center", padding: "64px 20px", color: "var(--tx3)" }}>
@@ -976,23 +980,26 @@ function StudentDashboard({ currentUser, onLogout }) {
                       </div>
                     </div>
 
-                    {/* Show Editor Quick Access */}
+                    {/* Show Progress Quick Access */}
                     <div className="setting-row-item">
                       <div className="setting-left">
                         <div className="setting-icon-wrapper">
-                          <Code2 size={16} />
+                          <LineChart size={16} />
                         </div>
                         <div className="setting-info">
-                          <span className="setting-label">Show Editor Quick Access</span>
-                          <span className="setting-desc">Display quick-access card to launch code editor environment</span>
+                          <span className="setting-label">Show Progress Quick Access</span>
+                          <span className="setting-desc">Display quick-access card to track coding activity and learning progress</span>
                         </div>
                       </div>
                       <div className="setting-right">
                         <label className="toggle-switch">
                           <input
                             type="checkbox"
-                            checked={dashboardSettingsState.showEditorCard}
-                            onChange={(e) => updateDashboardSetting("showEditorCard", e.target.checked)}
+                            checked={dashboardSettingsState.showProgressCard !== undefined ? dashboardSettingsState.showProgressCard : dashboardSettingsState.showEditorCard}
+                            onChange={(e) => {
+                              updateDashboardSetting("showProgressCard", e.target.checked);
+                              updateDashboardSetting("showEditorCard", e.target.checked);
+                            }}
                           />
                           <span className="toggle-thumb"></span>
                         </label>

@@ -10,13 +10,15 @@ const {
     getSubmissionAnalytics
 } = require("../controllers/submissionController");
 
+const { authenticateUser } = require("../middleware/authMiddleware");
+
 // Specific named routes first (before /:id wildcard)
-router.post("/save", saveSubmission);
-router.get("/analytics", getSubmissionAnalytics);
-router.get("/", getSubmissions);
+router.post("/save", authenticateUser, saveSubmission);
+router.get("/analytics", authenticateUser, getSubmissionAnalytics);
+router.get("/", authenticateUser, getSubmissions);
 
 // Wildcard param routes last
-router.get("/:id", getSubmissionById);
-router.put("/:id", updateSubmission);
+router.get("/:id", authenticateUser, getSubmissionById);
+router.put("/:id", authenticateUser, updateSubmission);
 
 module.exports = router;

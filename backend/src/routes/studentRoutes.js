@@ -9,19 +9,18 @@ const {
     registerStudent
 } = require("../controllers/studentController");
 
-const { verifyAdmin } = require("../middleware/authMiddleware");
+const { authenticateUser, requireTeacher, verifyAdmin } = require("../middleware/authMiddleware");
 
-
-// Get all students
-router.get("/", getStudents);
+// Get all students (Scoped to Teacher's college; Admin can view all)
+router.get("/", authenticateUser, requireTeacher, getStudents);
 
 // Admin registers student
 router.post("/register", verifyAdmin, registerStudent);
 
-// Get per-student analytics (submission trend, language usage, status distribution)
-router.get("/:id/analytics", getStudentAnalytics);
+// Get per-student analytics (Scoped to Teacher's college; Admin can view all)
+router.get("/:id/analytics", authenticateUser, requireTeacher, getStudentAnalytics);
 
-// Get single student profile with computed metrics
-router.get("/:id", getStudentById);
+// Get single student profile with computed metrics (Scoped to Teacher's college; Admin can view all)
+router.get("/:id", authenticateUser, requireTeacher, getStudentById);
 
 module.exports = router;

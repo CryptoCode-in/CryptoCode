@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import {
   ArrowLeft,
   BookOpen,
@@ -6,7 +7,7 @@ import {
   GraduationCap,
   Mail,
 } from "lucide-react";
-import { API_URL } from "../../utils/api";
+import { API_URL, getAuthHeaders } from "../../utils/api";
 import SubmissionCard from "../../components/teacher/SubmissionCard";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
@@ -41,75 +42,80 @@ function mapSubmission(sub) {
   };
 }
 
-function StudentProfile({ studentId, onBack, onViewSubmission }) {
+function StudentProfile({ studentId: propStudentId, onBack, onViewSubmission }) {
+  const { studentId: paramStudentId } = useParams();
+  const studentId = propStudentId || paramStudentId;
   const [student, setStudent] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const fetchStudentData = useCallback(async () => {
     if (!studentId) {
       setLoading(false);
       setError("Student ID was not received.");
       return;
     }
 
-    let isMounted = true;
+    try {
+      setLoading(true);
+      setError("");
+      setStudent(null);
+      setSubmissions([]);
 
-    const fetchStudentData = async () => {
-      try {
-        setLoading(true);
-        setError("");
+      const headers = getAuthHeaders();
 
-        // Fetch student profile and submissions in parallel
-        const [profileRes, subsRes] = await Promise.all([
-          fetch(`${API_URL}/students/${studentId}`),
-          fetch(`${API_URL}/submissions?student_id=${studentId}`),
-        ]);
+      // Fetch student profile and submissions in parallel with authenticating headers
+      const [profileRes, subsRes] = await Promise.all([
+        fetch(`${API_URL}/students/${studentId}`, { headers }),
+        fetch(`${API_URL}/submissions?student_id=${studentId}`, { headers }),
+      ]);
 
-        if (!isMounted) return;
-
-        // Profile data
-        const profileData = await profileRes.json();
-        if (!profileRes.ok || !profileData.success) {
-          throw new Error(profileData.message || "Failed to fetch student profile");
-        }
-
-        // Submissions data - latest 5 code submissions
-        let latestSubs = [];
-        if (subsRes.ok) {
-          const subsData = await subsRes.json();
-          if (subsData.success && Array.isArray(subsData.submissions)) {
-            latestSubs = subsData.submissions
-              .slice()
-              .sort((a, b) => new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0))
-              .slice(0, 5)
-              .map(mapSubmission);
-          }
-        }
-
-        if (isMounted) {
-          setStudent(profileData.student);
-          setSubmissions(latestSubs);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error("Failed to fetch student profile:", err);
-          setError(err.message || "Failed to load student profile.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
+      // Handle specific HTTP status codes
+      if (!profileRes.ok) {
+        const profileData = await profileRes.json().catch(() => ({}));
+        if (profileRes.status === 401) {
+          throw new Error("Session expired or authentication required. Please log in again.");
+        } else if (profileRes.status === 403) {
+          throw new Error(profileData.message || "Access denied. You cannot view students from another college.");
+        } else if (profileRes.status === 404) {
+          throw new Error("Student not found.");
+        } else {
+          throw new Error(profileData.message || "Unable to load student information.");
         }
       }
-    };
 
-    fetchStudentData();
+      const profileData = await profileRes.json();
+      if (!profileData.success || !profileData.student) {
+        throw new Error(profileData.message || "Failed to load student profile.");
+      }
 
-    return () => {
-      isMounted = false;
-    };
+      // Submissions data - latest 5 code submissions
+      let latestSubs = [];
+      if (subsRes.ok) {
+        const subsData = await subsRes.json().catch(() => ({}));
+        if (subsData.success && Array.isArray(subsData.submissions)) {
+          latestSubs = subsData.submissions
+            .slice()
+            .sort((a, b) => new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0))
+            .slice(0, 5)
+            .map(mapSubmission);
+        }
+      }
+
+      setStudent(profileData.student);
+      setSubmissions(latestSubs);
+    } catch (err) {
+      console.error("Failed to fetch student profile:", err);
+      setError(err.message || "Unable to load student information.");
+    } finally {
+      setLoading(false);
+    }
   }, [studentId]);
+
+  useEffect(() => {
+    fetchStudentData();
+  }, [fetchStudentData]);
 
   // Loading state
   if (loading) {
@@ -142,7 +148,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
           <button
             onClick={onBack}
             className="boc d-inline-flex align-items-center gap-2 px-3 py-2"
-            style={{ borderRadius: "8px", fontSize: "0.85rem", fontWeight: 600 }}
+            style={{ borderRadius: "8px", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}
           >
             <ArrowLeft size={14} />
             <span>Back to Students</span>
@@ -160,21 +166,38 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
             border: "1px solid var(--bd)",
           }}
         >
-          <p style={{ marginBottom: "20px", fontSize: "0.95rem" }}>
+          <p style={{ marginBottom: "20px", fontSize: "0.95rem", color: "var(--tx)" }}>
             {error || "Student profile not found."}
           </p>
-          <button
-            onClick={onBack}
-            className="boc"
-            style={{
-              padding: "9px 20px",
-              borderRadius: "8px",
-              fontWeight: 600,
-              fontSize: "0.85rem",
-            }}
-          >
-            Back to Students
-          </button>
+          <div className="d-flex align-items-center justify-content-center gap-3">
+            <button
+              onClick={fetchStudentData}
+              className="boc px-3 py-2"
+              style={{
+                borderRadius: "8px",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                background: "var(--pur)",
+                color: "#fff",
+                border: "none",
+                cursor: "pointer"
+              }}
+            >
+              Retry
+            </button>
+            <button
+              onClick={onBack}
+              className="boc px-3 py-2"
+              style={{
+                borderRadius: "8px",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                cursor: "pointer"
+              }}
+            >
+              Back to Students
+            </button>
+          </div>
         </div>
       </TeacherLayout>
     );

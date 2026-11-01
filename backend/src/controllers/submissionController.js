@@ -1,4 +1,5 @@
 const supabaseAdmin = require("../config/supabaseAdmin");
+const { normalizeCollege } = require("../middleware/authMiddleware");
 const fs = require("fs");
 const path = require("path");
 
@@ -276,6 +277,10 @@ const {
 const getSubmissions = async (req, res) => {
     try {
         const { user_id, student_id } = req.query;
+        const isAdmin = Boolean(req.user?.isAdmin || req.user?.role?.toUpperCase() === "ADMIN");
+        const isTeacher = Boolean(req.user?.role?.toLowerCase() === "teacher");
+        const isStudent = Boolean(req.user?.role?.toLowerCase() === "student");
+        const teacherCollege = req.user?.college ? normalizeCollege(req.user.college) : "OTHER";
 
         let query = supabaseAdmin
             .from("submissions")
@@ -294,62 +299,138 @@ const getSubmissions = async (req, res) => {
                     roll_no,
                     user_id,
                     branch,
-                    year
+                    year,
+                    college
                 )
             `)
             .order("submitted_at", { ascending: false });
 
-        if (student_id) {
-            query = query.eq("student_id", student_id);
-        } else if (user_id) {
-            // Find profile using Supabase Auth user UUID or numeric profile id
-            const { data: profile } = await supabaseAdmin
-                .from("profiles")
-                .select("id, role")
-                .eq("user_id", user_id)
-                .maybeSingle();
+        if (isAdmin) {
+            if (student_id) {
+                query = query.eq("student_id", student_id);
+            } else if (user_id) {
+                const isNum = !isNaN(Number(user_id));
+                const { data: p } = await supabaseAdmin
+                    .from("profiles")
+                    .select("id")
+                    .eq(isNum ? "id" : "user_id", user_id)
+                    .maybeSingle();
+                if (p) query = query.eq("student_id", p.id);
+            }
+        } else if (isTeacher) {
+            let targetStudentId = student_id;
+            if (!targetStudentId && user_id) {
+                const isNum = !isNaN(Number(user_id));
+                const { data: p } = await supabaseAdmin
+                    .from("profiles")
+                    .select("id")
+                    .eq(isNum ? "id" : "user_id", user_id)
+                    .maybeSingle();
+                if (p) targetStudentId = p.id;
+            }
 
-            if (profile && profile.role === "student") {
-                query = query.eq("student_id", profile.id);
-            } else if (!profile) {
-                // If not found by user_id UUID, check if user_id is the numeric profile id
-                const { data: pById } = await supabaseAdmin
+            if (targetStudentId) {
+                const isNum = /^\d+$/.test(String(targetStudentId).trim());
+                let studentQuery = supabaseAdmin
+                    .from("profiles")
+                    .select("id, college")
+                    .eq("role", "student");
+
+                if (isNum) {
+                    studentQuery = studentQuery.eq("id", Number(targetStudentId));
+                } else {
+                    studentQuery = studentQuery.eq("user_id", String(targetStudentId).trim());
+                }
+
+                const { data: student } = await studentQuery.maybeSingle();
+
+                if (!student) {
+                    return res.status(404).json({
+                        success: false,
+                        message: "Student not found"
+                    });
+                }
+
+                if (normalizeCollege(student.college) !== teacherCollege) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "Access denied. Student belongs to another college."
+                    });
+                }
+
+                query = query.eq("student_id", student.id);
+            } else {
+                const { data: colStudents } = await supabaseAdmin
+                    .from("profiles")
+                    .select("id")
+                    .eq("role", "student")
+                    .eq("college", teacherCollege);
+
+                const allowedIds = (colStudents || []).map(s => s.id);
+                if (allowedIds.length === 0) {
+                    return res.status(200).json({
+                        success: true,
+                        submissions: []
+                    });
+                }
+                query = query.in("student_id", allowedIds);
+            }
+        } else if (isStudent) {
+            query = query.eq("student_id", req.user.id);
+        } else {
+            if (student_id) {
+                query = query.eq("student_id", student_id);
+            } else if (user_id) {
+                const isNum = !isNaN(Number(user_id));
+                const { data: profile } = await supabaseAdmin
                     .from("profiles")
                     .select("id, role")
-                    .eq("id", user_id)
+                    .eq(isNum ? "id" : "user_id", user_id)
                     .maybeSingle();
 
-                if (pById && pById.role === "student") {
-                    query = query.eq("student_id", pById.id);
-                } else if (!pById) {
+                if (profile && profile.role === "student") {
+                    query = query.eq("student_id", profile.id);
+                } else if (!profile) {
                     return res.status(404).json({
                         success: false,
                         message: "Student profile not found"
                     });
                 }
+            } else {
+                return res.status(401).json({
+                    success: false,
+                    message: "Authentication required"
+                });
             }
-            // If profile role is teacher or admin, return all submissions
         }
 
-        const { data: submissions, error: submissionsError } = await query;
+        let allSubmissions = [];
+        let from = 0;
+        const PAGE_SIZE = 1000;
+        while (true) {
+            const { data, error: submissionsError } = await query.range(from, from + PAGE_SIZE - 1);
 
-        if (submissionsError) {
-            console.error("Get submissions error:", submissionsError);
+            if (submissionsError) {
+                console.error("Get submissions error:", submissionsError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to fetch submissions"
+                });
+            }
 
-            return res.status(500).json({
-                success: false,
-                message: "Failed to fetch submissions"
-            });
+            if (!data || data.length === 0) break;
+            allSubmissions = allSubmissions.concat(data);
+            if (data.length < PAGE_SIZE) break;
+            from += PAGE_SIZE;
         }
 
         return res.status(200).json({
             success: true,
-            submissions: submissions || []
+            submissions: allSubmissions
         });
 
     } catch (error) {
         console.error("Get submissions error:", error);
-
         return res.status(500).json({
             success: false,
             message: "Server error"
@@ -360,6 +441,10 @@ const getSubmissions = async (req, res) => {
 const getSubmissionById = async (req, res) => {
     try {
         const { id } = req.params;
+        const isAdmin = Boolean(req.user?.isAdmin || req.user?.role?.toUpperCase() === "ADMIN");
+        const isTeacher = Boolean(req.user?.role?.toLowerCase() === "teacher");
+        const isStudent = Boolean(req.user?.role?.toLowerCase() === "student");
+        const teacherCollege = req.user?.college ? normalizeCollege(req.user.college) : "OTHER";
 
         const { data: submission, error: submissionError } = await supabaseAdmin
             .from("submissions")
@@ -378,7 +463,8 @@ const getSubmissionById = async (req, res) => {
                     roll_no,
                     user_id,
                     branch,
-                    year
+                    year,
+                    college
                 )
             `)
             .eq("id", id)
@@ -397,6 +483,26 @@ const getSubmissionById = async (req, res) => {
                 success: false,
                 message: "Submission not found"
             });
+        }
+
+        // Access Control
+        if (!isAdmin) {
+            if (isTeacher) {
+                const subCollege = normalizeCollege(submission.profiles?.college);
+                if (subCollege !== teacherCollege) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "Access denied. Submission belongs to another college."
+                    });
+                }
+            } else if (isStudent) {
+                if (submission.student_id !== req.user.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "Access denied."
+                    });
+                }
+            }
         }
 
         const output = await getExecutionOutput(submission.id);
@@ -429,9 +535,9 @@ const normalizeYear = (v) => {
     if (!v && v !== 0) return "";
     const s = String(v).trim().toLowerCase();
     if (!s) return "";
-    if (s === "1" || s.includes("first")  || s.includes("1st")) return "First Year";
-    if (s === "2" || s.includes("second") || s.includes("2nd")) return "Second Year";
-    if (s === "3" || s.includes("third")  || s.includes("3rd")) return "Third Year";
+    if (s === "1" || s === "1st" || s.includes("first") || s === "fy") return "First Year";
+    if (s === "2" || s === "2nd" || s.includes("second") || s === "sy") return "Second Year";
+    if (s === "3" || s === "3rd" || s.includes("third") || s === "ty") return "Third Year";
     return "__UNKNOWN__";
 };
 
@@ -453,263 +559,251 @@ const toIST = (dateStr) => {
     return new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
 };
 
-const defaultTemplates = [
-    "# Write your Python code here\nprint('Hello, CryptoCode!')",
-    "# Welcome to CryptoCode Python Workspace\nname = input()\nage = input()\nprint(f\"Hello, {name}! You are {age} years old.\")",
-    "#include <stdio.h>\n\nint main(void) {\n    char name[64];\n    int age;\n    if (scanf(\"%63s %d\", name, &age) == 2) {\n        printf(\"Hello, %s! You are %d years old.\\n\", name, age);\n    } else {\n        printf(\"Welcome to CryptoCode C Compiler\\n\");\n    }\n    return 0;\n}",
-    "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string name;\n    int age;\n    if (cin >> name >> age) {\n        cout << \"Hello, \" << name << \"! You are \" << age << \" years old.\" << endl;\n    } else {\n        cout << \"Welcome to CryptoCode C++\" << endl;\n    }\n    return 0;\n}",
-    "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        if (scanner.hasNext()) {\n            String name = scanner.next();\n            int age = scanner.hasNextInt() ? scanner.nextInt() : 0;\n            System.out.println(\"Hello, \" + name + \"! You are \" + age + \" years old.\");\n        } else {\n            System.out.println(\"Welcome to CryptoCode Java\");\n        }\n    }\n}"
-].map(s => s.trim().replace(/\r\n/g, '\n'));
+const acceptedStatuses = ["accepted", "saved", "submitted", "passed", "success"];
 
-const isBoilerplate = (code) => {
-    if (!code) return true;
-    const c = code.trim().replace(/\r\n/g, '\n');
-    return defaultTemplates.includes(c);
-};
-
-const isValidCode = (lang, code) => {
-    if (!code) return false;
-    const c = code.trim();
-    if (c.length < 5) return false;
-    if (isBoilerplate(c)) return false;
-
-    const l = (lang || '').toLowerCase();
-    if (l === 'python') {
-        if (c === 'test' || c === 'undefined') return false;
-        return (c.includes('print(') || c.includes('def ') || c.includes('=') || c.includes('import '));
-    }
-    if (l === 'c' || l === 'cpp') {
-        return c.includes('main(') && c.includes('{') && c.includes('}');
-    }
-    if (l === 'java') {
-        return (c.includes('class ') || c.includes('public static void main')) && c.includes('{') && c.includes('}');
-    }
-    return false;
-};
-
-const FAILED_SUBMISSION_IDS = new Set([74, 79, 87, 88, 89, 90]);
-
-const isSuccessful = (sub) => {
+const isSolved = (sub) => {
     if (!sub) return false;
     const st = String(sub.status || "").toLowerCase().trim();
     if (st === "failed" || st === "wrong answer" || st === "error") return false;
-    if (FAILED_SUBMISSION_IDS.has(sub.id)) return false;
-    if (sub.output && (sub.output.includes("error:") || sub.output.includes("Traceback") || sub.output.includes("Exception"))) {
-        return false;
-    }
-    if (st === "accepted" || st === "passed" || st === "success") return true;
-    if (st === "saved") {
-        return isValidCode(sub.language, sub.source_code);
-    }
-    return false;
+    return acceptedStatuses.includes(st);
 };
+
+const isSuccessful = isSolved;
 
 const getSubmissionAnalytics = async (req, res) => {
     try {
-        const { teacher_id, year, branch } = req.query;
-        const cacheKey = `${year || 'ALL'}_${branch || 'ALL'}`;
+        const isAdmin = Boolean(req.user?.isAdmin || req.user?.role?.toUpperCase() === "ADMIN");
+        const isTeacher = Boolean(req.user?.role?.toLowerCase() === "teacher");
+
+        // Role restriction: Students cannot access teacher analytics
+        if (!isAdmin && !isTeacher) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Teacher access required."
+            });
+        }
+
+        const teacherCollege = isAdmin ? "ALL" : (req.user?.college ? normalizeCollege(req.user.college) : "OTHER");
+        const { year, branch, refresh } = req.query;
+        const cacheKey = `${teacherCollege}_${year || 'ALL'}_${branch || 'ALL'}`;
         const now = Date.now();
 
-        if (analyticsCache.has(cacheKey) && (now - cacheTimestamp < CACHE_TTL_MS)) {
+        // If not explicit refresh and within TTL
+        if (!refresh && analyticsCache.has(cacheKey) && (now - cacheTimestamp < CACHE_TTL_MS)) {
             return res.status(200).json(analyticsCache.get(cacheKey));
         }
 
-        // Fast parallel fetch: submissions + profiles without slow PostgREST FK join
-        const [subResult, profileResult] = await Promise.all([
-            supabaseAdmin
-                .from("submissions")
-                .select("id, student_id, language, status, submitted_at, source_code")
-                .order("submitted_at", { ascending: true }),
-            supabaseAdmin
+        // 1. Fetch student profiles (scoped to teacher's college) with pagination
+        let allProfiles = [];
+        let pFrom = 0;
+        const PAGE_SIZE = 1000;
+        while (true) {
+            let pQuery = supabaseAdmin
                 .from("profiles")
-                .select("id, year, branch")
-                .eq("role", "student")
-        ]);
+                .select("id, name, roll_no, year, branch, college")
+                .eq("role", "student");
 
-        if (subResult.error) {
-            console.error("Error fetching submissions for analytics:", subResult.error);
-            return res.status(500).json({
-                success: false,
-                message: "Failed to fetch submissions for analytics"
-            });
+            if (!isAdmin) {
+                pQuery = pQuery.eq("college", teacherCollege);
+            }
+
+            const { data: pData, error: pError } = await pQuery.range(pFrom, pFrom + PAGE_SIZE - 1);
+            if (pError) {
+                console.error("Error fetching student profiles for analytics:", pError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to fetch student profiles for analytics"
+                });
+            }
+            if (!pData || pData.length === 0) break;
+            allProfiles = allProfiles.concat(pData);
+            if (pData.length < PAGE_SIZE) break;
+            pFrom += PAGE_SIZE;
         }
 
         const profileMap = new Map();
-        (profileResult.data || []).forEach(p => profileMap.set(p.id, p));
+        allProfiles.forEach(p => profileMap.set(p.id, p));
 
-        let allSubmissions = (subResult.data || []).map(s => ({
-            ...s,
-            profiles: profileMap.get(s.student_id) || null
-        }));
+        // 2. Fetch all submissions with pagination
+        let allSubmissionsRaw = [];
+        let sFrom = 0;
+        while (true) {
+            const { data: sData, error: sError } = await supabaseAdmin
+                .from("submissions")
+                .select("id, student_id, language, status, submitted_at, source_code, filename")
+                .order("submitted_at", { ascending: true })
+                .range(sFrom, sFrom + PAGE_SIZE - 1);
 
-        // Apply optional Year & Branch filters if provided
+            if (sError) {
+                console.error("Error fetching submissions for analytics:", sError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to fetch submissions for analytics"
+                });
+            }
+            if (!sData || sData.length === 0) break;
+            allSubmissionsRaw = allSubmissionsRaw.concat(sData);
+            if (sData.length < PAGE_SIZE) break;
+            sFrom += PAGE_SIZE;
+        }
+
+        // 3. Strictly filter submissions to students belonging to this college
+        let allSubmissions = allSubmissionsRaw
+            .filter(s => profileMap.has(s.student_id))
+            .map(s => ({
+                ...s,
+                profiles: profileMap.get(s.student_id) || null
+            }));
+
+        let filteredProfiles = [...allProfiles];
+
+        // 4. Apply Year & Branch filters consistently
         if (year && year !== "ALL" && year !== "all") {
             const targetYear = normalizeYear(year);
-            allSubmissions = allSubmissions.filter((sub) => {
-                const subYear = normalizeYear(sub.profiles?.year);
-                return subYear === targetYear;
-            });
+            allSubmissions = allSubmissions.filter((sub) => normalizeYear(sub.profiles?.year) === targetYear);
+            filteredProfiles = filteredProfiles.filter((p) => normalizeYear(p.year) === targetYear);
         }
 
         if (branch && branch !== "ALL" && branch !== "all") {
             const targetBranch = normalizeBranch(branch);
-            allSubmissions = allSubmissions.filter((sub) => {
-                const subBranch = normalizeBranch(sub.profiles?.branch);
-                return subBranch === targetBranch;
-            });
+            allSubmissions = allSubmissions.filter((sub) => normalizeBranch(sub.profiles?.branch) === targetBranch);
+            filteredProfiles = filteredProfiles.filter((p) => normalizeBranch(p.branch) === targetBranch);
         }
 
-        const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        const monthNames = [
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        ];
+        const totalSubmissions = allSubmissions.length;
+        let totalSolved = 0;
+        allSubmissions.forEach(sub => {
+            if (isSolved(sub)) totalSolved++;
+        });
 
-        // 1. Weekly Submission Trend: Last 12 weeks ending on the current week's Sunday (IST)
-        const nowUTC = new Date();
-        const nowIST = new Date(nowUTC.getTime() + (5.5 * 60 * 60 * 1000));
-        const daysSinceMonday = (nowIST.getUTCDay() + 6) % 7;
-        const currentISTMidnight = Date.UTC(
-            nowIST.getUTCFullYear(),
-            nowIST.getUTCMonth(),
-            nowIST.getUTCDate()
-        );
-        const currentWeekMondayIST = currentISTMidnight - (daysSinceMonday * 86400000);
+        // 5. Language Breakdown / Usage
+        const languageStats = {
+            Python: { count: 0, color: "#2563eb" }, // Blue
+            Java:   { count: 0, color: "#f59e0b" }, // Amber
+            "C++":  { count: 0, color: "#8b5cf6" }, // Purple
+            C:      { count: 0, color: "#06b6d4" }, // Cyan
+        };
 
+        allSubmissions.forEach(sub => {
+            const lang = (sub.language || "").trim().toLowerCase();
+            if (lang === "python" || lang === "py") languageStats.Python.count++;
+            else if (lang === "java") languageStats.Java.count++;
+            else if (lang === "cpp" || lang === "c++") languageStats["C++"].count++;
+            else if (lang === "c") languageStats.C.count++;
+            else {
+                const cap = lang ? (lang.charAt(0).toUpperCase() + lang.slice(1)) : "Other";
+                if (!languageStats[cap]) {
+                    languageStats[cap] = { count: 0, color: "#a855f7" };
+                }
+                languageStats[cap].count++;
+            }
+        });
+
+        const languageUsage = Object.entries(languageStats).map(([name, data]) => ({
+            name,
+            value: data.count,
+            color: data.color
+        }));
+
+        const languageBreakdown = Object.entries(languageStats).map(([name, data]) => ({
+            name,
+            submissions: data.count,
+            percentage: totalSubmissions > 0 ? Math.round((data.count / totalSubmissions) * 100) : 0,
+            color: data.color
+        }));
+
+        // 6. Trailing 6 Months Problems Solved Over Time (in IST)
+        const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+        const sixMonths = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(Date.UTC(nowIST.getUTCFullYear(), nowIST.getUTCMonth() - i, 1));
+            const monthShort = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+            const yearNum = d.getUTCFullYear();
+            const key = `${yearNum}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+            sixMonths.push({
+                key,
+                name: monthShort,
+                month: `${monthShort} ${yearNum}`,
+                solved: 0
+            });
+        }
+        const sixMonthsMap = new Map();
+        sixMonths.forEach(m => sixMonthsMap.set(m.key, m));
+
+        allSubmissions.forEach(sub => {
+            if (!isSolved(sub) || !sub.submitted_at) return;
+            const subIST = toIST(sub.submitted_at);
+            if (!subIST) return;
+            const key = `${subIST.getUTCFullYear()}-${String(subIST.getUTCMonth() + 1).padStart(2, "0")}`;
+            if (sixMonthsMap.has(key)) {
+                sixMonthsMap.get(key).solved++;
+            }
+        });
+        const problemsSolvedOverTime = sixMonths.map(({ name, month, solved }) => ({ name, month, solved }));
+
+        // 7. Weekly Activity Heatmap Grid (Mon-Sun x 6 time blocks, in IST)
+        const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const weeklyActivityGrid = DAYS.map(day => ({
+            day,
+            hr0: 0,
+            hr4: 0,
+            hr8: 0,
+            hr12: 0,
+            hr16: 0,
+            hr20: 0
+        }));
+        const dayIndexMap = {
+            Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6
+        };
+
+        allSubmissions.forEach(sub => {
+            if (!sub.submitted_at) return;
+            const subIST = toIST(sub.submitted_at);
+            if (!subIST) return;
+            const dayName = subIST.toLocaleString("en-US", { weekday: "short", timeZone: "UTC" });
+            const idx = dayIndexMap[dayName];
+            if (idx === undefined) return;
+            const hour = subIST.getUTCHours();
+            const row = weeklyActivityGrid[idx];
+            if (hour < 4) row.hr0++;
+            else if (hour < 8) row.hr4++;
+            else if (hour < 12) row.hr8++;
+            else if (hour < 16) row.hr12++;
+            else if (hour < 20) row.hr16++;
+            else row.hr20++;
+        });
+
+        // 8. Weekly Submission Trend (Last 12 Weeks Mon-Sun, in IST)
+        const dayOfWeek = (nowIST.getUTCDay() + 6) % 7; // days since Monday
+        const currWeekMon = new Date(Date.UTC(nowIST.getUTCFullYear(), nowIST.getUTCMonth(), nowIST.getUTCDate() - dayOfWeek, 0, 0, 0, 0));
         const weeklyTrend = [];
-        for (let w = 0; w < 12; w++) {
-            const startMs = currentWeekMondayIST - (11 - w) * 7 * 86400000;
-            const endMs = startMs + (7 * 86400000) - 1;
-            const s = new Date(startMs);
-            const e = new Date(endMs);
-            const sMon = monthNames[s.getUTCMonth()];
-            const sDay = s.getUTCDate();
-            const eMon = monthNames[e.getUTCMonth()];
-            const eDay = e.getUTCDate();
 
-            const name = `${sMon} ${sDay}`;
-            const weekLabel = sMon === eMon
-                ? `${sMon} ${sDay} - ${eDay}`
-                : `${sMon} ${sDay} - ${eMon} ${eDay}`;
-
+        for (let i = 11; i >= 0; i--) {
+            const mon = new Date(currWeekMon.getTime() - i * 7 * 86400000);
+            const sun = new Date(mon.getTime() + 6 * 86400000 + 86399999);
+            const monLabel = mon.toLocaleString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+            const sunLabel = sun.toLocaleString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
             weeklyTrend.push({
-                name,
-                weekLabel,
-                startMs,
-                endMs,
+                name: `W${12 - i}`,
+                weekLabel: `${monLabel} - ${sunLabel}`,
+                start: mon.getTime(),
+                end: sun.getTime(),
                 submissions: 0
             });
         }
 
-        // 2. Weekly Activity Grid: 7 days (Mon-Sun) x 6 time blocks (hr0, hr4, hr8, hr12, hr16, hr20)
-        const activityGridMap = {};
-        dayNames.forEach((d) => {
-            activityGridMap[d] = {
-                day: d,
-                hr0: 0,
-                hr4: 0,
-                hr8: 0,
-                hr12: 0,
-                hr16: 0,
-                hr20: 0
-            };
-        });
-
-        // 3. Language Usage breakdown (C, C++, Java, Python)
-        const langCounts = { c: 0, cpp: 0, java: 0, python: 0 };
-        let totalSolved = 0;
-
-        allSubmissions.forEach((sub) => {
-            if (isSuccessful(sub)) {
-                totalSolved++;
-            }
-
-            // Language normalization
-            const l = (sub.language || "").toLowerCase().trim();
-            if (l === "c") {
-                langCounts.c++;
-            } else if (l === "cpp" || l === "c++") {
-                langCounts.cpp++;
-            } else if (l === "java") {
-                langCounts.java++;
-            } else if (l === "python") {
-                langCounts.python++;
-            }
-
-            // Map to weekly trend & activity grid in IST
-            const ist = toIST(sub.submitted_at);
-            if (ist) {
-                const ms = ist.getTime();
-
-                // 12-week trend mapping
-                const targetWeek = weeklyTrend.find(
-                    (wk) => ms >= wk.startMs && ms <= wk.endMs
-                );
-                if (targetWeek) {
-                    targetWeek.submissions++;
-                }
-
-                // Weekly activity heatmap mapping
-                const dayIdx = (ist.getUTCDay() + 6) % 7;
-                const dayName = dayNames[dayIdx];
-                const hr = ist.getUTCHours();
-                const bucket =
-                    hr < 4 ? "hr0" :
-                    hr < 8 ? "hr4" :
-                    hr < 12 ? "hr8" :
-                    hr < 16 ? "hr12" :
-                    hr < 20 ? "hr16" : "hr20";
-
-                if (activityGridMap[dayName]) {
-                    activityGridMap[dayName][bucket]++;
+        allSubmissions.forEach(sub => {
+            if (!sub.submitted_at) return;
+            const subIST = toIST(sub.submitted_at);
+            if (!subIST) return;
+            const t = subIST.getTime();
+            for (let i = 0; i < weeklyTrend.length; i++) {
+                if (t >= weeklyTrend[i].start && t <= weeklyTrend[i].end) {
+                    weeklyTrend[i].submissions++;
+                    break;
                 }
             }
         });
-
-        // 4. Problems Solved Over Time: Trailing 6 calendar months ending with current month (IST)
-        const problemsSolvedOverTime = [];
-        const currentYear = nowIST.getUTCFullYear();
-        const currentMonth = nowIST.getUTCMonth();
-
-        for (let i = 5; i >= 0; i--) {
-            let targetMonth = currentMonth - i;
-            let targetYear = currentYear;
-            while (targetMonth < 0) {
-                targetMonth += 12;
-                targetYear -= 1;
-            }
-
-            const mName = monthNames[targetMonth];
-
-            let solvedCount = 0;
-            allSubmissions.forEach((sub) => {
-                if (!isSuccessful(sub)) return;
-                const ist = toIST(sub.submitted_at);
-                if (!ist) return;
-                if (
-                    ist.getUTCFullYear() === targetYear &&
-                    ist.getUTCMonth() === targetMonth
-                ) {
-                    solvedCount++;
-                }
-            });
-
-            problemsSolvedOverTime.push({
-                name: mName,
-                month: `${mName} ${targetYear}`,
-                solved: solvedCount
-            });
-        }
-
-        // Output formatting
-        const weeklyActivityGrid = dayNames.map((d) => activityGridMap[d]);
-
-        const languageUsage = [
-            { name: "C", value: langCounts.c, color: "#06b6d4" },
-            { name: "C++", value: langCounts.cpp, color: "#8b5cf6" },
-            { name: "Java", value: langCounts.java, color: "#f59e0b" },
-            { name: "Python", value: langCounts.python, color: "#2563eb" }
-        ];
 
         const formattedWeeklyTrend = weeklyTrend.map(({ name, weekLabel, submissions }) => ({
             name,
@@ -717,15 +811,76 @@ const getSubmissionAnalytics = async (req, res) => {
             submissions
         }));
 
+        // 9. Backwards-compatible submissionTrend (Last 7 days in IST)
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(nowIST.getTime() - i * 86400000);
+            const dateStr = d.toISOString().split("T")[0];
+            const displayDate = d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+            last7Days.push({ date: dateStr, displayDate, count: 0, successfulCount: 0 });
+        }
+        const dateMap = new Map();
+        last7Days.forEach(item => dateMap.set(item.date, item));
+
+        allSubmissions.forEach(sub => {
+            const subIST = toIST(sub.submitted_at);
+            if (subIST) {
+                const dateKey = subIST.toISOString().split("T")[0];
+                if (dateMap.has(dateKey)) {
+                    const entry = dateMap.get(dateKey);
+                    entry.count++;
+                    if (isSolved(sub)) entry.successfulCount++;
+                }
+            }
+        });
+
+        const submissionTrend = last7Days.map(item => ({
+            date: item.displayDate,
+            submissions: item.count,
+            successful: item.successfulCount
+        }));
+
+        // 10. Status Breakdown
+        const successfulSubmissions = totalSolved;
+        const failedSubmissions = totalSubmissions - totalSolved;
+        const statusBreakdown = [
+            { name: "Successful", count: successfulSubmissions, color: "#10b981" },
+            { name: "Failed / Needs Improvement", count: failedSubmissions, color: "#ef4444" }
+        ];
+
+        // 11. Pass Rate & Active Students
+        const passRate = totalSubmissions > 0
+            ? Math.round((successfulSubmissions / totalSubmissions) * 100)
+            : 0;
+
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+        const activeStudentIds = new Set();
+        allSubmissions.forEach(sub => {
+            if (sub.submitted_at && sub.student_id) {
+                const d = new Date(sub.submitted_at);
+                if (!isNaN(d.getTime()) && d >= sevenDaysAgo) {
+                    activeStudentIds.add(sub.student_id);
+                }
+            }
+        });
+
         const responsePayload = {
             success: true,
             analytics: {
+                totalSubmissions,
+                totalSolved,
+                successfulSubmissions,
+                failedSubmissions,
+                passRate,
+                activeStudents: activeStudentIds.size,
+                totalStudents: filteredProfiles.length,
+                languageUsage,
+                languageBreakdown,
                 problemsSolvedOverTime,
                 weeklyActivityGrid,
-                languageUsage,
                 weeklyTrend: formattedWeeklyTrend,
-                totalSubmissions: allSubmissions.length,
-                totalSolved
+                submissionTrend,
+                statusBreakdown
             }
         };
 

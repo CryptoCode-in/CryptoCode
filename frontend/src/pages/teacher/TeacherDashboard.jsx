@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -6,7 +7,7 @@ import {
   Activity,
   Terminal,
 } from "lucide-react";
-import { API_URL } from "../../utils/api";
+import { API_URL, getAuthHeaders } from "../../utils/api";
 
 // Components
 import Sidebar from "../../components/teacher/Sidebar";
@@ -24,13 +25,20 @@ import Profile from "./Profile";
 import Settings from "./Settings";
 
 // Utils
-import { mockTeacherData } from "../../utils/mockTeacherData";
 
 function TeacherDashboard({ currentUser, onLogout }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { studentId: routeStudentId, section: routeSection } = useParams();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   console.log("TEACHER CURRENT USER:", currentUser);
 
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState(() => {
+    if (routeStudentId) return "student-profile";
+    if (routeSection) return routeSection;
+    return "dashboard";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const mainContentRef = useRef(null);
 
@@ -40,8 +48,36 @@ function TeacherDashboard({ currentUser, onLogout }) {
     }
   }, [activeSection]);
 
-  // Selected student
-  const [selectedStudentId, setSelectedStudentId] = useState(null);
+    // Selected student
+  const [selectedStudentId, setSelectedStudentId] = useState(() => routeStudentId || null);
+
+  // Synchronize section and studentId from URL route parameters
+  useEffect(() => {
+    if (routeStudentId) {
+      setSelectedStudentId(routeStudentId);
+      setActiveSection("student-profile");
+    } else if (routeSection) {
+      setActiveSection(routeSection);
+      setSelectedStudentId(null);
+    } else if (location.pathname === "/teacher/dashboard" || location.pathname === "/teacher") {
+      setActiveSection("dashboard");
+      setSelectedStudentId(null);
+    }
+  }, [routeStudentId, routeSection, location.pathname]);
+
+  const handleSectionChange = (sec) => {
+    setSearchQuery("");
+    setPracticalFilter("");
+    setSelectedStudentId(null);
+    setActiveSection(sec);
+    navigate(sec === "dashboard" ? "/teacher/dashboard" : `/teacher/${sec}`);
+  };
+
+  const handleBackFromStudentProfile = () => {
+    setSelectedStudentId(null);
+    setActiveSection("students");
+    navigate("/teacher/students");
+  };
   // Selected submission
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   // Selected student for student-centric submissions view
@@ -52,7 +88,12 @@ function TeacherDashboard({ currentUser, onLogout }) {
 
   // Teacher profile
   const [profile, setProfile] = useState(() => ({
-    ...mockTeacherData.getProfile(),
+    name: currentUser?.name || "Teacher",
+    email: currentUser?.email || "",
+    department: currentUser?.department || "",
+    college: currentUser?.college || "",
+    role: currentUser?.role || "Teacher",
+    subjects: currentUser?.subjects || [],
     ...currentUser,
   }));
 
@@ -72,11 +113,11 @@ function TeacherDashboard({ currentUser, onLogout }) {
     const fetchStats = async () => {
       try {
         // 1. Fetch total students (role=student) and active student count
-        const studentsRes = await fetch(`${API_URL}/students`);
+        const studentsRes = await fetch(`${API_URL}/students`, { headers: getAuthHeaders() });
         const studentsData = await studentsRes.json();
 
         // 2. Fetch all submissions for total count and active students
-        const subsRes = await fetch(`${API_URL}/submissions`);
+        const subsRes = await fetch(`${API_URL}/submissions`, { headers: getAuthHeaders() });
         const subsData = await subsRes.json();
 
         if (cancelled) return;
@@ -141,16 +182,15 @@ function TeacherDashboard({ currentUser, onLogout }) {
   // VIEW STUDENT PROFILE
   // =========================================================
  const handleViewStudentProfile = (studentId) => {
-  console.log("VIEW STUDENT PROFILE ID:", studentId);
-
-  if (!studentId) {
-    console.error("ERROR: Student ID is missing");
-    return;
-  }
-
-  setSelectedStudentId(studentId);
-  setActiveSection("student-profile");
-};
+    console.log("VIEW STUDENT PROFILE ID:", studentId);
+    if (!studentId) {
+      console.error("ERROR: Student ID is missing");
+      return;
+    }
+    setSelectedStudentId(studentId);
+    setActiveSection("student-profile");
+    navigate(`/teacher/students/${studentId}`);
+  };
 
   // =========================================================
   // VIEW SUBMISSION DETAILS
@@ -206,7 +246,7 @@ function TeacherDashboard({ currentUser, onLogout }) {
           name: profile.name,
         }}
         activeSection={activeSection}
-        setActiveSection={setActiveSection}
+        setActiveSection={handleSectionChange}
         onLogout={onLogout}
         onSearch={
           activeSection === "submissions" ||
@@ -607,13 +647,10 @@ function TeacherDashboard({ currentUser, onLogout }) {
             {/* =================================================
                 3. STUDENT PROFILE
             ================================================== */}
-        {activeSection === "student-profile" && selectedStudentId && (
+        {activeSection === "student-profile" && (selectedStudentId || routeStudentId) && (
   <StudentProfile
-    studentId={selectedStudentId}
-    onBack={() => {
-      setSelectedStudentId(null);
-      setActiveSection("students");
-    }}
+    studentId={selectedStudentId || routeStudentId}
+    onBack={handleBackFromStudentProfile}
     onViewSubmission={handleViewSubmissionDetails}
   />
 )}

@@ -14,7 +14,7 @@ import {
   Search,
   Bell,
 } from "lucide-react";
-import { API_URL } from "../../utils/api";
+import { API_URL, getAuthHeaders } from "../../utils/api";
 import { formatSubmissionDate, parseUtcDate } from "../../utils/dateTime";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
@@ -37,9 +37,9 @@ function normalizeYear(v) {
   if (!v && v !== 0) return "";
   const s = String(v).trim().toLowerCase();
   if (!s) return "";
-  if (s === "1" || s.includes("first")  || s.includes("1st")) return "First Year";
-  if (s === "2" || s.includes("second") || s.includes("2nd")) return "Second Year";
-  if (s === "3" || s.includes("third")  || s.includes("3rd")) return "Third Year";
+  if (s === "1" || s === "1st" || s.includes("first") || s === "fy") return "First Year";
+  if (s === "2" || s === "2nd" || s.includes("second") || s === "sy") return "Second Year";
+  if (s === "3" || s === "3rd" || s.includes("third") || s === "ty") return "Third Year";
   return "__UNKNOWN__";
 }
 
@@ -288,13 +288,21 @@ function Submissions({
       setLoading(true);
       setFetchError("");
 
+      const headers = getAuthHeaders();
       const [studentsRes, subsRes] = await Promise.all([
-        fetch(`${API_URL}/students`),
-        fetch(`${API_URL}/submissions`),
+        fetch(`${API_URL}/students`, { headers }),
+        fetch(`${API_URL}/submissions`, { headers }),
       ]);
 
       if (!studentsRes.ok || !subsRes.ok) {
-        throw new Error("Unable to load records from the database.");
+        if (studentsRes.status === 401 || subsRes.status === 401) {
+          throw new Error("Session expired or authentication required. Please log in again.");
+        }
+        if (studentsRes.status === 403 || subsRes.status === 403) {
+          throw new Error("Access denied. Teacher access required.");
+        }
+        const errorData = await (studentsRes.ok ? subsRes.json() : studentsRes.json()).catch(() => ({}));
+        throw new Error(errorData.message || "Unable to load records from the database.");
       }
 
       const [studentsData, subsData] = await Promise.all([
@@ -327,7 +335,7 @@ function Submissions({
       }
     } catch (err) {
       console.error("Submissions load error:", err);
-      setFetchError("Unable to load data from database. Please try again.");
+      setFetchError(err.message || "Unable to load data from database. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -412,7 +420,7 @@ function Submissions({
     try {
       setStudentSubmissionsLoading(true);
       // Fetch submissions for this specific student ID directly from database
-      const res = await fetch(`${API_URL}/submissions?student_id=${student.id}`);
+      const res = await fetch(`${API_URL}/submissions?student_id=${student.id}`, { headers: getAuthHeaders() });
       const data = await res.json();
 
       if (data.success && Array.isArray(data.submissions)) {
@@ -593,11 +601,30 @@ function Submissions({
             marginBottom: "20px",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
+            justifyContent: "space-between",
+            gap: "10px",
+            flexWrap: "wrap",
           }}
         >
-          <ShieldAlert size={15} />
-          {fetchError}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ShieldAlert size={15} />
+            <span>{fetchError}</span>
+          </div>
+          <button
+            onClick={fetchAllData}
+            style={{
+              background: "rgba(239,68,68,0.2)",
+              color: "#fff",
+              border: "1px solid rgba(239,68,68,0.4)",
+              borderRadius: "6px",
+              padding: "4px 12px",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Retry
+          </button>
         </div>
       )}
 

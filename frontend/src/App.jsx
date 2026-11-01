@@ -36,6 +36,8 @@ function App() {
     setCurrentUser(null);
     localStorage.removeItem("cryptocode_user");
     localStorage.removeItem("cryptocode_admin_token");
+    localStorage.removeItem("cryptocode_token");
+    localStorage.removeItem("session");
   };
 
   const isAdmin = currentUser?.role?.toUpperCase() === "ADMIN";
@@ -120,6 +122,42 @@ function App() {
               <Navigate to="/" replace />
             )
           }
+        />
+        <Route
+          path="/teacher/students/:studentId"
+          element={
+            currentUser ? (
+              isAdmin ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : isTeacher ? (
+                <TeacherDashboard currentUser={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/teacher/:section"
+          element={
+            currentUser ? (
+              isAdmin ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : isTeacher ? (
+                <TeacherDashboard currentUser={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/teacher"
+          element={<Navigate to="/teacher/dashboard" replace />}
         />
 
         <Route

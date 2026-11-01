@@ -1,22 +1,30 @@
 const supabase = require("../config/supabase");
 const supabaseAdmin = require("../config/supabaseAdmin");
 const { validatePassword } = require("../utils/passwordValidator");
+const { normalizeCollege } = require("../middleware/authMiddleware");
 
 const getStudents = async (req, res) => {
     try {
-        // Use supabaseAdmin (service role) so Row Level Security never filters out
-        // any registered student records regardless of RLS policy configuration.
+        const isAdmin = Boolean(req.user?.isAdmin || req.user?.role?.toUpperCase() === "ADMIN");
+        const teacherCollege = req.user?.college ? normalizeCollege(req.user.college) : "OTHER";
+
         let allStudents = [];
         let from = 0;
         const PAGE_SIZE = 1000;
 
-        // Paginate in case there are ever more than 1 000 students (Supabase default limit)
+        // Paginate in case there are more than 1000 students
         while (true) {
-            const { data, error } = await supabaseAdmin
+            let query = supabaseAdmin
                 .from("profiles")
                 .select("*")
-                .eq("role", "student")
-                .range(from, from + PAGE_SIZE - 1);
+                .eq("role", "student");
+
+            // College isolation: GPN teachers only see GPN students; Other teachers only see Other students
+            if (!isAdmin) {
+                query = query.eq("college", teacherCollege);
+            }
+
+            const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
 
             if (error) {
                 console.error("STUDENTS FETCH ERROR:", error);
@@ -34,7 +42,17 @@ const getStudents = async (req, res) => {
             from += PAGE_SIZE;
         }
 
-        console.log(`STUDENTS FETCHED: ${allStudents.length} total`);
+        // Apply in-memory search if requested (e.g. Test 15: GPN teacher searches for students)
+        const searchQuery = (req.query.search || req.query.q || "").trim().toLowerCase();
+        if (searchQuery) {
+            allStudents = allStudents.filter(s => {
+                const name = (s.name || "").toLowerCase();
+                const email = (s.email || "").toLowerCase();
+                const roll = (s.roll_no || "").toLowerCase();
+                const branch = (s.branch || "").toLowerCase();
+                return name.includes(searchQuery) || email.includes(searchQuery) || roll.includes(searchQuery) || branch.includes(searchQuery);
+            });
+        }
 
         return res.status(200).json({
             success: true,
@@ -56,24 +74,36 @@ const getStudents = async (req, res) => {
 const getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
+        const isAdmin = Boolean(req.user?.isAdmin || req.user?.role?.toUpperCase() === "ADMIN");
+        const teacherCollege = req.user?.college ? normalizeCollege(req.user.college) : "OTHER";
 
-        console.log("GET STUDENT BY ID:", id);
-
-        // Fetch student profile using actual existing columns in profiles table
-        const { data: studentData, error: profileError } = await supabaseAdmin
+        const isNumeric = /^\d+$/.test(String(id).trim());
+        let query = supabaseAdmin
             .from("profiles")
-            .select("id, name, email, roll_no, year, semester, branch, college, department, subjects")
-            .eq("id", id)
-            .eq("role", "student")
-            .single();
+            .select("id, user_id, name, email, roll_no, year, semester, branch, college, department, subjects")
+            .eq("role", "student");
 
-        console.log("STUDENT PROFILE DATA:", studentData);
-        console.log("STUDENT PROFILE ERROR:", profileError);
+        if (isNumeric) {
+            query = query.eq("id", Number(id));
+        } else {
+            query = query.eq("user_id", String(id).trim());
+        }
+
+        const { data: studentData, error: profileError } = await query.maybeSingle();
 
         if (profileError || !studentData) {
             return res.status(404).json({
                 success: false,
-                message: profileError?.message || "Student not found"
+                message: "Student not found"
+            });
+        }
+
+        // Access Control: Verify student's college matches teacher's college
+        const studentCollege = normalizeCollege(studentData.college);
+        if (!isAdmin && studentCollege !== teacherCollege) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Student belongs to another college."
             });
         }
 
@@ -81,7 +111,7 @@ const getStudentById = async (req, res) => {
         const { data: submissions, error: submissionsError } = await supabaseAdmin
             .from("submissions")
             .select("id, status, submitted_at, language, filename")
-            .eq("student_id", id)
+            .eq("student_id", studentData.id)
             .order("submitted_at", { ascending: false });
 
         if (submissionsError) {
@@ -98,7 +128,7 @@ const getStudentById = async (req, res) => {
             return acceptedStatuses.includes(st);
         }).length;
 
-        // Assignments: total number of submissions (each submission = one assignment attempt)
+        // Assignments: total number of submissions
         const assignmentsCompleted = totalSubmissions;
 
         // Average Score: 100 for accepted/saved/passed/success, 0 otherwise
@@ -178,21 +208,32 @@ const getStudentById = async (req, res) => {
 const getStudentAnalytics = async (req, res) => {
     try {
         const { id } = req.params;
+        const isAdmin = Boolean(req.user?.isAdmin || req.user?.role?.toUpperCase() === "ADMIN");
+        const teacherCollege = req.user?.college ? normalizeCollege(req.user.college) : "OTHER";
 
         if (!id) {
             return res.status(400).json({ success: false, message: "Student ID is required" });
         }
 
-        // Verify the student exists
+        // Verify the student exists and fetch college
         const { data: student, error: studentError } = await supabaseAdmin
             .from("profiles")
-            .select("id")
+            .select("id, college")
             .eq("id", id)
             .eq("role", "student")
             .single();
 
         if (studentError || !student) {
             return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        // Access Control: Verify student's college matches teacher's college
+        const studentCollege = normalizeCollege(student.college);
+        if (!isAdmin && studentCollege !== teacherCollege) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Student belongs to another college."
+            });
         }
 
         // Fetch all submissions for this student
@@ -362,15 +403,16 @@ const registerStudent = async (req, res) => {
         }
 
         const userId = authData.user.id;
+        const safeCollege = college ? normalizeCollege(college) : "OTHER";
 
         const {
             data: profileData,
             error: profileError
-        } = await supabase
+        } = await supabaseAdmin
             .from("profiles")
             .insert([
                 {
-                    id: userId,
+                    user_id: userId,
                     name,
                     email,
                     role: "student",
@@ -378,7 +420,7 @@ const registerStudent = async (req, res) => {
                     year: year || null,
                     semester: semester || null,
                     branch: branch || null,
-                    college: college || null
+                    college: safeCollege
                 }
             ])
             .select()
@@ -386,6 +428,9 @@ const registerStudent = async (req, res) => {
 
         if (profileError) {
             console.error("PROFILE CREATE ERROR:", profileError);
+            try {
+                await supabaseAdmin.auth.admin.deleteUser(userId);
+            } catch (e) {}
 
             return res.status(400).json({
                 success: false,

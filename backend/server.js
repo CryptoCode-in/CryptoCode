@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 
 const http = require("http");
 const express = require("express");
@@ -11,6 +11,7 @@ const studentRoutes = require("./src/routes/studentRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const notificationRoutes = require("./src/routes/notificationRoutes");
 const { getSubmissionAnalytics } = require("./src/controllers/submissionController");
+const { authenticateUser } = require("./src/middleware/authMiddleware");
 const executionManager = require("./execution/executionManager");
 const { initSocketServer } = require("./socket/socketHandler");
 
@@ -56,11 +57,17 @@ app.get("/profiles", async(req, res) => {
 
 // Authentication routes
 app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/submissions", submissionRoutes);
+app.use("/api/submissions", submissionRoutes);
 app.use("/students", studentRoutes);
+app.use("/api/students", studentRoutes);
 app.use("/admin", adminRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/notifications", notificationRoutes);
-app.get("/analytics", getSubmissionAnalytics);
+app.use("/api/notifications", notificationRoutes);
+app.get("/analytics", authenticateUser, getSubmissionAnalytics);
+app.get("/api/analytics", authenticateUser, getSubmissionAnalytics);
 
 
 // Code execution route (batch / backwards-compatible)
