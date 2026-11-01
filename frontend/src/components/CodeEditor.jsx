@@ -815,7 +815,7 @@ function CodeEditor({
               width: 100%;
               max-width: 100% !important;
               padding: 0 4px;
-              margin-bottom: max(36px, env(safe-area-inset-bottom, 24px));
+              margin-bottom: max(64px, env(safe-area-inset-bottom, 48px));
               display: flex;
               flex-direction: column;
               gap: 16px;

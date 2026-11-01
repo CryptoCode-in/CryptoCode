@@ -10,10 +10,24 @@ import { API_URL } from "../../utils/api";
 import SubmissionCard from "../../components/teacher/SubmissionCard";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
 
-// Map a raw DB submission to the shape SubmissionCard expects (simplified)
+// Map a raw DB submission to the shape SubmissionCard expects
 function mapSubmission(sub) {
   const rawStatus = (sub.status || "Saved").trim();
   const status = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase();
+
+  const formattedDate = sub.submitted_at
+    ? new Date(sub.submitted_at).toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "N/A";
+
+  const isAccepted =
+    status === "Accepted" ||
+    status === "Saved" ||
+    status === "Passed" ||
+    status === "Success";
 
   return {
     id: sub.id,
@@ -22,6 +36,8 @@ function mapSubmission(sub) {
     practicalTitle: sub.filename || "Lab Submission",
     language: sub.language ? sub.language.toUpperCase() : "CODE",
     status,
+    score: sub.score !== undefined && sub.score !== null ? sub.score : (isAccepted ? 100 : 0),
+    submittedOn: formattedDate,
   };
 }
 
@@ -59,12 +75,11 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
           throw new Error(profileData.message || "Failed to fetch student profile");
         }
 
-        // Submissions data - only take latest 5
+        // Submissions data - latest 5 code submissions
         let latestSubs = [];
         if (subsRes.ok) {
           const subsData = await subsRes.json();
           if (subsData.success && Array.isArray(subsData.submissions)) {
-            // Already sorted descending by backend (or sort by submitted_at desc just in case)
             latestSubs = subsData.submissions
               .slice()
               .sort((a, b) => new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0))
@@ -167,7 +182,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
 
   const userInitial = student.name ? student.name.trim()[0].toUpperCase() : "S";
 
-  // Academic Details: Branch, Year, Semester, College, Email
+  // Academic & Personal Details (Branch, Year, Semester, College, Email)
   const studentDetails = [
     { icon: BookOpen, label: "Branch", value: student.branch },
     { icon: Award, label: "Year", value: student.year },
@@ -207,7 +222,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
         }}
       >
         {/* =========================================================
-            1. STUDENT PROFILE CARD (Full Width, Centered)
+            1. COMPLETE STUDENT PROFILE CARD (Full Width)
         ========================================================== */}
         <div
           className="cyber-card"
@@ -287,11 +302,11 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
             </div>
           </div>
 
-          {/* Card Body: Academic Details in a Balanced Responsive Grid */}
+          {/* Card Body: Complete Academic and Personal Details */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
               gap: "20px 24px",
               paddingTop: "24px",
             }}
@@ -350,7 +365,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
         </div>
 
         {/* =========================================================
-            2. SUBMISSION HISTORY (Full Width, Centered)
+            2. LAST 5 SUBMISSIONS SECTION
         ========================================================== */}
         <div style={{ width: "100%" }}>
           <div
@@ -365,7 +380,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
                   margin: 0,
                 }}
               >
-                Submission History
+                Last 5 Submissions
               </h4>
               <p
                 style={{
@@ -374,7 +389,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
                   margin: "2px 0 0",
                 }}
               >
-                Displaying only the latest 5 submissions
+                Displaying the student's latest 5 code submissions
               </p>
             </div>
 
@@ -400,7 +415,7 @@ function StudentProfile({ studentId, onBack, onViewSubmission }) {
             submissions={submissions}
             onViewDetails={onViewSubmission}
             showStudentInfo={false}
-            simplified={true}
+            simplified={false}
           />
         </div>
       </div>

@@ -9,6 +9,7 @@ import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import AuthBackground from "./AuthBackground";
 import LeftPanel from "./LeftPanel";
+import { validatePassword } from "../../utils/passwordValidator";
 
 const LoginModal = ({ isOpen, initialTab = "login", onClose, onLoginSuccess }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -253,6 +254,12 @@ const handleSignup = async (event) => {
 console.log("SEMESTER VALUE:", signupData.semester);
   if (!name || !email || !password || !confirmPassword) {
     showSignupError("Please fill in every required field.");
+    return;
+  }
+
+  const pwCheck = validatePassword(password);
+  if (!pwCheck.isValid) {
+    showSignupError("Password must contain at least 6 characters, one uppercase letter, one lowercase letter, one number, and one special character.");
     return;
   }
 

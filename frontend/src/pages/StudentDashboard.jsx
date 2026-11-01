@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import DashboardNavbar from "../components/DashboardNavbar";
 import DashboardSidebar from "../components/DashboardSidebar";
 import WelcomeCard from "../components/WelcomeCard";
+import { validatePassword } from "../utils/passwordValidator";
+import PasswordChecklist from "../components/Auth/PasswordChecklist";
 import CodeEditor from "../components/CodeEditor";
 import CodeHistory from "../components/CodeHistory";
 import ProgressCards from "../components/ProgressCards";
@@ -23,7 +25,6 @@ import {
   Trash2,
   History,
   Layout,
-  Bell,
   Calendar,
   Lock,
   LogOut,
@@ -131,19 +132,6 @@ function StudentDashboard({ currentUser, onLogout }) {
     };
   });
 
-  const [notificationSettings, setNotificationSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem("cryptocode_notification_settings");
-      return saved ? JSON.parse(saved) : {
-        assignmentAlerts: true
-      };
-    } catch {
-      return {
-        assignmentAlerts: true
-      };
-    }
-  });
-
   // Apply accent color changes
   useEffect(() => {
     const root = document.documentElement;
@@ -183,12 +171,6 @@ function StudentDashboard({ currentUser, onLogout }) {
     const newSettings = { ...dashboardSettingsState, [key]: value };
     setDashboardSettingsState(newSettings);
     localStorage.setItem("cryptocode_dashboard_settings", JSON.stringify(newSettings));
-  };
-
-  const updateNotificationSetting = (key, value) => {
-    const newSettings = { ...notificationSettings, [key]: value };
-    setNotificationSettings(newSettings);
-    localStorage.setItem("cryptocode_notification_settings", JSON.stringify(newSettings));
   };
 
   // ==========================================
@@ -554,7 +536,7 @@ function StudentDashboard({ currentUser, onLogout }) {
                 animate="visible"
                 exit="exit"
                 variants={sectionVariants}
-                style={{ width: "100%" }}
+                style={{ width: "100%", paddingBottom: "40px", boxSizing: "border-box" }}
               >
                 <CodeEditor 
   lang={editorLang}
@@ -576,7 +558,7 @@ function StudentDashboard({ currentUser, onLogout }) {
                 animate="visible"
                 exit="exit"
                 variants={sectionVariants}
-                style={{ width: "100%" }}
+                className="dashboard-inner-container"
               >
                 <CodeHistory currentUser={currentUser} 
   onOpenFile={(file) => {
@@ -1098,38 +1080,7 @@ function StudentDashboard({ currentUser, onLogout }) {
                       </div>
                     </div>
                   </div>
-
-                  {/* Section 5: Notifications */}
-                  <div className="setting-section-card">
-                    <h5 className="setting-section-title">
-                      <Bell size={16} />
-                      <span>Notifications</span>
-                    </h5>
-
-                    <div className="setting-row-item">
-                      <div className="setting-left">
-                        <div className="setting-icon-wrapper">
-                          <Bell size={16} />
-                        </div>
-                        <div className="setting-info">
-                          <span className="setting-label">Practical Assignment Alerts</span>
-                          <span className="setting-desc">Notify when a new lab practical task is assigned</span>
-                        </div>
-                      </div>
-                      <div className="setting-right">
-                        <label className="toggle-switch">
-                          <input
-                            type="checkbox"
-                            checked={notificationSettings.assignmentAlerts}
-                            onChange={(e) => updateNotificationSetting("assignmentAlerts", e.target.checked)}
-                          />
-                          <span className="toggle-thumb"></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 6: Account Settings */}
+                  {/* Section 5: Account Settings */}
                   <div className="setting-section-card">
                     <h5 className="setting-section-title">
                       <User size={16} />
@@ -1316,7 +1267,7 @@ function StudentDashboard({ currentUser, onLogout }) {
 
                                 {/* Action Buttons */}
                                 <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "6px" }}>
-                                  <button type="submit" disabled={pwLoading} className="setting-btn setting-btn-submit">
+                                  <button type="submit" disabled={pwLoading || (Boolean(passwordForm.newPassword) && !validatePassword(passwordForm.newPassword).isValid)} className="setting-btn setting-btn-submit">
                                     {pwLoading ? (
                                       <><Loader2 size={14} className="spin-loader" /><span>Updating Password...</span></>
                                     ) : (

@@ -1,6 +1,7 @@
 const supabase = require("../config/supabase");
 const supabaseAdmin = require("../config/supabaseAdmin");
 const { createLoginNotification } = require("./notificationController");
+const { validatePassword } = require("../utils/passwordValidator");
 const signup = async(req, res) => {
 
     const {
@@ -21,6 +22,14 @@ const signup = async(req, res) => {
     if (!name || !email || !password || !role) {
         return res.status(400).json({
             message: "All required fields must be filled"
+        });
+    }
+
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.isValid) {
+        return res.status(400).json({
+            success: false,
+            message: `Password does not meet requirements: ${pwCheck.errors.join(", ")}`
         });
     }
 
@@ -270,8 +279,15 @@ const resetPassword = async (req, res) => {
         if (!token_hash) {
             return res.status(400).json({ success: false, message: "Reset token is missing." });
         }
-        if (!newPassword || newPassword.length < 6) {
-            return res.status(400).json({ success: false, message: "New password must be at least 6 characters." });
+        if (!newPassword) {
+            return res.status(400).json({ success: false, message: "New password is required." });
+        }
+        const pwCheck = validatePassword(newPassword);
+        if (!pwCheck.isValid) {
+            return res.status(400).json({
+                success: false,
+                message: `New password does not meet requirements: ${pwCheck.errors.join(", ")}`
+            });
         }
 
         // Exchange the token_hash for a session (verifies the reset link is valid)
@@ -317,10 +333,11 @@ const changePassword = async (req, res) => {
             });
         }
 
-        if (newPassword.length < 6) {
+        const pwCheck = validatePassword(newPassword);
+        if (!pwCheck.isValid) {
             return res.status(400).json({
                 success: false,
-                message: "New password must be at least 6 characters long"
+                message: `New password does not meet requirements: ${pwCheck.errors.join(", ")}`
             });
         }
 

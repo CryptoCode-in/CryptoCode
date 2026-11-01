@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FiLock, FiArrowRight, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
+import { FiLock, FiArrowRight, FiCheckCircle, FiAlertCircle, FiEye, FiEyeOff } from "react-icons/fi";
 import { API_URL } from "../utils/api";
+import { validatePassword } from "../utils/passwordValidator";
+import PasswordChecklist from "../components/Auth/PasswordChecklist";
 
 /**
  * ResetPassword page — opened when Supabase sends the user a recovery link.
@@ -18,6 +20,8 @@ function ResetPassword() {
   const [tokenHash, setTokenHash] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [done, setDone] = useState(false);
@@ -36,6 +40,9 @@ function ResetPassword() {
     }
   }, []);
 
+  const pwCheck = validatePassword(newPassword);
+  const isPasswordValid = pwCheck.isValid;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
@@ -44,10 +51,15 @@ function ResetPassword() {
       setMessage({ type: "error", text: "Please enter a new password." });
       return;
     }
-    if (newPassword.length < 6) {
-      setMessage({ type: "error", text: "Password must be at least 6 characters." });
+
+    if (!isPasswordValid) {
+      setMessage({
+        type: "error",
+        text: `Password must satisfy all conditions: ${pwCheck.errors.join(", ")}`,
+      });
       return;
     }
+
     if (newPassword !== confirmPassword) {
       setMessage({ type: "error", text: "Passwords do not match." });
       return;
@@ -99,7 +111,7 @@ function ResetPassword() {
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: "440px",
+          maxWidth: "460px",
           borderRadius: "24px",
           border: "1px solid rgba(255,255,255,0.12)",
           background: "rgba(255,255,255,0.05)",
@@ -115,8 +127,8 @@ function ResetPassword() {
         <h2 style={{ margin: "0 0 8px", color: "#f8fafc", fontSize: "1.6rem", fontWeight: 700 }}>
           Set New Password
         </h2>
-        <p style={{ margin: "0 0 28px", color: "#94a3b8", fontSize: "0.9rem", lineHeight: 1.6 }}>
-          Choose a strong password for your account.
+        <p style={{ margin: "0 0 24px", color: "#94a3b8", fontSize: "0.9rem", lineHeight: 1.6 }}>
+          Choose a strong password meeting all security requirements.
         </p>
 
         {message.text && (
@@ -130,6 +142,9 @@ function ResetPassword() {
               alignItems: "center",
               gap: "8px",
               marginBottom: "20px",
+              padding: "10px 14px",
+              borderRadius: "10px",
+              fontSize: "0.85rem",
             }}
           >
             {message.type === "success" ? <FiCheckCircle /> : <FiAlertCircle />}
@@ -144,15 +159,29 @@ function ResetPassword() {
                 <span className="auth-label-icon"><FiLock /></span>
                 New Password
               </label>
-              <input
-                type="password"
-                className="auth-input"
-                placeholder="Enter new password (min. 6 characters)"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
+              <div className="password-wrapper">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  className="auth-input"
+                  placeholder="Enter new password (e.g. Crypto@123)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-btn"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  title={showNewPassword ? "Hide password" : "Show password"}
+                  aria-label={showNewPassword ? "Hide password" : "Show password"}
+                >
+                  {showNewPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+
+              {/* Dynamic password requirements checklist */}
+              <PasswordChecklist password={newPassword} />
             </div>
 
             <div className="auth-group">
@@ -160,21 +189,32 @@ function ResetPassword() {
                 <span className="auth-label-icon"><FiLock /></span>
                 Confirm Password
               </label>
-              <input
-                type="password"
-                className="auth-input"
-                placeholder="Re-enter new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
+              <div className="password-wrapper">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="auth-input"
+                  placeholder="Re-enter new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-btn"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  title={showConfirmPassword ? "Hide password" : "Show password"}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
 
             <motion.button
               type="submit"
               className="auth-btn"
-              disabled={loading}
+              disabled={loading || (Boolean(newPassword) && !isPasswordValid)}
               whileHover={{ y: -2, scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               style={{ marginTop: "8px" }}

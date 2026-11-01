@@ -479,14 +479,16 @@ function AdminDashboard({ currentUser, onLogout }) {
 
         {/* CONTENT AREA */}
         <main
+          className="admin-main-canvas"
           style={{
             flex: 1,
-            padding: "28px 24px",
+            padding: "28px 24px 80px 24px",
             maxWidth: "1350px",
             margin: "0 auto",
             width: "100%",
             overflowY: "auto",
             height: "100%",
+            boxSizing: "border-box",
           }}
         >
           {/* ================= SECTION 1: DASHBOARD HOME ================= */}

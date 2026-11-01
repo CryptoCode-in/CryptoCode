@@ -220,7 +220,7 @@ function CodeHistory({ currentUser: propUser, onOpenFile }) {
   }, [searchQuery]);
 
   return (
-    <div id="code-history-section" style={{ marginBottom: "32px", maxWidth: "1400px", margin: "0 auto", padding: "0 20px" }}>
+    <div id="code-history-section" style={{ width: "100%" }}>
       {/* Header & Description */}
       <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>

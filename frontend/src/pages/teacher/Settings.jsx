@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TeacherLayout from "../../components/teacher/TeacherLayout";
+import { validatePassword } from "../../utils/passwordValidator";
+import PasswordChecklist from "../../components/Auth/PasswordChecklist";
 
 function Settings({ currentUser, onLogout }) {
   // Resolve base user info from prop or fallback to localStorage

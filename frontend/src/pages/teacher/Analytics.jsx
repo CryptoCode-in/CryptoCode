@@ -37,6 +37,13 @@ const BRANCHES = [
   { value: "Information Technology", label: "Information Technology (IF)" },
 ];
 
+const LANGUAGE_COLORS = {
+  C: "#06b6d4",
+  "C++": "#8b5cf6",
+  Java: "#f59e0b",
+  Python: "#2563eb",
+};
+
 const TIME_BLOCK_HEADERS = [
   { key: "hr0", label: "00-04h", full: "00:00 - 04:00" },
   { key: "hr4", label: "04-08h", full: "04:00 - 08:00" },
@@ -169,6 +176,56 @@ function Analytics({ currentUser }) {
     if (!analytics?.weeklyTrend || analytics.weeklyTrend.length === 0) return 0;
     return analytics.weeklyTrend[analytics.weeklyTrend.length - 1]?.submissions || 0;
   }, [analytics?.weeklyTrend]);
+
+  const CustomLanguageTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const count = Number(data.value) || 0;
+      const totalLangSubs = languageUsage.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
+      const total = totalLangSubs > 0 ? totalLangSubs : (totalSubmissions > 0 ? totalSubmissions : 1);
+      const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : "0.0";
+      const color = LANGUAGE_COLORS[data.name] || data.color || "#2563eb";
+
+      return (
+        <div
+          style={{
+            background: "#120f1f",
+            border: `1px solid ${color}88`,
+            borderRadius: "8px",
+            color: "#f3f4f6",
+            fontSize: "0.82rem",
+            boxShadow: `0 8px 24px rgba(0, 0, 0, 0.7), 0 0 12px ${color}33`,
+            padding: "8px 12px",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+            <span
+              style={{
+                width: "10px",
+                height: "10px",
+                borderRadius: "50%",
+                backgroundColor: color,
+                display: "inline-block",
+                boxShadow: `0 0 6px ${color}`,
+              }}
+            />
+            <span style={{ fontWeight: 700, color: "#fff", fontSize: "0.88rem" }}>
+              {data.name}
+            </span>
+          </div>
+          <div style={{ color: "var(--tx2, #94a3b8)", fontSize: "0.78rem" }}>
+            Submissions: <strong style={{ color: "#fff" }}>{count.toLocaleString()}</strong>
+          </div>
+          <div style={{ color: "var(--tx2, #94a3b8)", fontSize: "0.78rem" }}>
+            Percentage: <strong style={{ color }}>{percentage}%</strong>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const {
     weeklyTrend = [],
@@ -818,14 +875,17 @@ function Analytics({ currentUser }) {
             <div style={{ height: "260px", width: "100%", marginTop: "10px" }}>
               {totalSubmissions > 0 && languageUsage && languageUsage.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={languageUsage} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <BarChart data={languageUsage} margin={{ top: 25, right: 15, left: -20, bottom: 28 }}>
                     <CartesianGrid stroke="rgba(255, 255, 255, 0.05)" strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="name"
                       stroke="var(--tx3, #94a3b8)"
-                      fontSize={11}
+                      fontSize={12}
+                      fontWeight={600}
                       tickLine={false}
                       axisLine={{ stroke: "rgba(255, 255, 255, 0.1)" }}
+                      interval={0}
+                      dy={8}
                     />
                     <YAxis
                       stroke="var(--tx3, #94a3b8)"
@@ -835,15 +895,17 @@ function Analytics({ currentUser }) {
                       allowDecimals={false}
                     />
                     <Tooltip
-                      contentStyle={customTooltipStyle}
-                      formatter={(value, name, item) => [
-                        `${value} submissions (${totalSubmissions > 0 ? ((value / totalSubmissions) * 100).toFixed(1) : 0}%)`,
-                        item?.payload?.name || "Submissions",
-                      ]}
+                      content={<CustomLanguageTooltip />}
+                      cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                      position={{ y: 0 }}
+                      wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
                     />
                     <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>
                       {languageUsage.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={LANGUAGE_COLORS[entry.name] || entry.color || "#2563eb"}
+                        />
                       ))}
                     </Bar>
                   </BarChart>

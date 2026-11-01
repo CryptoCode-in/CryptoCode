@@ -708,7 +708,7 @@ const getSubmissionAnalytics = async (req, res) => {
             { name: "C", value: langCounts.c, color: "#06b6d4" },
             { name: "C++", value: langCounts.cpp, color: "#8b5cf6" },
             { name: "Java", value: langCounts.java, color: "#f59e0b" },
-            { name: "Python", value: langCounts.python, color: "#3b82f6" }
+            { name: "Python", value: langCounts.python, color: "#2563eb" }
         ];
 
         const formattedWeeklyTrend = weeklyTrend.map(({ name, weekLabel, submissions }) => ({

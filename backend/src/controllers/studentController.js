@@ -1,5 +1,6 @@
 const supabase = require("../config/supabase");
 const supabaseAdmin = require("../config/supabaseAdmin");
+const { validatePassword } = require("../utils/passwordValidator");
 
 const getStudents = async (req, res) => {
     try {
@@ -58,10 +59,10 @@ const getStudentById = async (req, res) => {
 
         console.log("GET STUDENT BY ID:", id);
 
-        // Fetch student profile
+        // Fetch student profile using actual existing columns in profiles table
         const { data: studentData, error: profileError } = await supabaseAdmin
             .from("profiles")
-            .select("id, name, email, roll_no, year, semester, branch, college, created_at")
+            .select("id, name, email, roll_no, year, semester, branch, college, department, subjects")
             .eq("id", id)
             .eq("role", "student")
             .single();
@@ -79,7 +80,7 @@ const getStudentById = async (req, res) => {
         // Fetch all submissions for this student to compute real metrics
         const { data: submissions, error: submissionsError } = await supabaseAdmin
             .from("submissions")
-            .select("id, status, score, submitted_at, language")
+            .select("id, status, submitted_at, language, filename")
             .eq("student_id", id)
             .order("submitted_at", { ascending: false });
 
@@ -100,19 +101,13 @@ const getStudentById = async (req, res) => {
         // Assignments: total number of submissions (each submission = one assignment attempt)
         const assignmentsCompleted = totalSubmissions;
 
-        // Average Score: mean of score field where it exists and is numeric, else treat accepted=100, others=0
+        // Average Score: 100 for accepted/saved/passed/success, 0 otherwise
         let totalScore = 0;
         let scoredCount = 0;
         allSubs.forEach(s => {
-            if (s.score !== null && s.score !== undefined && !isNaN(Number(s.score))) {
-                totalScore += Number(s.score);
-                scoredCount++;
-            } else {
-                // Derive score from status: accepted=100, else 0
-                const st = String(s.status || "").toLowerCase().trim();
-                totalScore += acceptedStatuses.includes(st) ? 100 : 0;
-                scoredCount++;
-            }
+            const st = String(s.status || "").toLowerCase().trim();
+            totalScore += acceptedStatuses.includes(st) ? 100 : 0;
+            scoredCount++;
         });
         const avgScore = scoredCount > 0 ? Math.round(totalScore / scoredCount) : 0;
 
@@ -132,14 +127,18 @@ const getStudentById = async (req, res) => {
             })
             : "N/A";
 
-        // Joined On: from profile created_at
-        const joinedOn = studentData.created_at
-            ? new Date(studentData.created_at).toLocaleDateString("en-US", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-            })
-            : "N/A";
+        // Joined On: derive from earliest submission date if available, else fallback to "N/A"
+        let joinedOn = "N/A";
+        if (allSubs.length > 0) {
+            const earliest = allSubs[allSubs.length - 1];
+            if (earliest && earliest.submitted_at) {
+                joinedOn = new Date(earliest.submitted_at).toLocaleDateString("en-US", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                });
+            }
+        }
 
         return res.status(200).json({
             success: true,
@@ -152,7 +151,8 @@ const getStudentById = async (req, res) => {
                 semester: studentData.semester || "N/A",
                 branch: studentData.branch || "N/A",
                 college: studentData.college || "N/A",
-                subject: "N/A",
+                department: studentData.department || "N/A",
+                subject: studentData.subjects || "N/A",
                 joinedOn,
                 // Real computed metrics
                 problemsSolved,
@@ -198,7 +198,7 @@ const getStudentAnalytics = async (req, res) => {
         // Fetch all submissions for this student
         const { data: submissions, error: subError } = await supabaseAdmin
             .from("submissions")
-            .select("id, status, score, submitted_at, language")
+            .select("id, status, submitted_at, language")
             .eq("student_id", id)
             .order("submitted_at", { ascending: true });
 
@@ -249,7 +249,7 @@ const getStudentAnalytics = async (req, res) => {
             else if (l === "python") langCounts["Python"]++;
         });
 
-        const langColors = { "C": "#06b6d4", "C++": "#8b5cf6", "Java": "#f59e0b", "Python": "#3b82f6" };
+        const langColors = { "C": "#06b6d4", "C++": "#8b5cf6", "Java": "#f59e0b", "Python": "#2563eb" };
         const totalLang = Object.values(langCounts).reduce((a, b) => a + b, 0);
 
         const languageUsage = Object.entries(langCounts)
@@ -332,6 +332,14 @@ const registerStudent = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Name, email and password are required"
+            });
+        }
+
+        const pwCheck = validatePassword(password);
+        if (!pwCheck.isValid) {
+            return res.status(400).json({
+                success: false,
+                message: `Password does not meet requirements: ${pwCheck.errors.join(", ")}`
             });
         }
 
