@@ -1205,22 +1205,6 @@ function AdminDashboard({ currentUser, onLogout }) {
                         Target Language: <strong>{sub.language}</strong>
                       </p>
                     </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        paddingTop: "16px",
-                        marginTop: "16px",
-                        borderTop: "1px solid var(--bd)",
-                        fontSize: "0.8rem",
-                        color: "var(--tx3)",
-                      }}
-                    >
-                      <span>{sub.students} Enrolled Students</span>
-                      <span>{sub.teachers} Teachers</span>
-                    </div>
                   </div>
                 ))}
               </div>
