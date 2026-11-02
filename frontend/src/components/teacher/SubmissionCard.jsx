@@ -1,69 +1,28 @@
 import { CheckCircle2, ShieldAlert, Clock, Eye } from "lucide-react";
 
-// Columns shown in StudentProfile (simplified): Practical/Assignment | Language | Status | View
-// Columns shown in Submissions page (full): Student | Practical/Assignment | Language | Status | Score | Submitted On | View
+// Columns shown in StudentProfile: Practical/Assignment | Language | Status | Submitted On | View
+// Columns shown in Submissions page: Student | Practical/Assignment | Language | Status | Submitted On | View
 function SubmissionCard({
   submissions = [],
   onViewDetails,
   showStudentInfo = true,
-  simplified = false, // when true: hide Score and Submitted On columns
+  simplified = false, // when true: hide Submitted On column
+  showScore = false, // Score column removed from Student Profile as per requirements
 }) {
-  const getBadgeStyle = (status) => {
-    const s = String(status || "").toLowerCase().trim();
-
-    // Accepted / Passed / Success -> Vibrant emerald green
-    if (s === "accepted" || s === "passed" || s === "success") {
-      return {
-        bg: "rgba(52, 211, 153, 0.12)",
-        color: "#34d399",
-        border: "1px solid rgba(52, 211, 153, 0.25)",
-        icon: CheckCircle2,
-      };
-    }
-
-    // Saved / Draft -> Subtle soft green success badge (never red / alert style)
-    if (s === "saved" || s === "draft") {
-      return {
-        bg: "rgba(16, 185, 129, 0.12)",
-        color: "#10b981",
-        border: "1px solid rgba(16, 185, 129, 0.25)",
-        icon: CheckCircle2,
-      };
-    }
-
-    // Submitted / Pending / In Review -> Soft blue
-    if (s === "submitted" || s === "pending" || s === "in review") {
-      return {
-        bg: "rgba(59, 130, 246, 0.12)",
-        color: "#60a5fa",
-        border: "1px solid rgba(59, 130, 246, 0.25)",
-        icon: Clock,
-      };
-    }
-
-    // Wrong Answer -> Amber / Yellow warning
-    if (s === "wrong answer" || s === "wrong_answer") {
-      return {
-        bg: "rgba(245, 158, 11, 0.12)",
-        color: "#fbbf24",
-        border: "1px solid rgba(245, 158, 11, 0.25)",
-        icon: ShieldAlert,
-      };
-    }
-
-    // Compilation Error / Failed / Rejected -> Soft Red
+  const getBadgeStyle = () => {
     return {
-      bg: "rgba(239, 68, 68, 0.12)",
-      color: "#f87171",
-      border: "1px solid rgba(239, 68, 68, 0.25)",
-      icon: ShieldAlert,
+      bg: "rgba(52, 211, 153, 0.12)",
+      color: "#34d399",
+      border: "1px solid rgba(52, 211, 153, 0.25)",
+      icon: CheckCircle2,
     };
   };
 
   // Column count for the empty-state colspan
   let colCount = 4; // Practical/Assignment, Language, Status, View
   if (showStudentInfo) colCount++;
-  if (!simplified) colCount += 2; // Score, Submitted On
+  if (showScore) colCount++;
+  if (!simplified) colCount++; // Submitted On
 
   const thStyle = {
     padding: "14px 18px",
@@ -101,26 +60,26 @@ function SubmissionCard({
               {showStudentInfo && (
                 <th style={thStyle}>Student</th>
               )}
-              <th style={{ ...thStyle, width: simplified ? "50%" : undefined }}>
+              <th style={{ ...thStyle, width: simplified ? "50%" : undefined, minWidth: !simplified ? "200px" : undefined }}>
                 Practical / Assignment
               </th>
-              <th style={{ ...thStyle, width: simplified ? "20%" : undefined }}>
+              <th style={{ ...thStyle, width: simplified ? "20%" : "120px" }}>
                 Language
               </th>
-              <th style={{ ...thStyle, width: simplified ? "20%" : undefined }}>
+              <th style={{ ...thStyle, width: simplified ? "20%" : "120px" }}>
                 Status
               </th>
+              {showScore && (
+                <th style={{ ...thStyle, width: "100px" }}>Score</th>
+              )}
               {!simplified && (
-                <>
-                  <th style={thStyle}>Score</th>
-                  <th style={thStyle}>Submitted On</th>
-                </>
+                <th style={{ ...thStyle, width: "160px" }}>Submitted On</th>
               )}
               <th
                 style={{
                   ...thStyle,
                   textAlign: "center",
-                  width: simplified ? "10%" : undefined,
+                  width: simplified ? "10%" : "90px",
                 }}
               >
                 View
@@ -145,7 +104,7 @@ function SubmissionCard({
               </tr>
             ) : (
               submissions.map((sub) => {
-                const badge = getBadgeStyle(sub.status);
+                const badge = getBadgeStyle(sub.rawStatus || sub.status);
                 const BadgeIcon = badge.icon;
 
                 return (
@@ -215,34 +174,36 @@ function SubmissionCard({
                         }}
                       >
                         <BadgeIcon size={12} />
-                        {sub.status}
+                        Saved
                       </span>
                     </td>
 
-                    {/* Score + Submitted On (only in non-simplified mode) */}
+                    {/* Score (optional, hidden by default) */}
+                    {showScore && (
+                      <td
+                        style={{
+                          padding: "14px 18px",
+                          color: "var(--tx2)",
+                          fontWeight: 700,
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        {sub.score}/100
+                      </td>
+                    )}
+
+                    {/* Submitted On (only in non-simplified mode) */}
                     {!simplified && (
-                      <>
-                        <td
-                          style={{
-                            padding: "14px 18px",
-                            color: "var(--tx2)",
-                            fontWeight: 700,
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          {sub.score}/100
-                        </td>
-                        <td
-                          style={{
-                            padding: "14px 18px",
-                            color: "var(--tx3)",
-                            fontSize: "0.82rem",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {sub.submittedOn}
-                        </td>
-                      </>
+                      <td
+                        style={{
+                          padding: "14px 18px",
+                          color: "var(--tx3)",
+                          fontSize: "0.82rem",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {sub.submittedOn}
+                      </td>
                     )}
 
                     {/* View button */}

@@ -78,14 +78,7 @@ function langStyle(lang) {
 }
 
 function statusStyle(status) {
-  const s = (status || "").toLowerCase();
-  if (["accepted", "success", "passed"].includes(s))
-    return { bg: "rgba(52,211,153,.12)", color: "#34d399", border: "rgba(52,211,153,.25)" };
-  if (s === "saved")
-    return { bg: "rgba(59,130,246,.12)", color: "#60a5fa", border: "rgba(59,130,246,.25)" };
-  if (["wrong answer", "failed"].includes(s))
-    return { bg: "rgba(245,158,11,.12)", color: "#fbbf24", border: "rgba(245,158,11,.25)" };
-  return { bg: "rgba(239,68,68,.12)", color: "#f87171", border: "rgba(239,68,68,.25)" };
+  return { bg: "rgba(52, 211, 153, 0.12)", color: "#34d399", border: "rgba(52, 211, 153, 0.25)" };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -907,7 +900,7 @@ function Submissions({
                                     border: `1px solid ${ss.border}`,
                                   }}
                                 >
-                                  {sub.status || "saved"}
+                                  Saved
                                 </span>
                               </td>
 
@@ -1580,7 +1573,7 @@ function Submissions({
                                   border: `1px solid ${ss.border}`,
                                 }}
                               >
-                                {sub.status || "saved"}
+                                Saved
                               </span>
                             </td>
 

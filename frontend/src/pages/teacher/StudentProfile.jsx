@@ -36,7 +36,8 @@ function mapSubmission(sub) {
     studentRoll: sub.profiles?.roll_no || "",
     practicalTitle: sub.filename || "Lab Submission",
     language: sub.language ? sub.language.toUpperCase() : "CODE",
-    status,
+    status: "Saved",
+    rawStatus: status,
     score: sub.score !== undefined && sub.score !== null ? sub.score : (isAccepted ? 100 : 0),
     submittedOn: formattedDate,
   };

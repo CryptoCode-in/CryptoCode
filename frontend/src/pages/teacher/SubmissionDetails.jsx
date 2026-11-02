@@ -177,22 +177,12 @@ function SubmissionDetails({ submissionId, onBack }) {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const getStatusInfo = (status) => {
-    const s = String(status || "").toLowerCase().trim();
-    if (s === "saved" || s === "draft") {
-      return {
-        label: "Saved",
-        color: "#10b981", // green
-        bg: "rgba(16, 185, 129, 0.12)",
-        border: "rgba(16, 185, 129, 0.25)",
-      };
-    }
-    // "submitted" or "accepted" or other status
+  const getStatusInfo = () => {
     return {
-      label: s === "accepted" ? "Submitted" : (s.charAt(0).toUpperCase() + s.slice(1)),
-      color: "#3b82f6", // blue
-      bg: "rgba(59, 130, 246, 0.12)",
-      border: "rgba(59, 130, 246, 0.25)",
+      label: "Saved",
+      color: "#34d399", // emerald green
+      bg: "rgba(52, 211, 153, 0.12)",
+      border: "rgba(52, 211, 153, 0.25)",
     };
   };
 
